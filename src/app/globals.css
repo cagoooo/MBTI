@@ -1,0 +1,84 @@
+@import "tailwindcss";
+
+@theme {
+  --color-cream: #fef9f3;
+  --color-peach: #ffd6c0;
+  --color-coral: #ff8364;
+  --color-sky: #a3d8f4;
+  --color-mint: #b8e0d2;
+  --color-lavender: #c8a8e9;
+  --color-sunny: #ffd93d;
+  --color-rose: #ff6b9d;
+  --color-ink: #2d3047;
+
+  --font-display: "Noto Sans TC", system-ui, sans-serif;
+
+  --shadow-cute: 0 8px 0 0 rgba(45, 48, 71, 0.15);
+  --shadow-cute-hover: 0 10px 0 0 rgba(45, 48, 71, 0.25);
+}
+
+html, body {
+  background: linear-gradient(180deg, #fef9f3 0%, #fff5ea 100%);
+  color: var(--color-ink);
+  font-family: var(--font-display);
+  min-height: 100%;
+  overscroll-behavior: none;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button, a {
+  transition: transform 120ms ease, box-shadow 120ms ease, background-color 120ms ease;
+}
+
+@keyframes wiggle {
+  0%, 100% { transform: rotate(-2deg); }
+  50% { transform: rotate(2deg); }
+}
+
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes pop-in {
+  0% { transform: scale(0.85); opacity: 0; }
+  60% { transform: scale(1.05); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-wiggle { animation: wiggle 1.6s ease-in-out infinite; }
+.animate-float-slow { animation: float-slow 3s ease-in-out infinite; }
+.animate-pop-in { animation: pop-in 0.5s ease-out both; }
+
+.shimmer-text {
+  background: linear-gradient(90deg, #ff6b9d 0%, #ffd93d 50%, #a3d8f4 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shimmer 4s linear infinite;
+}
+
+.btn-3d {
+  box-shadow: 0 6px 0 0 rgba(45, 48, 71, 0.18);
+  transition: transform 100ms ease, box-shadow 100ms ease;
+}
+.btn-3d:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 0 0 rgba(45, 48, 71, 0.25);
+}
+.btn-3d:active {
+  transform: translateY(3px);
+  box-shadow: 0 2px 0 0 rgba(45, 48, 71, 0.18);
+}
+
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
