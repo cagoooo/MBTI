@@ -385,6 +385,7 @@ export function getAllMBTIInfo(): MBTIInfo[] {
 export const MBTI_GROUPS = [
   {
     name: "分析家 (NT)",
+    key: "NT",
     color: "from-purple-300 to-indigo-400",
     emoji: "🧠",
     desc: "用邏輯與遠見看世界的策略派",
@@ -392,6 +393,7 @@ export const MBTI_GROUPS = [
   },
   {
     name: "外交官 (NF)",
+    key: "NF",
     color: "from-rose-300 to-pink-400",
     emoji: "💖",
     desc: "重視價值與情感的理想派",
@@ -399,6 +401,7 @@ export const MBTI_GROUPS = [
   },
   {
     name: "守護者 (SJ)",
+    key: "SJ",
     color: "from-emerald-300 to-teal-400",
     emoji: "🛡️",
     desc: "守護秩序與責任的可靠派",
@@ -406,6 +409,7 @@ export const MBTI_GROUPS = [
   },
   {
     name: "探險家 (SP)",
+    key: "SP",
     color: "from-amber-300 to-orange-400",
     emoji: "🌈",
     desc: "享受當下與行動的自由派",

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { MBTI_GROUPS } from "@/lib/mbti";
+import CampusIntro from "@/components/CampusIntro";
 
 export default function HomePage() {
   return (
@@ -63,6 +64,9 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* Campus intro animation */}
+      <CampusIntro />
 
       {/* How it works */}
       <section className="px-6 py-12 sm:py-16 bg-white/50">
@@ -172,6 +176,14 @@ export default function HomePage() {
             不需要回答抽象問卷就能認識自己的人格傾向。
             適合作為班級活動、輔導課、自我認識主題的引導素材。
           </p>
+          <Link
+            href="/class-stats"
+            className="mt-5 inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-gradient-to-r from-violet-500 to-purple-500 text-white font-black hover:from-violet-600 hover:to-purple-600 transition shadow-md"
+          >
+            <span className="text-xl">📊</span>
+            <span>老師專用：全班 MBTI 統計</span>
+            <span>→</span>
+          </Link>
           <p className="text-[var(--color-ink)]/60 text-sm mt-3">
             ⚠️ MBTI 為性格傾向參考，並非心理診斷工具。請以開放、好奇的態度引導孩子探索。
           </p>

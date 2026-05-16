@@ -128,15 +128,21 @@ export default function GamePage() {
           </div>
         )}
 
+        {/* 透視容器：讓子層的 rotateY 看起來有翻書感 */}
+        <div style={{ perspective: 1400 }} className="relative">
         <AnimatePresence mode="wait">
           <motion.div
             key={scene.id}
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -24 }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
-            className="bg-white rounded-3xl p-6 sm:p-8 border-2 border-[var(--color-ink)]/10 shadow-lg relative overflow-hidden"
+            initial={{ opacity: 0, rotateY: 30, x: 100, scale: 0.92 }}
+            animate={{ opacity: 1, rotateY: 0, x: 0, scale: 1 }}
+            exit={{ opacity: 0, rotateY: -30, x: -100, scale: 0.92 }}
+            transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+            style={{ transformOrigin: "center center", transformStyle: "preserve-3d" }}
+            className="bg-white rounded-3xl p-6 sm:p-8 border-2 border-[var(--color-ink)]/10 shadow-2xl relative overflow-hidden"
           >
+            {/* 翻頁的脊邊陰影（左側陰影模擬書脊光影） */}
+            <div className="absolute inset-y-0 left-0 w-12 pointer-events-none bg-gradient-to-r from-black/8 to-transparent" />
+            <div className="absolute inset-y-0 right-0 w-12 pointer-events-none bg-gradient-to-l from-black/4 to-transparent" />
             {/* 場景背景 emoji 點綴 */}
             <div className="absolute -top-6 -right-6 text-9xl opacity-10 select-none pointer-events-none">
               {scene.bg}
@@ -185,6 +191,7 @@ export default function GamePage() {
             </div>
           </motion.div>
         </AnimatePresence>
+        </div>
       </div>
 
       {/* Follow-up modal */}
