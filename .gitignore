@@ -1,4 +1,7 @@
 node_modules/
+# Claude Code harness session locks
+.claude/scheduled_tasks.lock
+.claude/*.lock
 .next/
 out/
 .env*.local
