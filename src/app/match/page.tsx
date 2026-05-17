@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import HomeToButton from "@/components/HomeToButton";
+import SiteNav from "@/components/SiteNav";
 import SoundButton from "@/components/SoundButton";
 import SoundLink from "@/components/SoundLink";
 import BgmController from "@/components/BgmController";
@@ -45,12 +45,11 @@ export default function MatchPage() {
   }
 
   return (
-    <div className="px-3 sm:px-6 py-5 sm:py-10 has-floating-ui">
+    <div className="container-paper has-floating-ui" style={{paddingTop:0}}>
+      <SiteNav active="/match" />
       <BgmController track="home" />
-      <div className="max-w-5xl mx-auto">
-        <div className="mb-6">
-          <HomeToButton />
-        </div>
+      <div className="max-w-5xl mx-auto" style={{ paddingTop: 24 }}>
+
 
         <header className="text-center mb-8">
           <p className="inline-block px-4 py-1.5 rounded-full bg-rose-100 border-2 border-rose-300 text-xs sm:text-sm font-bold text-rose-700 uppercase tracking-wider mb-3">

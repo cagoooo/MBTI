@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import HomeToButton from "@/components/HomeToButton";
+import SiteNav from "@/components/SiteNav";
 import SoundButton from "@/components/SoundButton";
 import { ensureSignedIn, isFirebaseAvailable } from "@/lib/firebase";
 import {
@@ -86,11 +86,12 @@ export default function TeacherHistoryPage() {
   }
 
   return (
-    <div className="px-3 sm:px-6 py-5 sm:py-10 has-floating-ui">
+    <div className="container-paper has-floating-ui" style={{paddingTop:0}}>
+      <SiteNav active="/teacher/history" />
       <BgmController track="home" />
       <div className="max-w-5xl mx-auto">
         <div className="mb-6 flex items-center justify-between flex-wrap gap-3">
-          <HomeToButton />
+          
           <Link
             href="/teacher/new"
             className="text-sm text-violet-700 hover:text-violet-900 font-bold underline underline-offset-4"

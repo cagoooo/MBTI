@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import HomeToButton from "@/components/HomeToButton";
+import SiteNav from "@/components/SiteNav";
 import SoundButton from "@/components/SoundButton";
 import BgmController from "@/components/BgmController";
 import RubyText from "@/components/RubyText";
@@ -188,12 +188,11 @@ function SelPageInner() {
   }
 
   return (
-    <div className="px-3 sm:px-6 py-5 sm:py-10 has-floating-ui">
+    <div className="container-paper has-floating-ui" style={{paddingTop:0}}>
+      <SiteNav active="/sel" />
       <BgmController track="result" />
-      <div className="max-w-3xl mx-auto">
-        <div className="mb-6">
-          <HomeToButton />
-        </div>
+      <div className="max-w-3xl mx-auto" style={{ paddingTop: 24 }}>
+
 
         {/* 班級模式 badge (O2) */}
         {classSession && (

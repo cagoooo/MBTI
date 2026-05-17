@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import HomeToButton from "@/components/HomeToButton";
+import SiteNav from "@/components/SiteNav";
 import SoundButton from "@/components/SoundButton";
 import { createRoom, type RoomMode } from "@/lib/classroom-rtdb";
 import { isFirebaseAvailable } from "@/lib/firebase";
@@ -50,10 +50,11 @@ export default function NewRoomPage() {
   }
 
   return (
-    <div className="px-3 sm:px-6 py-5 sm:py-10 has-floating-ui">
+    <div className="container-paper has-floating-ui" style={{paddingTop:0}}>
+      <SiteNav active="/teacher/new" />
       <div className="max-w-md mx-auto">
         <div className="mb-6">
-          <HomeToButton />
+          
         </div>
         <header className="text-center mb-8">
           <p className="inline-block px-4 py-1.5 rounded-full bg-violet-100 border-2 border-violet-300 text-xs font-bold text-violet-700 uppercase tracking-wider mb-3">

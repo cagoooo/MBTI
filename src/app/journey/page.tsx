@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
-import HomeToButton from "@/components/HomeToButton";
+import SiteNav from "@/components/SiteNav";
 import SoundLink from "@/components/SoundLink";
 import SoundButton from "@/components/SoundButton";
 import BgmController from "@/components/BgmController";
@@ -165,12 +165,13 @@ export default function JourneyPage() {
   }
 
   return (
-    <div className="px-3 sm:px-6 py-5 sm:py-10 has-floating-ui">
+    <div className="container-paper has-floating-ui" style={{paddingTop:0}}>
+      <SiteNav active="/journey" />
       <BgmController track="home" />
       <div className="max-w-5xl mx-auto">
         {/* 列印時不顯示這些 */}
         <div className="mb-6 flex items-center justify-between flex-wrap gap-3 print-hide">
-          <HomeToButton />
+          
           {doneCount > 0 && (
             <button
               onClick={resetAll}

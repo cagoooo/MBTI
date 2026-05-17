@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
-import HomeToButton from "@/components/HomeToButton";
+import SiteNav from "@/components/SiteNav";
 import SoundButton from "@/components/SoundButton";
 import BgmController from "@/components/BgmController";
 import { playSound } from "@/lib/sound";
@@ -165,11 +165,12 @@ export default function GuessGamePage() {
   const currentPerson = people[currentIdx];
 
   return (
-    <div className="px-3 sm:px-6 py-5 sm:py-10 has-floating-ui">
+    <div className="container-paper has-floating-ui" style={{paddingTop:0}}>
+      <SiteNav active="/guess" />
       <BgmController track="home" />
       <div className="max-w-3xl mx-auto">
         <div className="mb-6">
-          <HomeToButton />
+          
         </div>
 
         {/* ─── Input ─── */}

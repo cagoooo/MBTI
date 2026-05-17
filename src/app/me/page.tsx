@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import HomeToButton from "@/components/HomeToButton";
+import SiteNav from "@/components/SiteNav";
 import SoundButton from "@/components/SoundButton";
 import BgmController from "@/components/BgmController";
 import {
@@ -105,18 +105,20 @@ export default function MePage() {
   // SSR safe
   if (!mounted) {
     return (
-      <div className="px-3 sm:px-6 py-5 sm:py-10 has-floating-ui">
+      <div className="container-paper has-floating-ui" style={{paddingTop:0}}>
+        <SiteNav active="/me" />
         <div className="max-w-3xl mx-auto text-center py-12 text-[var(--color-ink)]/40">載入中...</div>
       </div>
     );
   }
 
   return (
-    <div className="px-3 sm:px-6 py-5 sm:py-10 has-floating-ui">
+    <div className="container-paper has-floating-ui" style={{paddingTop:0}}>
+      <SiteNav active="/me" />
       <BgmController track="home" />
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-4xl mx-auto" style={{ paddingTop: 24 }}>
         <div className="mb-6 flex items-center justify-between flex-wrap gap-2 print-hide">
-          <HomeToButton />
+          
           {entries.length > 0 && (
             <div className="flex gap-2 flex-wrap">
               {ttsEnabled && (

@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import QRCode from "qrcode";
-import HomeToButton from "@/components/HomeToButton";
+import SiteNav from "@/components/SiteNav";
 import SoundButton from "@/components/SoundButton";
 import {
   clearAllVotes,
@@ -181,10 +181,11 @@ function TeacherDashboard() {
   // 未授權：顯示密碼框
   if (!authorized) {
     return (
-      <div className="px-3 sm:px-6 py-5 sm:py-10 has-floating-ui">
+      <div className="container-paper has-floating-ui" style={{paddingTop:0}}>
+      <SiteNav active="/teacher/room" />
         <div className="max-w-md mx-auto">
           <div className="mb-6">
-            <HomeToButton />
+            
           </div>
           <div className="bg-white rounded-3xl p-6 sm:p-8 border-2 border-[var(--color-ink)]/10">
             <h1 className="text-2xl font-black mb-2">🔐 老師密碼驗證</h1>
@@ -223,10 +224,11 @@ function TeacherDashboard() {
   const isRoomEnded = snap?.meta?.isActive === false;
 
   return (
-    <div className="px-3 sm:px-6 py-5 sm:py-10 has-floating-ui">
-      <div className="max-w-6xl mx-auto">
+    <div className="container-paper has-floating-ui" style={{paddingTop:0}}>
+      <SiteNav active="/teacher/room" />
+      <div className="max-w-6xl mx-auto" style={{ paddingTop: 24 }}>
         <div className="mb-6 flex items-center justify-between flex-wrap gap-3">
-          <HomeToButton />
+          
           <div className="flex items-center gap-3 flex-wrap">
             <a
               href={`${BASE_PATH}/teacher/room/projector?code=${roomCode}`}

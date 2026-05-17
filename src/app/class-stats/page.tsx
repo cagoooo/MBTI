@@ -4,7 +4,7 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import HomeToButton from "@/components/HomeToButton";
+import SiteNav from "@/components/SiteNav";
 import SoundButton from "@/components/SoundButton";
 import SoundLink from "@/components/SoundLink";
 import BgmController from "@/components/BgmController";
@@ -80,11 +80,12 @@ function ClassStatsPage() {
   }
 
   return (
-    <div className="px-3 sm:px-6 py-5 sm:py-10 has-floating-ui">
+    <div className="container-paper has-floating-ui" style={{paddingTop:0}}>
+      <SiteNav active="/class-stats" />
       <BgmController track="home" />
       <div className="max-w-5xl mx-auto">
         <div className="mb-6 flex items-center justify-between flex-wrap gap-3">
-          <HomeToButton />
+          
           <SoundLink
             href="/game"
             sound="tap"

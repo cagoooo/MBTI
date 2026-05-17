@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import HomeToButton from "@/components/HomeToButton";
+import SiteNav from "@/components/SiteNav";
 import BgmController from "@/components/BgmController";
 import { ensureSignedIn, isFirebaseAvailable } from "@/lib/firebase";
 import { subscribeTeacherHistory, type SessionSnapshot } from "@/lib/classroom-rtdb";
@@ -95,11 +95,12 @@ export default function TeacherDashboardPage() {
   const recent5 = items.slice(0, 5);
 
   return (
-    <div className="px-3 sm:px-6 py-5 sm:py-10 has-floating-ui">
+    <div className="container-paper has-floating-ui" style={{paddingTop:0}}>
+      <SiteNav active="/teacher/dashboard" />
       <BgmController track="home" />
       <div className="max-w-6xl mx-auto">
         <div className="mb-6">
-          <HomeToButton />
+          
         </div>
 
         {/* Hero */}

@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import HomeToButton from "@/components/HomeToButton";
+import SiteNav from "@/components/SiteNav";
 import SoundButton from "@/components/SoundButton";
 import { getRoomMeta, joinRoom } from "@/lib/classroom-rtdb";
 import { isFirebaseAvailable } from "@/lib/firebase";
@@ -67,10 +67,11 @@ function JoinPageInner() {
   }
 
   return (
-    <div className="px-3 sm:px-6 py-5 sm:py-10 has-floating-ui">
+    <div className="container-paper has-floating-ui" style={{paddingTop:0}}>
+      <SiteNav active="/join" />
       <div className="max-w-md mx-auto">
         <div className="mb-6">
-          <HomeToButton />
+          
         </div>
 
         <header className="text-center mb-8">
