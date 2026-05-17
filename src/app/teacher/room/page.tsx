@@ -16,11 +16,43 @@ import {
 } from "@/lib/classroom-rtdb";
 import { getScene } from "@/lib/scenes";
 import { ensureSignedIn, isFirebaseAvailable } from "@/lib/firebase";
-import { ALL_TYPES, type MBTIType } from "@/lib/types";
+import { ALL_TYPES, type MBTIType, type Branch } from "@/lib/types";
 import { getMBTIInfo } from "@/lib/mbti";
 import { playSound } from "@/lib/sound";
+import appConfig from "../../../../app.config";
 
 const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || "";
+
+const BRANCH_GRAD: Record<Branch | "main", string> = {
+  sport: "linear-gradient(135deg, var(--tape-coral), var(--coral))",
+  art: "linear-gradient(135deg, var(--tape-rose), var(--rose))",
+  study: "linear-gradient(135deg, var(--tape-sky), var(--sky))",
+  friend: "linear-gradient(135deg, var(--tape-mint), var(--mint))",
+  main: "linear-gradient(135deg, var(--paper-2), var(--muted))",
+};
+
+const BRANCH_NAME: Record<Branch | "main", string> = {
+  sport: "🏃 校隊",
+  art: "🎨 藝術",
+  study: "📚 學術",
+  friend: "🤝 友誼",
+  main: "📖 主線",
+};
+
+const BRANCH_COLOR: Record<Branch | "main", string> = {
+  sport: "var(--coral)",
+  art: "var(--rose)",
+  study: "var(--sky)",
+  friend: "var(--mint)",
+  main: "var(--ink)",
+};
+
+const TYPE_GROUP: Record<MBTIType, "NT" | "NF" | "SJ" | "SP"> = {
+  INTJ: "NT", INTP: "NT", ENTJ: "NT", ENTP: "NT",
+  INFJ: "NF", INFP: "NF", ENFJ: "NF", ENFP: "NF",
+  ISTJ: "SJ", ISFJ: "SJ", ESTJ: "SJ", ESFJ: "SJ",
+  ISTP: "SP", ISFP: "SP", ESTP: "SP", ESFP: "SP",
+};
 
 export default function TeacherDashboardPage() {
   return (
@@ -40,8 +72,14 @@ function TeacherDashboard() {
   const [authError, setAuthError] = useState<string | null>(null);
   const [qrDataUrl, setQrDataUrl] = useState<string>("");
   const [joinUrl, setJoinUrl] = useState<string>("");
+  const [startedAt, setStartedAt] = useState<number>(Date.now());
+  const [now, setNow] = useState<number>(Date.now());
 
-  // 1. 確認密碼 (從 sessionStorage 拿 / 或要使用者輸入)
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
   useEffect(() => {
     if (!roomCode) return;
     if (typeof window === "undefined") return;
@@ -62,14 +100,13 @@ function TeacherDashboard() {
     }
   }, [roomCode]);
 
-  // 2. 訂閱 RTDB
   useEffect(() => {
     if (!authorized || !roomCode) return;
+    setStartedAt(Date.now());
     const unsub = subscribeRoom(roomCode, setSnap);
     return () => unsub();
   }, [authorized, roomCode]);
 
-  // 3. 生成 QR code
   useEffect(() => {
     if (!roomCode || typeof window === "undefined") return;
     const origin = window.location.origin;
@@ -96,11 +133,16 @@ function TeacherDashboard() {
     }
   }
 
+  const students = snap?.students ?? {};
+  const studentList = Object.entries(students).map(([uid, s]) => ({ uid, ...s }));
+  const totalStudents = studentList.length;
+  const doneStudents = studentList.filter((s) => s.finalType);
+  const pinnedScene = snap?.teacherControl?.pinnedScene;
+
   async function handleEndRoom() {
     if (!confirm("確定要結束會議？學生端會看到「老師已結束會議」")) return;
     playSound("whoosh");
     await endRoom(roomCode);
-    // 帶班級結果跳到 /class-stats 預填輸入框
     const completedRoster = doneStudents
       .map((s) => `${s.name} ${s.finalType}`)
       .join("\n");
@@ -112,13 +154,6 @@ function TeacherDashboard() {
     }
   }
 
-  const students = snap?.students ?? {};
-  const studentList = Object.entries(students).map(([uid, s]) => ({ uid, ...s }));
-  const totalStudents = studentList.length;
-  const doneStudents = studentList.filter((s) => s.finalType);
-  const pinnedScene = snap?.teacherControl?.pinnedScene;
-
-  // 計算 pinned scene 的投票分布
   const pinnedSceneData = pinnedScene ? getScene(pinnedScene) : null;
   const voteCounts = useMemo(() => {
     if (!pinnedScene || !pinnedSceneData) return [] as Array<{ index: number; count: number; voters: string[] }>;
@@ -139,7 +174,6 @@ function TeacherDashboard() {
     return counts;
   }, [pinnedScene, pinnedSceneData, studentList]);
 
-  // 在 pinned scene 但尚未投票的學生
   const undecidedStudents = useMemo(() => {
     if (!pinnedScene) return [] as typeof studentList;
     return studentList.filter(
@@ -156,7 +190,6 @@ function TeacherDashboard() {
     await pinScene(roomCode, null, "");
   }
 
-  // 統計每個場景有多少人
   const sceneCounts = useMemo(() => {
     const m = new Map<string, number>();
     for (const s of studentList) {
@@ -166,7 +199,6 @@ function TeacherDashboard() {
     return m;
   }, [studentList]);
 
-  // 統計 final type 分布
   const typeCounts = useMemo(() => {
     const m: Partial<Record<MBTIType, number>> = {};
     for (const s of doneStudents) {
@@ -178,21 +210,68 @@ function TeacherDashboard() {
     return m;
   }, [doneStudents]);
 
-  // 未授權：顯示密碼框
+  const activeCount = studentList.filter((s) => {
+    if (s.finalType) return false;
+    if (!s.lastSeen) return false;
+    return now - s.lastSeen < 30_000;
+  }).length;
+
+  const avgScene = useMemo(() => {
+    const sceneNumbers = studentList
+      .map((s) => {
+        if (s.finalType) return 30;
+        const m = (s.currentScene ?? "").match(/(\d+)/);
+        return m ? parseInt(m[1], 10) : 0;
+      })
+      .filter((n) => n > 0);
+    if (sceneNumbers.length === 0) return null;
+    const avg = sceneNumbers.reduce((a, b) => a + b, 0) / sceneNumbers.length;
+    return Math.round(avg * 10) / 10;
+  }, [studentList]);
+
+  const elapsedMs = now - startedAt;
+  const elapsedMin = Math.floor(elapsedMs / 60_000);
+  const elapsedSec = Math.floor((elapsedMs % 60_000) / 1000);
+  const elapsedDisplay = `${String(elapsedMin).padStart(2, "0")}:${String(elapsedSec).padStart(2, "0")}`;
+
+  // 未授權 → 密碼框（用 v3.17 風格）
   if (!authorized) {
     return (
-      <div className="container-paper has-floating-ui" style={{paddingTop:0}}>
-      <SiteNav active="/teacher/room" />
-        <div className="max-w-md mx-auto">
-          <div className="mb-6">
-            
-          </div>
-          <div className="bg-white rounded-3xl p-6 sm:p-8 border-2 border-[var(--color-ink)]/10">
-            <h1 className="text-2xl font-black mb-2">🔐 老師密碼驗證</h1>
-            <p className="text-sm text-[var(--color-ink)]/70 mb-4">
-              房號：<span className="font-mono font-black text-[var(--color-coral)]">{roomCode}</span>
-              <br />
-              輸入建房時設定的密碼回到 dashboard
+      <div className="container-paper has-floating-ui" style={{ paddingTop: 0 }}>
+        <SiteNav active="/teacher/room" />
+        <section style={{ padding: "60px 0 40px", maxWidth: 480, margin: "0 auto" }}>
+          <div className="tape plum rotate-n2" style={{ marginBottom: 20 }}>🔐 TEACHER · LOGIN</div>
+          <h1 className="f-serif" style={{ fontWeight: 900, fontSize: 44, lineHeight: 1, margin: "0 0 20px" }}>
+            老師密碼<br /><span style={{ color: "var(--coral)" }}>驗證</span>
+          </h1>
+
+          <div
+            style={{
+              background: "#fff",
+              border: "2.5px solid var(--ink)",
+              boxShadow: "8px 8px 0 var(--ink)",
+              padding: "28px 32px",
+              position: "relative",
+            }}
+          >
+            <div
+              style={{
+                position: "absolute",
+                top: -16,
+                left: 24,
+                background: "var(--ink)",
+                color: "var(--paper)",
+                padding: "6px 16px",
+                fontFamily: "var(--font-mono)",
+                fontWeight: 800,
+                fontSize: 12,
+                letterSpacing: 3,
+              }}
+            >
+              📡 ROOM · {roomCode || "??????"}
+            </div>
+            <p style={{ fontSize: 14, color: "var(--ink-soft)", margin: "8px 0 16px", lineHeight: 1.6 }}>
+              輸入建房時設定的密碼回到 dashboard。
             </p>
             <input
               type="password"
@@ -200,23 +279,43 @@ function TeacherDashboard() {
               onChange={(e) => setPwInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleAuth()}
               placeholder="老師密碼"
-              className="w-full p-3 rounded-2xl border-2 border-[var(--color-ink)]/15 focus:border-[var(--color-coral)] focus:outline-none mb-3"
+              className="roster-textarea"
+              style={{
+                width: "100%",
+                minHeight: "auto",
+                padding: "14px 16px",
+                fontSize: 16,
+                backgroundImage: "none",
+                lineHeight: 1.5,
+              }}
               autoFocus
             />
             {authError && (
-              <div className="bg-rose-50 border-2 border-rose-200 rounded-xl p-3 text-sm text-rose-800 mb-3">
+              <div
+                style={{
+                  marginTop: 12,
+                  padding: "10px 14px",
+                  background: "var(--paper-warm)",
+                  border: "2px solid var(--coral)",
+                  fontSize: 13,
+                  color: "var(--coral)",
+                  fontWeight: 700,
+                }}
+              >
                 ⚠️ {authError}
               </div>
             )}
             <SoundButton
               sound="click"
               onClick={handleAuth}
-              className="btn-3d w-full px-6 py-3 rounded-2xl bg-[var(--color-coral)] text-white font-black"
+              className="btn-start"
+              style={{ marginTop: 18, width: "100%", justifyContent: "center" }}
             >
               進入 Dashboard
+              <span className="arrow">→</span>
             </SoundButton>
           </div>
-        </div>
+        </section>
       </div>
     );
   }
@@ -224,252 +323,629 @@ function TeacherDashboard() {
   const isRoomEnded = snap?.meta?.isActive === false;
 
   return (
-    <div className="container-paper has-floating-ui" style={{paddingTop:0}}>
+    <div className="container-paper has-floating-ui" style={{ paddingTop: 0 }}>
       <SiteNav active="/teacher/room" />
-      <div className="max-w-6xl mx-auto" style={{ paddingTop: 24 }}>
-        <div className="mb-6 flex items-center justify-between flex-wrap gap-3">
-          
-          <div className="flex items-center gap-3 flex-wrap">
+
+      {/* HERO */}
+      <section style={{ padding: "32px 0 24px" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-end",
+            flexWrap: "wrap",
+            gap: 20,
+          }}
+        >
+          <div>
+            <div className="tape plum rotate-n2" style={{ marginBottom: 14 }}>
+              🎓 TEACHER · CONTROL · ROOM
+            </div>
+            <h1
+              className="f-serif"
+              style={{
+                fontWeight: 900,
+                fontSize: "clamp(36px, 5.5vw, 72px)",
+                lineHeight: 0.95,
+                margin: 0,
+              }}
+            >
+              即時房間 · <span style={{ color: "var(--coral)" }}>{roomCode}</span>
+            </h1>
+            {snap?.meta?.teacherName && (
+              <div style={{ marginTop: 6, fontSize: 13, color: "var(--ink-soft)" }}>
+                👩‍🏫 {snap.meta.teacherName}
+              </div>
+            )}
+          </div>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <span
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                padding: "8px 14px",
+                background: "#fff",
+                border: `2px solid ${isRoomEnded ? "var(--muted)" : "var(--mint)"}`,
+                boxShadow: `3px 3px 0 ${isRoomEnded ? "var(--muted)" : "var(--mint)"}`,
+                fontFamily: "var(--font-mono)",
+                fontSize: 13,
+                fontWeight: 800,
+                color: isRoomEnded ? "var(--muted)" : "var(--mint)",
+              }}
+            >
+              <span className="live-dot" style={{ background: isRoomEnded ? "var(--muted)" : "var(--mint)", boxShadow: isRoomEnded ? "none" : "0 0 6px var(--mint)" }}></span>
+              ● {isRoomEnded ? "ENDED" : "ONLINE"}
+            </span>
+            <span
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "8px 14px",
+                background: "#fff",
+                border: "2px solid var(--ink)",
+                boxShadow: "3px 3px 0 var(--ink)",
+                fontFamily: "var(--font-mono)",
+                fontSize: 13,
+                fontWeight: 800,
+              }}
+            >
+              ⏱ {elapsedDisplay} 已開課
+            </span>
             <a
               href={`${BASE_PATH}/teacher/room/projector?code=${roomCode}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-violet-100 border-2 border-violet-300 text-sm font-bold text-violet-700 hover:bg-violet-200 transition"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "8px 14px",
+                background: "var(--ink)",
+                color: "var(--paper)",
+                fontFamily: "var(--font-mono)",
+                fontSize: 13,
+                fontWeight: 800,
+                letterSpacing: 2,
+                textDecoration: "none",
+              }}
             >
-              📺 投影模式（新分頁）
+              📺 PROJECTOR
             </a>
-            {snap?.meta?.teacherName && (
-              <span className="text-xs text-[var(--color-ink)]/50">👩‍🏫 {snap.meta.teacherName}</span>
-            )}
           </div>
         </div>
+      </section>
 
-        {/* Header: 房號 + QR + 統計 */}
-        <section className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          {/* 房號 + QR */}
-          <div className="bg-gradient-to-br from-violet-500 via-purple-500 to-fuchsia-500 rounded-3xl p-6 text-white shadow-xl md:col-span-2">
-            <div className="text-xs uppercase tracking-widest opacity-80 mb-1">📡 房號</div>
-            <div className="text-6xl sm:text-7xl font-black tracking-widest font-mono mb-3 drop-shadow-lg">
-              {roomCode}
+      {/* ROOM CARD */}
+      <section style={{ paddingBottom: 8 }}>
+        <div className="room-card">
+          <div className="room-card-head">
+            <div className="live">
+              <span className="live-dot"></span>
+              ◆ ROOM · CODE · SHARE WITH STUDENTS
             </div>
-            <div className="text-sm opacity-90 break-all">{joinUrl}</div>
-            {isRoomEnded && (
-              <div className="mt-3 inline-block px-3 py-1 rounded-full bg-rose-200 text-rose-900 text-xs font-bold">
-                ⛔ 已結束
-              </div>
-            )}
+            <div style={{ color: "var(--muted)", display: "flex", gap: 24, flexWrap: "wrap" }}>
+              <span>SAVE 01 · CAMPUS.SAV</span>
+              <span style={{ color: "#88e0ff" }}>{new Date().toISOString().slice(0, 10)}</span>
+            </div>
           </div>
-          {qrDataUrl && (
-            <div className="bg-white rounded-3xl p-5 border-2 border-[var(--color-ink)]/10 flex flex-col items-center justify-center">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={qrDataUrl} alt="QR code" className="w-full max-w-[200px]" />
-              <p className="text-xs text-[var(--color-ink)]/60 mt-2 text-center">📱 手機掃描加入</p>
+          <div className="room-card-body">
+            <div>
+              <div className="hud" style={{ marginBottom: 6 }}>▸ 6 位數房號</div>
+              <div className="room-code-big">
+                {roomCode.split("").map((d, i) => (
+                  <span key={i} className="digit">{d}</span>
+                ))}
+              </div>
+              <div style={{ fontSize: 14, color: "var(--ink-soft)", lineHeight: 1.7, marginTop: 14 }}>
+                學生在<b>瀏覽器</b>輸入{" "}
+                <span
+                  className="f-mono"
+                  style={{
+                    background: "var(--paper-warm)",
+                    padding: "2px 10px",
+                    fontWeight: 800,
+                    wordBreak: "break-all",
+                  }}
+                >
+                  {joinUrl}
+                </span>{" "}
+                → 寫自己名字 → 開始玩。
+              </div>
+              {isRoomEnded && (
+                <div
+                  style={{
+                    marginTop: 12,
+                    display: "inline-block",
+                    padding: "4px 12px",
+                    background: "var(--coral)",
+                    color: "#fff",
+                    fontWeight: 800,
+                    fontSize: 12,
+                    fontFamily: "var(--font-mono)",
+                    letterSpacing: 2,
+                  }}
+                >
+                  ⛔ 已結束
+                </div>
+              )}
             </div>
-          )}
-        </section>
+            <div className="qr-placeholder">
+              {qrDataUrl ? (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img src={qrDataUrl} alt="QR code" />
+              ) : (
+                <div style={{ fontFamily: "var(--font-mono)", color: "var(--muted)", fontSize: 12 }}>QR LOADING...</div>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
 
-        {/* 摘要 */}
-        <section className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-          <Stat label="加入學生" value={totalStudents} color="bg-sky-100 text-sky-900" />
-          <Stat label="完成" value={doneStudents.length} color="bg-emerald-100 text-emerald-900" />
-          <Stat label="進行中" value={totalStudents - doneStudents.length} color="bg-amber-100 text-amber-900" />
-          <Stat label="出現型" value={Object.keys(typeCounts).length} color="bg-rose-100 text-rose-900" />
-        </section>
+      {/* KPI ROW */}
+      <section>
+        <div className="kpi-row">
+          <div className="kpi coral">
+            <div className="lbl">▸ TOTAL · 加入學生</div>
+            <div className="num">{totalStudents}</div>
+            <div className="delta">人已加入這次房間</div>
+          </div>
+          <div className="kpi mint">
+            <div className="lbl">▸ ACTIVE · 進行中</div>
+            <div className="num">{activeCount}</div>
+            <div className="delta">● 過去 30s 有動作</div>
+          </div>
+          <div className="kpi sunny">
+            <div className="lbl">▸ DONE · 已完成</div>
+            <div className="num">{doneStudents.length}</div>
+            <div className="delta">
+              {totalStudents ? Math.round((doneStudents.length / totalStudents) * 100) : 0}% 全班完成
+            </div>
+          </div>
+          <div className="kpi plum">
+            <div className="lbl">▸ CURRENT · 平均場景</div>
+            <div className="num">
+              {avgScene ?? "--"}
+              <span style={{ fontSize: 22, color: "var(--muted)", fontWeight: 400 }}>/30</span>
+            </div>
+            <div className="delta">{Object.keys(typeCounts).length} 種人格已現身</div>
+          </div>
+        </div>
+      </section>
 
-        {/* 場景進度分布 */}
-        {sceneCounts.size > 0 && (
-          <section className="bg-white rounded-3xl p-6 border-2 border-[var(--color-ink)]/10 mb-6">
-            <h3 className="text-xl font-black mb-3 flex items-center gap-2">
-              <span>📍</span> 學生目前場景分布
-            </h3>
-            <div className="space-y-2">
-              {Array.from(sceneCounts.entries())
-                .sort((a, b) => b[1] - a[1])
-                .map(([scene, count]) => {
-                  const isCurrentPin = scene === pinnedScene;
-                  const label =
-                    scene === "__done__"
-                      ? "✅ 已完成"
-                      : scene === "__waiting__"
-                      ? "🚪 剛加入"
-                      : scene;
+      {/* PIN SCENE BAR */}
+      {pinnedScene && pinnedSceneData && (
+        <section>
+          <div className="pin-bar">
+            <span className="tab">📌 PIN · 全班同步討論</span>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr",
+                gap: 18,
+                alignItems: "center",
+                marginTop: 6,
+              }}
+            >
+              <div>
+                <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 6, flexWrap: "wrap" }}>
+                  <span style={{ fontSize: 32 }}>🍽️</span>
+                  <div>
+                    <div className="hud" style={{ color: "var(--sunny)", marginBottom: 2 }}>
+                      ▸ {pinnedScene} · {pinnedSceneData.location}
+                    </div>
+                    <div className="f-serif" style={{ fontWeight: 900, fontSize: 20 }}>
+                      「{pinnedSceneData.text[0]?.slice(0, 40) ?? "討論場景"}」 — 你 PIN 在這場景
+                    </div>
+                  </div>
+                </div>
+                <div style={{ fontSize: 13, color: "var(--ink-soft)" }}>
+                  全班 {totalStudents} 位學生中{" "}
+                  <b style={{ color: "var(--sunny)" }}>
+                    {voteCounts.reduce((s, c) => s + c.count, 0)} 位
+                  </b>
+                  已投票，剩 {undecidedStudents.length} 位還沒選。
+                </div>
+              </div>
+
+              {/* Real-time vote distribution */}
+              <div style={{ marginTop: 8 }}>
+                {pinnedSceneData.choices.map((choice, idx) => {
+                  const data = voteCounts[idx];
+                  const total = voteCounts.reduce((s, c) => s + c.count, 0);
+                  const pct = total === 0 ? 0 : Math.round((data.count / total) * 100);
                   return (
                     <div
-                      key={scene}
-                      className={`flex items-center gap-3 p-3 rounded-xl border-2 ${
-                        isCurrentPin
-                          ? "border-rose-400 bg-rose-50"
-                          : "border-[var(--color-ink)]/10 bg-[var(--color-cream)]"
-                      }`}
+                      key={idx}
+                      style={{
+                        background: "#fff",
+                        border: "2px solid var(--ink)",
+                        padding: "10px 12px",
+                        marginBottom: 8,
+                        boxShadow: "3px 3px 0 var(--ink)",
+                      }}
                     >
-                      <div className="flex-1 font-mono text-sm">{label}</div>
-                      <div className="font-black text-lg">{count} 位</div>
-                      {scene !== "__done__" && scene !== "__waiting__" && (
-                        <SoundButton
-                          sound={isCurrentPin ? "toggleOff" : "click"}
-                          onClick={() => (isCurrentPin ? handleUnpin() : pinScene(roomCode, scene, ""))}
-                          className={`px-3 py-1.5 rounded-full text-xs font-bold ${
-                            isCurrentPin
-                              ? "bg-rose-500 text-white"
-                              : "bg-white border-2 border-[var(--color-ink)]/15 hover:border-rose-400"
-                          }`}
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                        {choice.emoji && <span style={{ fontSize: 18 }}>{choice.emoji}</span>}
+                        <span style={{ flex: 1, fontSize: 13, fontWeight: 600, lineHeight: 1.4 }}>{choice.text}</span>
+                        <span
+                          style={{
+                            fontFamily: "var(--font-mono)",
+                            fontWeight: 800,
+                            fontSize: 13,
+                            color: "var(--sunny)",
+                          }}
                         >
-                          {isCurrentPin ? "📌 已 Pin (點取消)" : "📌 Pin 全班"}
-                        </SoundButton>
+                          {data.count} 位 · {pct}%
+                        </span>
+                      </div>
+                      <div className="stat-bar">
+                        <div className="stat-fill sunny" style={{ width: `${pct}%` }}></div>
+                      </div>
+                      {data.voters.length > 0 && (
+                        <div
+                          style={{
+                            marginTop: 6,
+                            fontSize: 11,
+                            color: "var(--ink-soft)",
+                            fontFamily: "var(--font-mono)",
+                          }}
+                        >
+                          🗳️ {data.voters.join("、")}
+                        </div>
                       )}
                     </div>
                   );
                 })}
-            </div>
-            {pinnedScene && (
-              <p className="text-xs text-rose-700 mt-3">
-                ⚠️ 全班正在 <strong>{pinnedScene}</strong> 場景被 pin 住，學生看不到下一場景。下方有即時投票分布。
-              </p>
-            )}
-          </section>
-        )}
+              </div>
 
-        {/* Pinned scene 即時投票分布 */}
-        {pinnedScene && pinnedSceneData && (
-          <section className="bg-gradient-to-br from-rose-50 to-pink-50 rounded-3xl p-6 border-2 border-rose-300 mb-6">
-            <h3 className="text-xl font-black mb-2 flex items-center gap-2 text-rose-900">
-              <span>📊</span> 即時投票分布
-            </h3>
-            <p className="text-xs text-rose-700 mb-4">
-              場景：{pinnedSceneData.location}（{pinnedScene}）— {pinnedSceneData.text[0]?.slice(0, 50)}...
-            </p>
-            <div className="space-y-3">
-              {pinnedSceneData.choices.map((choice, idx) => {
-                const data = voteCounts[idx];
-                const total = voteCounts.reduce((s, c) => s + c.count, 0);
-                const pct = total === 0 ? 0 : Math.round((data.count / total) * 100);
-                return (
-                  <div key={idx} className="bg-white rounded-2xl p-3 border-2 border-rose-200">
-                    <div className="flex items-start gap-2 mb-2">
-                      {choice.emoji && <span className="text-xl">{choice.emoji}</span>}
-                      <span className="flex-1 text-sm font-medium leading-snug">{choice.text}</span>
-                      <span className="font-black text-lg text-rose-700 shrink-0">{data.count} 位</span>
-                    </div>
-                    <div className="h-3 rounded-full bg-rose-100 overflow-hidden">
-                      <div
-                        className="h-full bg-gradient-to-r from-rose-400 to-pink-500 transition-all duration-500"
-                        style={{ width: `${pct}%` }}
-                      />
-                    </div>
-                    {data.voters.length > 0 && (
-                      <p className="text-xs text-[var(--color-ink)]/60 mt-1.5 truncate">
-                        🗳️ {data.voters.join("、")}
-                      </p>
-                    )}
-                  </div>
-                );
-              })}
+              {undecidedStudents.length > 0 && (
+                <div
+                  style={{
+                    padding: "10px 14px",
+                    background: "var(--paper-warm)",
+                    border: "2px dashed var(--sunny)",
+                    fontSize: 13,
+                    color: "var(--ink-soft)",
+                  }}
+                >
+                  <b style={{ color: "#a87a16" }}>⏳ 還在想：</b>
+                  {undecidedStudents.map((s) => s.name).join("、")}
+                </div>
+              )}
+
+              <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                <SoundButton
+                  sound="toggleOn"
+                  onClick={handleUnpin}
+                  className="btn-start"
+                  style={{ background: "var(--mint)", boxShadow: "5px 5px 0 var(--ink)" }}
+                >
+                  ✅ 討論結束，放開全班
+                  <span className="arrow">→</span>
+                </SoundButton>
+              </div>
             </div>
-            {undecidedStudents.length > 0 && (
-              <div className="mt-3 p-3 rounded-xl bg-amber-50 border border-amber-200 text-sm text-amber-900">
-                <strong>⏳ 還在想：</strong>
-                {undecidedStudents.map((s) => s.name).join("、")}（{undecidedStudents.length} 位）
+          </div>
+        </section>
+      )}
+
+      {/* CONTROL ROOM (student grid + sidebar) */}
+      <section>
+        <div className="section-header">
+          <div className="diamond"></div>
+          <div className="label">Live Students · {totalStudents} 位學生即時狀態</div>
+          <div className="rule"></div>
+        </div>
+
+        <div className="control-room">
+          {/* LEFT: student grid */}
+          <div>
+            {totalStudents === 0 ? (
+              <div
+                style={{
+                  background: "var(--paper-warm)",
+                  border: "2px dashed var(--line-strong)",
+                  padding: "60px 24px",
+                  textAlign: "center",
+                  color: "var(--ink-soft)",
+                }}
+              >
+                <div style={{ fontSize: 48, marginBottom: 12 }}>🪑</div>
+                <div className="f-serif" style={{ fontSize: 22, fontWeight: 900, marginBottom: 6 }}>
+                  還沒有學生加入
+                </div>
+                <div style={{ fontSize: 14 }}>把房號 / QR code 投影出來給學生吧 ✨</div>
+              </div>
+            ) : (
+              <div className="student-grid">
+                {studentList.map((s) => (
+                  <StudentCard key={s.uid} s={s} now={now} />
+                ))}
               </div>
             )}
-            <div className="mt-4 flex justify-end">
-              <SoundButton
-                sound="toggleOn"
-                onClick={handleUnpin}
-                className="btn-3d px-5 py-2.5 rounded-2xl bg-emerald-500 text-white font-black hover:bg-emerald-600"
+
+            {totalStudents > 0 && (
+              <div
+                style={{
+                  marginTop: 14,
+                  padding: "12px 16px",
+                  background: "var(--paper-warm)",
+                  borderLeft: "4px solid var(--ink)",
+                  fontSize: 12,
+                  color: "var(--ink-soft)",
+                  display: "flex",
+                  gap: 24,
+                  flexWrap: "wrap",
+                }}
               >
-                ✅ 討論結束，放開全班繼續
-              </SoundButton>
-            </div>
-          </section>
-        )}
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                  <span className="status-dot active"></span> 進行中
+                </span>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                  <span className="status-dot idle"></span> 閒置 (&gt;30s)
+                </span>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                  <span className="status-dot done"></span> 已完成
+                </span>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                  <span className="status-dot offline"></span> 離線
+                </span>
+              </div>
+            )}
+          </div>
 
-        {/* 學生清單 */}
-        <section className="bg-white rounded-3xl p-6 border-2 border-[var(--color-ink)]/10 mb-6">
-          <h3 className="text-xl font-black mb-3 flex items-center gap-2">
-            <span>👥</span> 學生清單 ({totalStudents})
-          </h3>
-          {totalStudents === 0 ? (
-            <p className="text-[var(--color-ink)]/50 text-center py-6">
-              還沒有學生加入，把房號 / QR code 投影出來給學生吧 ✨
-            </p>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-              {studentList.map((s) => (
-                <StudentCard key={s.uid} s={s} />
-              ))}
-            </div>
-          )}
-        </section>
+          {/* RIGHT: sidebar */}
+          <aside>
+            {/* Scene distribution / pin */}
+            {sceneCounts.size > 0 && (
+              <div className="sidebar-card">
+                <span className="tab" style={{ background: "var(--plum)" }}>📍 SCENES · 場景分布</span>
+                <div style={{ marginTop: 14, maxHeight: 320, overflowY: "auto" }}>
+                  {Array.from(sceneCounts.entries())
+                    .sort((a, b) => b[1] - a[1])
+                    .map(([scene, count]) => {
+                      const isCurrentPin = scene === pinnedScene;
+                      const label =
+                        scene === "__done__"
+                          ? "✅ 已完成"
+                          : scene === "__waiting__"
+                          ? "🚪 剛加入"
+                          : scene;
+                      const canPin = scene !== "__done__" && scene !== "__waiting__";
+                      return (
+                        <div
+                          key={scene}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 8,
+                            padding: "8px 10px",
+                            marginBottom: 6,
+                            background: isCurrentPin ? "var(--paper-warm)" : "#fff",
+                            border: `1.5px solid ${isCurrentPin ? "var(--sunny)" : "var(--line)"}`,
+                          }}
+                        >
+                          <div
+                            style={{
+                              flex: 1,
+                              fontFamily: "var(--font-mono)",
+                              fontSize: 11,
+                              fontWeight: 700,
+                              color: isCurrentPin ? "#a87a16" : "var(--ink)",
+                            }}
+                          >
+                            {label}
+                          </div>
+                          <div style={{ fontFamily: "var(--font-mono)", fontWeight: 800, fontSize: 13 }}>
+                            {count}
+                          </div>
+                          {canPin && (
+                            <SoundButton
+                              sound={isCurrentPin ? "toggleOff" : "click"}
+                              onClick={() => (isCurrentPin ? handleUnpin() : pinScene(roomCode, scene, ""))}
+                              style={{
+                                padding: "4px 10px",
+                                fontSize: 11,
+                                fontWeight: 800,
+                                fontFamily: "var(--font-mono)",
+                                background: isCurrentPin ? "var(--coral)" : "#fff",
+                                color: isCurrentPin ? "#fff" : "var(--ink)",
+                                border: "1.5px solid var(--ink)",
+                                cursor: "pointer",
+                                letterSpacing: 1,
+                              }}
+                            >
+                              {isCurrentPin ? "✕ UNPIN" : "📌 PIN"}
+                            </SoundButton>
+                          )}
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+            )}
 
-        {/* 已完成的 MBTI 分布 */}
-        {doneStudents.length > 0 && (
-          <section className="bg-white rounded-3xl p-6 border-2 border-[var(--color-ink)]/10 mb-6">
-            <h3 className="text-xl font-black mb-3 flex items-center gap-2">
-              <span>🎯</span> 已完成的同學 ({doneStudents.length})
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
-              {doneStudents.map((s) => {
-                const info = getMBTIInfo(s.finalType as MBTIType);
-                return (
-                  <div
-                    key={s.uid}
-                    className={`bg-gradient-to-r ${info.gradient} rounded-xl px-3 py-2 text-white text-sm font-bold flex items-center gap-2`}
-                  >
-                    <span className="text-lg">{info.emoji}</span>
-                    <span className="truncate flex-1">{s.name}</span>
-                    <span className="text-xs opacity-90">{s.finalType}</span>
-                  </div>
-                );
-              })}
-            </div>
-          </section>
-        )}
+            {/* Live MBTI distribution */}
+            {doneStudents.length > 0 && (
+              <div className="sidebar-card">
+                <span className="tab" style={{ background: "var(--coral)" }}>📊 LIVE · MBTI 分佈</span>
+                <div style={{ marginTop: 6, fontSize: 12, color: "var(--muted)" }}>
+                  {doneStudents.length} / {totalStudents} 完成 · 隨完成自動更新
+                </div>
+                <div style={{ marginTop: 14 }}>
+                  {Object.entries(typeCounts)
+                    .sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0))
+                    .map(([type, count]) => {
+                      const t = type as MBTIType;
+                      const info = getMBTIInfo(t);
+                      const maxCount = Math.max(1, ...Object.values(typeCounts).filter((v): v is number => !!v));
+                      const pct = ((count ?? 0) / maxCount) * 100;
+                      return (
+                        <div key={type} className="mini-bar" data-group={TYPE_GROUP[t]}>
+                          <div className="code">
+                            {info.emoji} {type}
+                          </div>
+                          <div className="track">
+                            <div className="fill" style={{ width: `${pct}%` }}></div>
+                          </div>
+                          <div className="count">{count}</div>
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+            )}
 
-        {/* 結束會議 */}
-        {!isRoomEnded && (
-          <section className="flex justify-end">
-            <SoundButton
-              sound="whoosh"
-              onClick={handleEndRoom}
-              className="btn-3d px-5 py-3 rounded-2xl bg-rose-500 text-white font-black hover:bg-rose-600"
+            {/* Quick actions */}
+            <div className="sidebar-card">
+              <span className="tab" style={{ background: "var(--ink)" }}>⚙ ACTIONS · 老師控制</span>
+              <div style={{ marginTop: 14 }}>
+                <a
+                  href={`${BASE_PATH}/teacher/room/projector?code=${roomCode}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="act-btn"
+                >
+                  <span className="emoji">🖥️</span>
+                  <span>大螢幕投影模式</span>
+                </a>
+                <a href={`${BASE_PATH}/class-stats`} className="act-btn">
+                  <span className="emoji">📊</span>
+                  <span>看完整班級統計</span>
+                </a>
+                <a href={`${BASE_PATH}/guess`} className="act-btn">
+                  <span className="emoji">🎲</span>
+                  <span>進入猜朋友環節</span>
+                </a>
+                {!isRoomEnded && (
+                  <SoundButton sound="whoosh" onClick={handleEndRoom} className="act-btn danger">
+                    <span className="emoji">⏹</span>
+                    <span>結束本次房間</span>
+                  </SoundButton>
+                )}
+              </div>
+            </div>
+
+            {/* Tips */}
+            <div
+              className="sidebar-card"
+              style={{ borderColor: "var(--mint)", boxShadow: "6px 6px 0 var(--mint)" }}
             >
-              ⛔ 結束會議
-            </SoundButton>
-          </section>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function Stat({ label, value, color }: { label: string; value: number; color: string }) {
-  return (
-    <div className={`rounded-2xl p-4 ${color}`}>
-      <div className="text-xs font-bold opacity-80">{label}</div>
-      <div className="text-3xl font-black mt-1">{value}</div>
-    </div>
-  );
-}
-
-function StudentCard({ s }: { s: StudentEntry & { uid: string } }) {
-  const isDone = !!s.finalType;
-  const isStale = s.lastSeen && Date.now() - s.lastSeen > 30_000;
-  return (
-    <div
-      className={`flex items-center gap-2 p-2 rounded-xl border-2 ${
-        isDone
-          ? "border-emerald-300 bg-emerald-50"
-          : isStale
-          ? "border-amber-200 bg-amber-50 opacity-70"
-          : "border-[var(--color-ink)]/10 bg-[var(--color-cream)]"
-      }`}
-    >
-      <span className="text-2xl shrink-0">{s.avatar ?? "🧑"}</span>
-      <div className="flex-1 min-w-0">
-        <div className="font-bold text-sm truncate">{s.name}</div>
-        <div className="text-xs text-[var(--color-ink)]/60 font-mono truncate">
-          {isDone ? `✓ ${s.finalType}` : s.currentScene ?? "剛加入"}
+              <span className="tab" style={{ background: "var(--mint)" }}>💡 教學提示</span>
+              <ul
+                style={{
+                  margin: "14px 0 0",
+                  paddingLeft: 18,
+                  fontSize: 12.5,
+                  lineHeight: 1.75,
+                  color: "var(--ink-soft)",
+                }}
+              >
+                <li>學生在<b>緩慢</b>時，按 PIN 鎖大家在同一場景集合</li>
+                <li>結束前提醒學生<b>寫學習單</b>（A4 學習單入口）</li>
+                <li>結束時房間會自動產生<b>班級統計報告</b></li>
+                <li>下次同一組房號可<b>重複使用</b>（請學生用同樣暱稱）</li>
+              </ul>
+            </div>
+          </aside>
         </div>
+      </section>
+
+      <footer
+        style={{
+          padding: "60px 0 80px",
+          borderTop: "1.5px dashed var(--line-strong)",
+          marginTop: 60,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-end",
+          flexWrap: "wrap",
+          gap: 24,
+        }}
+      >
+        <div>
+          <div className="f-serif" style={{ fontWeight: 900, fontSize: 28, lineHeight: 1, marginBottom: 6 }}>
+            校園<span style={{ color: "var(--coral)" }}>奇遇</span>記
+          </div>
+          <div style={{ fontSize: 12, color: "var(--muted)" }}>
+            班級房間 · 老師後台 © 2026 · {appConfig.teacherName} · {appConfig.schoolFullName}
+          </div>
+        </div>
+        <div className="hud">v3.17 · teacher-room</div>
+      </footer>
+    </div>
+  );
+}
+
+function StudentCard({
+  s,
+  now,
+}: {
+  s: StudentEntry & { uid: string };
+  now: number;
+}) {
+  const isDone = !!s.finalType;
+  const isStale = s.lastSeen ? now - s.lastSeen > 60_000 : true;
+  const isOffline = s.lastSeen ? now - s.lastSeen > 180_000 : true;
+  const isActive = !isDone && !isStale && !isOffline;
+
+  const status: "active" | "idle" | "done" | "offline" = isDone
+    ? "done"
+    : isOffline
+    ? "offline"
+    : isStale
+    ? "idle"
+    : "active";
+
+  const branchKey: Branch | "main" = ((s.currentBranch as Branch | undefined) ?? "main");
+  // 假設 30 場景估計進度
+  const sceneNum = s.currentScene?.match(/(\d+)/)?.[1] ? parseInt(s.currentScene.match(/(\d+)/)![1], 10) : 0;
+  const pct = isDone ? 100 : sceneNum > 0 ? Math.min(100, (sceneNum / 30) * 100) : 5;
+  const initial = s.name?.slice(-1) ?? "?";
+
+  const finalTypeInfo = isDone && s.finalType ? getMBTIInfo(s.finalType as MBTIType) : null;
+
+  return (
+    <div className="student" style={{ opacity: status === "offline" ? 0.55 : 1 }}>
+      <div className="head">
+        <div className="avatar" style={{ background: BRANCH_GRAD[branchKey] }}>
+          {initial}
+        </div>
+        <span className="s-name">{s.name}</span>
+        <span className={`status-dot ${status}`}></span>
+      </div>
+      <div className="scene-line">
+        <span>{isDone ? "✓ 完成" : sceneNum > 0 ? `SCENE ${String(sceneNum).padStart(2, "0")}` : "剛加入"}</span>
+        <span
+          style={{
+            padding: "1px 6px",
+            background: BRANCH_COLOR[branchKey],
+            color: "#fff",
+            fontWeight: 800,
+            fontSize: 9,
+          }}
+        >
+          {BRANCH_NAME[branchKey]}
+        </span>
+      </div>
+      <div className="s-progress">
+        <div className={`fill ${isDone ? "done" : ""}`} style={{ width: `${pct}%` }}></div>
+      </div>
+      <div className="footer-line">
+        {isDone && finalTypeInfo ? (
+          <span className="result-pill">
+            {finalTypeInfo.emoji} {s.finalType} · {finalTypeInfo.nickname}
+          </span>
+        ) : (
+          <>
+            <span style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--muted)" }}>
+              {sceneNum > 0 ? `${sceneNum} / 30` : "—"}
+            </span>
+            <span style={{ color: "var(--muted)", fontSize: 10 }}>{Math.round(pct)}%</span>
+          </>
+        )}
       </div>
     </div>
   );
