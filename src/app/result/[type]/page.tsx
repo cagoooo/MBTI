@@ -12,6 +12,7 @@ import ResultRevealMount from "@/components/ResultRevealMount";
 import SoundLink from "@/components/SoundLink";
 import BgmController from "@/components/BgmController";
 import RubyText from "@/components/RubyText";
+import PretestCompare from "@/components/PretestCompare";
 
 export function generateStaticParams() {
   return ALL_TYPES.map((type) => ({ type }));
@@ -85,6 +86,9 @@ export default async function ResultPage({ params }: { params: Promise<{ type: s
             ))}
           </div>
         </section>
+
+        {/* 課前/課後對照 (有做課前快測才會顯示) */}
+        <PretestCompare actual={upper} />
 
         {/* 強度條 */}
         <section className="mt-6">

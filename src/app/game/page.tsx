@@ -20,6 +20,8 @@ import {
 } from "@/lib/classroom-rtdb";
 import { isFirebaseAvailable } from "@/lib/firebase";
 import RubyText from "@/components/RubyText";
+import PretestQuiz from "@/components/PretestQuiz";
+import { loadPretestGuess } from "@/lib/pretest";
 
 /**
  * 場景所屬支線 → BGM track 對應
@@ -66,6 +68,17 @@ function GameInner() {
   const [showFollowUp, setShowFollowUp] = useState<string | null>(null);
   const [pendingNext, setPendingNext] = useState<{ id: string; isEnding: boolean } | null>(null);
   const [ttsEnabled, setTtsEnabled] = useState(false);
+
+  // ─────── 課前快測 modal ───────
+  // 只在「真的剛開始 (scene_01) + 沒進度 + 沒做過 pretest」時顯示
+  const [showPretest, setShowPretest] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (sceneId !== START_SCENE_ID) return;
+    if (history.length > 0) return;
+    if (loadPretestGuess()) return; // 已經做過
+    setShowPretest(true);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ─────── 班級模式 sync hook ───────
   const [classSession, setClassSession] = useState<ClassSession | null>(null);
@@ -465,6 +478,11 @@ function GameInner() {
         </AnimatePresence>
         </div>
       </div>
+
+      {/* 課前快測 modal (只在開頭顯示一次) */}
+      <AnimatePresence>
+        {showPretest && <PretestQuiz onDone={() => setShowPretest(false)} />}
+      </AnimatePresence>
 
       {/* Follow-up modal */}
       <AnimatePresence>
