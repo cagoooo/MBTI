@@ -11,6 +11,7 @@ import {
   stopBgm,
   unlock,
 } from "@/lib/sound";
+import { initTts, isTtsAvailable, isTtsOn, setTtsOn, speak, stop as stopTts } from "@/lib/tts";
 
 /**
  * 浮動音效控制按鈕（靜音 / BGM 開關）。
@@ -23,20 +24,24 @@ import {
 export default function SoundToggle() {
   const [muted, setMutedState] = useState(false);
   const [bgm, setBgmState] = useState(true);
+  const [tts, setTtsState] = useState(false);
+  const [ttsSupported, setTtsSupported] = useState(true);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
     setMutedState(isMuted());
     setBgmState(isBgmOn());
+    setTtsState(isTtsOn());
+    setTtsSupported(isTtsAvailable());
+    // 預載 TTS 中文 voice
+    if (isTtsAvailable()) void initTts();
 
     // 第一次互動：unlock SFX + 觸發當前 track 的 BGM
     const onFirstInteract = () => {
       unlock();
+      void initTts();
       if (isBgmOn() && !isMuted()) {
-        // BgmController 在 page mount 時就呼叫了 playBgm，但因 autoplay 被擋
-        // 這裡再觸發一次（同 trackId 會 no-op，但若 autoplay 失敗則會重啟）
-        // 預設 home，BgmController 會立刻覆蓋成正確的 track
         playBgm("home");
       }
       window.removeEventListener("pointerdown", onFirstInteract);
@@ -73,6 +78,21 @@ export default function SoundToggle() {
     else if (!muted) playBgm("home"); // 開啟 BGM 後重啟（BgmController 會切到正確 track）
   }
 
+  function toggleTts() {
+    const next = !tts;
+    playSound(next ? "toggleOn" : "toggleOff");
+    setTtsState(next);
+    setTtsOn(next);
+    if (!next) {
+      stopTts();
+    } else {
+      // 開啟時唸一句問候，順便驗證聲音可用
+      void initTts().then(() => {
+        speak("語音導讀已開啟，跟著故事一起進入校園奇遇吧！");
+      });
+    }
+  }
+
   if (!mounted) return null;
 
   return (
@@ -94,6 +114,20 @@ export default function SoundToggle() {
       >
         {bgm ? "🎵" : "🎶"}
       </button>
+      {ttsSupported && (
+        <button
+          onClick={toggleTts}
+          title={tts ? "關閉語音導讀" : "開啟語音導讀（自動朗讀故事）"}
+          aria-label={tts ? "關閉語音導讀" : "開啟語音導讀"}
+          className={`w-11 h-11 rounded-full backdrop-blur border-2 shadow-md flex items-center justify-center text-lg hover:scale-110 transition ${
+            tts
+              ? "bg-amber-100 border-amber-400 ring-2 ring-amber-300/40"
+              : "bg-white/90 border-[var(--color-ink)]/15"
+          }`}
+        >
+          {tts ? "🗣️" : "🤐"}
+        </button>
+      )}
     </div>
   );
 }

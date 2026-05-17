@@ -11,6 +11,7 @@ import HomeToButton from "@/components/HomeToButton";
 import BgmController from "@/components/BgmController";
 import SoundButton from "@/components/SoundButton";
 import { playSound } from "@/lib/sound";
+import { isTtsAvailable, isTtsOn, speakScene, stop as stopTts, speak as speakTts } from "@/lib/tts";
 
 interface HistoryEntry {
   sceneId: string;
@@ -28,8 +29,68 @@ export default function GamePage() {
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [showFollowUp, setShowFollowUp] = useState<string | null>(null);
   const [pendingNext, setPendingNext] = useState<{ id: string; isEnding: boolean } | null>(null);
+  const [ttsEnabled, setTtsEnabled] = useState(false);
+
+  // 追蹤 TTS 開關狀態 (避免 SSR mismatch + 使用者中途切換)
+  useEffect(() => {
+    setTtsEnabled(isTtsAvailable() && isTtsOn());
+    // localStorage 沒 storage event 在同一頁 tab，但我們可以監聽 sound-toggle 的 click
+    function refresh() {
+      setTtsEnabled(isTtsAvailable() && isTtsOn());
+    }
+    window.addEventListener("storage", refresh);
+    // 每 1.5s polling 一次 (給同 tab 切換用，輕量)
+    const iv = window.setInterval(refresh, 1500);
+    return () => {
+      window.removeEventListener("storage", refresh);
+      window.clearInterval(iv);
+    };
+  }, []);
 
   const scene: Scene | undefined = useMemo(() => getScene(sceneId), [sceneId]);
+
+  // 場景切換時自動唸場景內容（若 TTS 開啟）
+  useEffect(() => {
+    if (!scene) return;
+    if (showFollowUp) return; // followUp modal 開著時不唸
+    if (!ttsEnabled) return;
+    // 稍微延遲讓翻頁動畫先進來
+    const t = setTimeout(() => {
+      speakScene({
+        location: scene.location,
+        speaker: scene.speaker,
+        text: scene.text,
+      });
+    }, 350);
+    return () => {
+      clearTimeout(t);
+      // 切場景前停掉舊的
+      stopTts();
+    };
+  }, [scene?.id, showFollowUp, ttsEnabled]);
+
+  // followUp modal 開啟時唸 followUp 文字
+  useEffect(() => {
+    if (!showFollowUp) return;
+    if (!ttsEnabled) return;
+    speakTts(showFollowUp, { rate: 1.05, pitch: 1.1 });
+    return () => { stopTts(); };
+  }, [showFollowUp, ttsEnabled]);
+
+  function speakCurrentScene() {
+    if (!scene) return;
+    playSound("tap");
+    speakScene({
+      location: scene.location,
+      speaker: scene.speaker,
+      text: scene.text,
+    });
+  }
+
+  function stopSpeaking() {
+    playSound("toggleOff");
+    stopTts();
+  }
 
   // Click choice
   function handleChoice(choice: Choice, index: number) {
@@ -166,11 +227,33 @@ export default function GamePage() {
               </div>
             )}
 
-            <div className="space-y-3 mb-6 text-lg leading-relaxed text-[var(--color-ink)]">
+            <div className="space-y-3 mb-3 text-lg leading-relaxed text-[var(--color-ink)]">
               {scene.text.map((p, i) => (
                 <p key={i}>{p}</p>
               ))}
             </div>
+
+            {/* TTS 控制 (僅 TTS 開啟時顯示) */}
+            {ttsEnabled && (
+              <div className="flex items-center gap-2 mb-5">
+                <button
+                  onClick={speakCurrentScene}
+                  title="再唸一次"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-100 border-2 border-amber-300 text-amber-900 text-xs font-bold hover:bg-amber-200 transition"
+                >
+                  <span>🔊</span>
+                  <span>再唸一次</span>
+                </button>
+                <button
+                  onClick={stopSpeaking}
+                  title="停止朗讀"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border-2 border-[var(--color-ink)]/15 text-[var(--color-ink)]/70 text-xs font-bold hover:border-amber-300 transition"
+                >
+                  <span>⏸</span>
+                  <span>停止</span>
+                </button>
+              </div>
+            )}
 
             <div className="border-t-2 border-dashed border-[var(--color-ink)]/15 pt-5">
               <p className="text-sm font-bold text-[var(--color-ink)]/60 mb-3">💭 你會怎麼做？</p>
