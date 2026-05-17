@@ -14,6 +14,7 @@ import BgmController from "@/components/BgmController";
 import RubyText from "@/components/RubyText";
 import PretestCompare from "@/components/PretestCompare";
 import GeminiAnalysis from "@/components/GeminiAnalysis";
+import TypeCelebration from "@/components/TypeCelebration";
 
 export function generateStaticParams() {
   return ALL_TYPES.map((type) => ({ type }));
@@ -53,10 +54,12 @@ export default async function ResultPage({ params }: { params: Promise<{ type: s
 
         {/* 賀卡 hero */}
         <section
-          className={`bg-gradient-to-br ${info.gradient} rounded-[2rem] p-8 sm:p-12 text-center shadow-xl border-4 border-white/60 relative overflow-hidden`}
+          className={`bg-gradient-to-br ${info.gradient} rounded-[2rem] p-8 sm:p-12 text-center shadow-xl border-4 border-white/60 relative overflow-hidden min-h-[420px]`}
         >
-          <div className="absolute top-4 right-4 text-7xl opacity-20 animate-wiggle">{info.emoji}</div>
-          <div className="absolute bottom-4 left-4 text-6xl opacity-20 animate-float-slow">✨</div>
+          {/* 16 型專屬慶祝動畫 (3 秒一次性) */}
+          <TypeCelebration type={upper} />
+          <div className="absolute top-4 right-4 text-7xl opacity-15 animate-wiggle">{info.emoji}</div>
+          <div className="absolute bottom-4 left-4 text-6xl opacity-15 animate-float-slow">✨</div>
 
           <p className="text-sm sm:text-base font-bold uppercase tracking-[0.3em] text-white/90 mb-2 drop-shadow">
             🎉 你的 MBTI 是
