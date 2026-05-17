@@ -162,8 +162,68 @@ export function isSpeaking(): boolean {
 }
 
 /**
+ * NPC 語音輪廓 — 每個角色用不同 pitch / rate 增加辨識度
+ * pitch 越高越尖銳 (高音調)；rate 越大越快
+ *
+ * 設計原則：跟角色 MBTI 個性吻合
+ *   E + F 系列 → 較快較高 (活潑熱情)
+ *   I + T 系列 → 較慢較低 (沉穩思考)
+ *   F (情感系) → 偏高 (溫柔親切)
+ *   T (思考系) → 偏低 (冷靜理性)
+ */
+interface VoiceProfile {
+  pitch: number;
+  rate: number;
+}
+
+const NARRATOR: VoiceProfile = { pitch: 1.0, rate: 1.0 };
+
+const VOICE_PROFILES: Record<string, VoiceProfile> = {
+  // 8 位主要 NPC (CampusIntro 角色)
+  "小芸":   { pitch: 1.25, rate: 1.1 },   // ENFP 活潑可愛
+  "阿哲":   { pitch: 0.88, rate: 0.95 },  // INTJ 慢條斯理沉穩
+  "小傑":   { pitch: 1.05, rate: 1.2 },   // ESTP 急性子衝勁
+  "雅雯":   { pitch: 1.18, rate: 0.92 },  // INFJ 溫柔輕語
+  "宇航":   { pitch: 1.1,  rate: 0.95 },  // ISFP 安靜溫和
+  "凱莉":   { pitch: 0.95, rate: 1.05 },  // ENTJ 沉穩有力
+  "小宇":   { pitch: 1.0,  rate: 1.0 },   // INTP 平靜均速
+  "婷婷":   { pitch: 1.15, rate: 1.05 },  // ESFJ 熱情溫暖
+
+  // 老師 / 大人
+  "林老師": { pitch: 1.05, rate: 0.95 },  // 班導，溫和帶笑
+  "張教練": { pitch: 0.85, rate: 1.1 },   // 校隊教練，渾厚有力
+  "陳老師": { pitch: 1.1,  rate: 0.92 },  // 美術老師，文藝柔和
+  "王老師": { pitch: 0.95, rate: 0.98 },  // 自然老師，理性沉穩
+  "校長":   { pitch: 0.85, rate: 0.9 },   // 慢且權威
+  "美術陳老師": { pitch: 1.1, rate: 0.92 },
+  "自然王老師": { pitch: 0.95, rate: 0.98 },
+
+  // 場景中的其他角色 (短暫出現)
+  "服務隊長":     { pitch: 1.05, rate: 1.05 },
+  "司儀同學":     { pitch: 1.1,  rate: 1.1 },
+  "高年級學長":   { pitch: 0.92, rate: 1.0 },
+  "校刊主編學姊": { pitch: 1.12, rate: 1.0 },
+  "驚慌的學弟":   { pitch: 1.3,  rate: 1.15 },  // 慌張高音快語
+  "隊友小傑":     { pitch: 1.05, rate: 1.2 },
+  "兩個好朋友":   { pitch: 1.15, rate: 1.05 },
+  "同學小芸":     { pitch: 1.25, rate: 1.1 },
+
+  // 旁白 / 主角 OS
+  "你的內心":   NARRATOR,
+  "你的肚子":   NARRATOR,
+  "你":         NARRATOR,
+};
+
+/** 取得某個 speaker 的 voice profile (找不到就用旁白) */
+export function getVoiceProfile(speaker?: string): VoiceProfile {
+  if (!speaker) return NARRATOR;
+  return VOICE_PROFILES[speaker] ?? NARRATOR;
+}
+
+/**
  * 快捷：把場景的多個段落串成一段唸（自動加標點停頓）
  * 場景結構：location / speaker / text[]
+ * 自動套用對應 speaker 的 voice profile
  */
 export function speakScene(parts: {
   location?: string;
@@ -174,7 +234,9 @@ export function speakScene(parts: {
   if (parts.location) segments.push(parts.location);
   if (parts.speaker) segments.push(`${parts.speaker} 說：`);
   segments.push(...parts.text);
-  // 用全形句號連接，TTS 會把它當段落停頓
   const full = segments.filter(Boolean).join("。");
-  speak(full, { rate: 1.0, pitch: 1.08 });
+
+  // 用 speaker 對應的 profile，沒指定就 NARRATOR
+  const profile = getVoiceProfile(parts.speaker);
+  speak(full, { rate: profile.rate, pitch: profile.pitch });
 }

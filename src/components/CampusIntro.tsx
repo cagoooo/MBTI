@@ -9,22 +9,82 @@ interface Student {
   emoji: string;
   type: string;
   badge: string; // 角色配色
-  line: string;  // 對白
+  /** 對白輪播 (每 3.2 秒換) — 第二句通常帶家庭背景自然呈現多元 */
+  lines: string[];
 }
 
+/**
+ * NPC 設計兼顧 MBTI 風格 + 多元家庭情境 (#7 SDGs):
+ *   雅雯 — 隔代教養 (跟奶奶住)
+ *   阿哲 — 新住民第二代 (爸爸是越南人)
+ *   凱莉 — 同志家庭 (兩個媽媽)
+ *   婷婷 — 大家庭 (照顧弟妹)
+ *   小傑 — 單親爸爸忙碌
+ *   宇航 — 阿公會手語 (家有聽障家人)
+ * 不刻意說教,只在第二輪台詞自然帶到。
+ */
 const STUDENTS: Student[] = [
-  { name: "小芸",   emoji: "🌸", type: "ENFP", badge: "bg-yellow-300",   line: "嗨嗨！我是小芸～新學期一起玩好不好？✨" },
-  { name: "阿哲",   emoji: "🤓", type: "INTJ", badge: "bg-purple-300",   line: "我已經把這學期的計畫表列出來了。" },
-  { name: "小傑",   emoji: "⚡", type: "ESTP", badge: "bg-orange-300",   line: "下課鐘響我先衝操場喔！😆" },
-  { name: "雅雯",   emoji: "🌙", type: "INFJ", badge: "bg-indigo-300",   line: "你今天看起來有心事...要不要聊聊？" },
-  { name: "宇航",   emoji: "🎨", type: "ISFP", badge: "bg-rose-300",     line: "我把今天的晚霞畫下來了，給你看。" },
-  { name: "凱莉",   emoji: "👑", type: "ENTJ", badge: "bg-red-300",      line: "校慶我們班一定要拿冠軍！跟我來！" },
-  { name: "小宇",   emoji: "📚", type: "INTP", badge: "bg-sky-300",      line: "你知道彩虹為什麼有 7 個顏色嗎？" },
-  { name: "婷婷",   emoji: "🍰", type: "ESFJ", badge: "bg-pink-300",     line: "今天誰生日？我帶了小蛋糕！🎂" },
+  {
+    name: "小芸", emoji: "🌸", type: "ENFP", badge: "bg-yellow-300",
+    lines: [
+      "嗨嗨！我是小芸～新學期一起玩好不好？✨",
+      "我妹妹今天也是開學第一天！她讀一年級耶。",
+    ],
+  },
+  {
+    name: "阿哲", emoji: "🤓", type: "INTJ", badge: "bg-purple-300",
+    lines: [
+      "我已經把這學期的計畫表列出來了。",
+      "我爸爸是越南人，所以我會講一點越南話喔！",
+    ],
+  },
+  {
+    name: "小傑", emoji: "⚡", type: "ESTP", badge: "bg-orange-300",
+    lines: [
+      "下課鐘響我先衝操場喔！😆",
+      "今天我爸值班，姑姑會來接我。我們家就我跟爸爸兩個人。",
+    ],
+  },
+  {
+    name: "雅雯", emoji: "🌙", type: "INFJ", badge: "bg-indigo-300",
+    lines: [
+      "你今天看起來有心事...要不要聊聊？",
+      "晚上是奶奶接我回家，她每天都煮我最愛吃的菜 💕",
+    ],
+  },
+  {
+    name: "宇航", emoji: "🎨", type: "ISFP", badge: "bg-rose-300",
+    lines: [
+      "我把今天的晚霞畫下來了，給你看。",
+      "我爺爺聽不見，所以我們在家都用手語聊天，超酷！",
+    ],
+  },
+  {
+    name: "凱莉", emoji: "👑", type: "ENTJ", badge: "bg-red-300",
+    lines: [
+      "校慶我們班一定要拿冠軍！跟我來！",
+      "我家有兩個媽媽，她們都超會煮菜，我超幸福的！",
+    ],
+  },
+  {
+    name: "小宇", emoji: "📚", type: "INTP", badge: "bg-sky-300",
+    lines: [
+      "你知道彩虹為什麼有 7 個顏色嗎？",
+      "其實光的顏色是連續的，七色只是人類分類方式啦。",
+    ],
+  },
+  {
+    name: "婷婷", emoji: "🍰", type: "ESFJ", badge: "bg-pink-300",
+    lines: [
+      "今天誰生日？我帶了小蛋糕！🎂",
+      "我家有兩個弟弟一個妹妹，所以我超會照顧人 ✨",
+    ],
+  },
 ];
 
 export default function CampusIntro() {
   const [activeIdx, setActiveIdx] = useState(0);
+  const [lineIdx, setLineIdx] = useState(0);
   const [visibleCount, setVisibleCount] = useState(0);
 
   // 角色逐一登場
@@ -34,16 +94,22 @@ export default function CampusIntro() {
     return () => clearTimeout(t);
   }, [visibleCount]);
 
-  // 對白輪替
+  // 對白輪替：每 3.2 秒換 (角色 + line 雙重輪播)
   useEffect(() => {
     if (visibleCount < STUDENTS.length) return;
     const interval = setInterval(() => {
-      setActiveIdx((i) => (i + 1) % STUDENTS.length);
+      setActiveIdx((i) => {
+        const next = (i + 1) % STUDENTS.length;
+        // 每輪走完所有角色才換到第二輪台詞 (家庭背景版本)
+        if (next === 0) setLineIdx((li) => (li + 1) % 2);
+        return next;
+      });
     }, 3200);
     return () => clearInterval(interval);
   }, [visibleCount]);
 
   const active = STUDENTS[activeIdx];
+  const activeLine = active.lines[lineIdx % active.lines.length] ?? active.lines[0];
 
   return (
     <section className="px-6 py-12 sm:py-16">
@@ -118,7 +184,7 @@ export default function CampusIntro() {
               <AnimatePresence mode="wait">
                 {visibleCount >= STUDENTS.length && (
                   <motion.div
-                    key={active.name + active.line}
+                    key={active.name + activeLine}
                     initial={{ opacity: 0, y: 16, scale: 0.92 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: -10, scale: 0.96 }}
@@ -139,7 +205,7 @@ export default function CampusIntro() {
                       </span>
                     </div>
                     <p className="text-[var(--color-ink)] leading-relaxed text-sm sm:text-base">
-                      {active.line}
+                      {activeLine}
                     </p>
                   </motion.div>
                 )}
