@@ -25,6 +25,7 @@ import { countMatchedAxes, loadPretestGuess } from "@/lib/pretest";
 import SceneBackground from "@/components/SceneBackground";
 import NpcAvatar from "@/components/NpcAvatar";
 import { addHistory } from "@/lib/history";
+import SiteNav from "@/components/SiteNav";
 
 /**
  * 場景所屬支線 → BGM track 對應
@@ -322,23 +323,128 @@ function GameInner() {
     );
   }
 
+  // 進度計算 (從 history 推估 + chapter)
+  const totalScenes = 30;
+  const sceneNum = history.length + 1;
+
   return (
-    <div className="flex-1 px-3 sm:px-6 py-5 sm:py-10 has-floating-ui">
+    <div className="container-paper has-floating-ui" style={{ paddingTop: 0, paddingBottom: 0 }}>
       {/* 場景變動時自動切換 BGM track (依當前場景所屬支線) */}
       <BgmController track={scene ? BRANCH_TO_BGM[scene.branch] : "game"} />
-      {/* Top bar */}
-      <div className="max-w-3xl mx-auto flex items-center justify-between mb-6">
-        <HomeToButton />
-        <SoundButton
-          sound="whoosh"
-          onClick={handleRestart}
-          className="text-xs sm:text-sm text-[var(--color-ink)]/60 hover:text-[var(--color-coral)] underline underline-offset-4"
+
+      <SiteNav active="/game" ctaLabel="↻ 從頭" ctaHref="#" />
+
+      {/* HUD bar — 新設計 */}
+      <div
+        className="game-hud-bar"
+        style={{
+          background: "#fff",
+          border: "2px solid var(--ink)",
+          boxShadow: "5px 5px 0 var(--ink)",
+          padding: "16px 24px",
+          margin: "28px 0 28px",
+          display: "grid",
+          gridTemplateColumns: "auto 1fr auto",
+          gap: 32,
+          alignItems: "center",
+          position: "relative",
+        }}
+      >
+        <div
+          style={{
+            position: "absolute",
+            top: -14,
+            left: 16,
+            background: "var(--coral)",
+            color: "#fff",
+            fontFamily: "var(--font-mono)",
+            fontSize: 11,
+            letterSpacing: 4,
+            fontWeight: 800,
+            padding: "4px 14px",
+          }}
         >
-          ↻ 從頭再玩
-        </SoundButton>
+          ◆ NOW PLAYING
+        </div>
+        <div>
+          <div className="hud" style={{ marginBottom: 4 }}>
+            CHAPTER {String(scene.chapter).padStart(2, "0")} · ACT {Math.min(sceneNum, 9)}/{totalScenes}
+          </div>
+          <div className="f-serif" style={{ fontWeight: 900, fontSize: 22, lineHeight: 1 }}>
+            {branch === "main" && "開學週 · 主線"}
+            {branch === "sport" && "🏃 校隊組 · 汗水與勝負"}
+            {branch === "art" && "🎨 藝術組 · 創作與表達"}
+            {branch === "study" && "📚 學術組 · 好奇與發現"}
+            {branch === "friend" && "🤝 友誼組 · 陪伴與成長"}
+          </div>
+        </div>
+        {/* Chapter dots — desktop only */}
+        <div className="hidden md:flex items-center gap-1">
+          {Array.from({ length: TOTAL_CHAPTERS }).map((_, i) => {
+            const ch = i + 1;
+            const done = ch < scene.chapter;
+            const current = ch === scene.chapter;
+            return (
+              <div key={ch} className="flex items-center">
+                <div
+                  style={{
+                    width: 22,
+                    height: 22,
+                    border: "2px solid var(--ink)",
+                    background: current ? "var(--sunny)" : done ? "var(--coral)" : "var(--paper-2)",
+                    color: done ? "#fff" : "var(--ink)",
+                    fontFamily: "var(--font-mono)",
+                    fontSize: 10,
+                    fontWeight: 800,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    transform: current ? "scale(1.15)" : undefined,
+                    boxShadow: current ? "0 0 0 3px rgba(212,154,19,0.25)" : undefined,
+                  }}
+                >
+                  {ch}
+                </div>
+                {i < TOTAL_CHAPTERS - 1 && (
+                  <div
+                    style={{
+                      width: 12,
+                      height: 3,
+                      background: done ? "var(--coral)" : "var(--paper-2)",
+                      borderTop: "1px solid var(--ink)",
+                      borderBottom: "1px solid var(--ink)",
+                    }}
+                  ></div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+        <div style={{ textAlign: "right" }}>
+          <div className="hud" style={{ marginBottom: 4 }}>PROGRESS</div>
+          <div className="f-mono" style={{ fontSize: 18, fontWeight: 800 }}>
+            {sceneNum} / {totalScenes}
+          </div>
+          <button
+            onClick={handleRestart}
+            style={{
+              marginTop: 6,
+              fontSize: 11,
+              fontFamily: "var(--font-mono)",
+              color: "var(--muted)",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              padding: 0,
+              textDecoration: "underline",
+            }}
+          >
+            ↻ 從頭再玩
+          </button>
+        </div>
       </div>
 
-      <div className="max-w-3xl mx-auto">
+      <div style={{ maxWidth: 880, margin: "0 auto" }}>
         {/* 班級模式 badge */}
         {classSession && (
           <div className="text-center mb-3">
@@ -365,20 +471,6 @@ function GameInner() {
               </div>
             </div>
           </motion.div>
-        )}
-
-        <ProgressDots chapter={scene.chapter} total={TOTAL_CHAPTERS} />
-
-        {/* 支線標籤 */}
-        {branch !== "main" && (
-          <div className="text-center mb-4">
-            <span className="inline-block px-3 py-1 rounded-full text-xs font-bold bg-white/80 border border-[var(--color-ink)]/15 text-[var(--color-ink)]/70">
-              {branch === "sport" && "🏃 校隊組"}
-              {branch === "art" && "🎨 藝術組"}
-              {branch === "study" && "📚 學術組"}
-              {branch === "friend" && "🤝 友誼組"}
-            </span>
-          </div>
         )}
 
         {/* 透視容器：讓子層的 rotateY 看起來有翻書感 */}
