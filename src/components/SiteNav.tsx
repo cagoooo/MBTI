@@ -1,5 +1,6 @@
 import Link from "next/link";
 import SoundLink from "@/components/SoundLink";
+import TeacherLoginButton from "@/components/TeacherLoginButton";
 
 interface Props {
   /** 高亮的 nav 項目 (對應 href) */
@@ -55,12 +56,14 @@ export default function SiteNav({ active = "/", ctaLabel = "▶ START", ctaHref 
             {l.label}
           </Link>
         ))}
+        <TeacherLoginButton variant="compact" />
         <SoundLink href={ctaHref} sound="click" className="nav-cta">
           {ctaLabel}
         </SoundLink>
       </div>
-      {/* 手機收縮成只 logo + CTA */}
-      <div className="flex md:hidden">
+      {/* 手機收縮成只 logo + 登入 + CTA */}
+      <div className="flex md:hidden items-center gap-2">
+        <TeacherLoginButton variant="compact" />
         <SoundLink href={ctaHref} sound="click" className="nav-cta">
           {ctaLabel}
         </SoundLink>

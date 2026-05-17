@@ -10,7 +10,17 @@
  */
 
 import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
-import { getAuth, signInAnonymously, type Auth } from "firebase/auth";
+import {
+  getAuth,
+  signInAnonymously,
+  signInWithPopup,
+  signOut as fbSignOut,
+  linkWithPopup,
+  GoogleAuthProvider,
+  onAuthStateChanged,
+  type Auth,
+  type User,
+} from "firebase/auth";
 import { getDatabase, type Database } from "firebase/database";
 
 const config = {
@@ -54,8 +64,9 @@ export function getAuthInstance(): Auth | null {
 }
 
 /**
- * 確保有匿名登入。同一個瀏覽器會穩定拿到同一個 uid（localStorage 持久化）。
- * 老師端 / 學生端都用同樣機制 — 角色靠房間 meta 區分。
+ * 確保有登入 (anonymous fallback)。
+ * 同一個瀏覽器穩定拿到同一個 uid (localStorage 持久化)。
+ * 升級到 Google 帳號後 uid 不變 (用 linkWithPopup)，舊資料無痛保留。
  */
 export async function ensureSignedIn(): Promise<string | null> {
   const init = ensureInit();
@@ -68,4 +79,77 @@ export async function ensureSignedIn(): Promise<string | null> {
     console.warn("[firebase] anon sign-in failed", e);
     return null;
   }
+}
+
+/**
+ * 訂閱當前 auth 狀態 (拿 user 物件含 displayName / photoURL / isAnonymous)。
+ * 回傳 unsubscribe。
+ */
+export function subscribeAuth(cb: (user: User | null) => void): () => void {
+  const init = ensureInit();
+  if (!init) {
+    cb(null);
+    return () => {};
+  }
+  return onAuthStateChanged(init.auth, cb);
+}
+
+/** 拿當前 user 物件 (沒登入回 null) */
+export function getCurrentUser(): User | null {
+  const init = ensureInit();
+  if (!init) return null;
+  return init.auth.currentUser;
+}
+
+/**
+ * Google OAuth 登入 (跨裝置同步)。
+ * 如果已經是 anonymous user，會用 linkWithPopup 升級，**保留同個 uid**，
+ * 所有 classHistory / 房間擁有權無痛繼承。
+ * 如果 anonymous link 失敗 (例如此 Google 帳號已綁過別的 uid)，
+ * fall back 用 signInWithPopup (會切換到 Google 那邊的既有 uid)。
+ */
+export async function signInWithGoogle(): Promise<
+  { ok: true; uid: string; user: User; upgraded: boolean } | { ok: false; error: string }
+> {
+  const init = ensureInit();
+  if (!init) return { ok: false, error: "Firebase 未設定" };
+  const provider = new GoogleAuthProvider();
+  // 提示帳號選擇器，方便老師選自己的學校 google 帳號
+  provider.setCustomParameters({ prompt: "select_account" });
+
+  const current = init.auth.currentUser;
+  // anonymous → upgrade 路徑
+  if (current && current.isAnonymous) {
+    try {
+      const cred = await linkWithPopup(current, provider);
+      return { ok: true, uid: cred.user.uid, user: cred.user, upgraded: true };
+    } catch (e) {
+      const err = e as { code?: string; message?: string };
+      // 這個 Google 帳號已綁過別的 uid → fall back signInWithPopup
+      if (err.code === "auth/credential-already-in-use" || err.code === "auth/email-already-in-use") {
+        try {
+          const cred = await signInWithPopup(init.auth, provider);
+          return { ok: true, uid: cred.user.uid, user: cred.user, upgraded: false };
+        } catch (e2) {
+          return { ok: false, error: (e2 as Error).message };
+        }
+      }
+      return { ok: false, error: err.message ?? "Google 登入失敗" };
+    }
+  }
+
+  // 沒有 anonymous current → 直接 popup 登入
+  try {
+    const cred = await signInWithPopup(init.auth, provider);
+    return { ok: true, uid: cred.user.uid, user: cred.user, upgraded: false };
+  } catch (e) {
+    return { ok: false, error: (e as Error).message };
+  }
+}
+
+/** 登出 (回到「沒有 user」狀態；下次 ensureSignedIn 會再生一個新的 anonymous uid) */
+export async function signOut(): Promise<void> {
+  const init = ensureInit();
+  if (!init) return;
+  await fbSignOut(init.auth);
 }

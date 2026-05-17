@@ -5,6 +5,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import SiteNav from "@/components/SiteNav";
 import BgmController from "@/components/BgmController";
+import TeacherLoginButton from "@/components/TeacherLoginButton";
 import { ensureSignedIn, isFirebaseAvailable } from "@/lib/firebase";
 import { subscribeTeacherHistory, type SessionSnapshot } from "@/lib/classroom-rtdb";
 import { ALL_TYPES, type MBTIType } from "@/lib/types";
@@ -100,7 +101,8 @@ export default function TeacherDashboardPage() {
       <BgmController track="home" />
       <div className="max-w-6xl mx-auto">
         <div className="mb-6">
-          
+          {/* 🔑 Google OAuth 跨裝置同步 */}
+          <TeacherLoginButton variant="full" />
         </div>
 
         {/* Hero */}
