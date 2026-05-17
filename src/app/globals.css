@@ -25,6 +25,11 @@ html, body {
   overscroll-behavior: none;
 }
 
+/* 字級縮放 — 使用者可從 SettingsPanel 切換 */
+html {
+  font-size: calc(16px * var(--font-scale, 1));
+}
+
 * {
   -webkit-tap-highlight-color: transparent;
 }

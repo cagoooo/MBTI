@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffd6c0"/>
+      <stop offset="50%" stop-color="#ff8364"/>
+      <stop offset="100%" stop-color="#ff6b9d"/>
+    </linearGradient>
+  </defs>
+  <!-- 圓角背景 -->
+  <rect width="512" height="512" rx="96" fill="url(#bg)"/>
+  <!-- 中央校園 emoji + 文字 -->
+  <text x="256" y="240" font-size="200" text-anchor="middle" dominant-baseline="middle" font-family="Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, sans-serif">🏫</text>
+  <text x="256" y="400" font-size="96" font-weight="900" fill="white" text-anchor="middle" font-family="Noto Sans TC, system-ui, sans-serif" style="letter-spacing:-4px">MBTI</text>
+</svg>

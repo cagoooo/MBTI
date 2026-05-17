@@ -12,6 +12,8 @@
  * 不需要特別 unlock — 一旦使用者點過按鈕就 OK。
  */
 
+import { getTtsRate } from "./settings";
+
 const STORAGE_KEY = "mbti-tts-on";
 
 let selectedVoice: SpeechSynthesisVoice | null = null;
@@ -125,7 +127,8 @@ export function speak(text: string, opts: SpeakOptions = {}): void {
   const u = new SpeechSynthesisUtterance(text);
   if (selectedVoice) u.voice = selectedVoice;
   u.lang = selectedVoice?.lang ?? "zh-TW";
-  u.rate = opts.rate ?? 1.0;
+  // 使用者透過 SettingsPanel 設的 rate 是基準，opts.rate 可微調 (例：1.05 的話會乘上 base)
+  u.rate = (opts.rate ?? 1.0) * (getTtsRate() / 1.0);
   u.pitch = opts.pitch ?? 1.08;
   u.volume = opts.volume ?? 1.0;
 
