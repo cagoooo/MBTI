@@ -1,4 +1,4 @@
-import Link from "next/link";
+import SoundLink from "@/components/SoundLink";
 
 export default function NotFound() {
   return (
@@ -9,13 +9,14 @@ export default function NotFound() {
         <p className="text-[var(--color-ink)]/70 mb-6">
           這個頁面好像不在校園地圖上耶。要不要回到校門口重新開始？
         </p>
-        <Link
+        <SoundLink
           href="/"
+          sound="click"
           className="btn-3d inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-[var(--color-coral)] text-white font-black"
         >
           <span>🏫</span>
           <span>回主頁</span>
-        </Link>
+        </SoundLink>
       </div>
     </div>
   );

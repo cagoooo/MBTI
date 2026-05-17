@@ -9,6 +9,7 @@ import PrintSheet from "@/components/PrintSheet";
 import PrintButton from "@/components/PrintButton";
 import ResultBadgeMount from "@/components/ResultBadgeMount";
 import ResultRevealMount from "@/components/ResultRevealMount";
+import SoundLink from "@/components/SoundLink";
 
 export function generateStaticParams() {
   return ALL_TYPES.map((type) => ({ type }));
@@ -215,20 +216,22 @@ export default async function ResultPage({ params }: { params: Promise<{ type: s
 
         {/* CTA */}
         <section className="mt-8 mb-4 flex flex-col sm:flex-row gap-3 justify-center">
-          <Link
+          <SoundLink
             href="/game"
+            sound="click"
             className="btn-3d inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-[var(--color-coral)] text-white text-lg font-black hover:bg-[var(--color-coral)]/90"
           >
             <span>↻</span>
             <span>再玩一次（試試不同選擇）</span>
-          </Link>
-          <Link
+          </SoundLink>
+          <SoundLink
             href="/types"
+            sound="tap"
             className="btn-3d inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-white border-2 border-[var(--color-ink)]/15 text-lg font-black hover:border-[var(--color-coral)]/40"
           >
             <span>🔍</span>
             <span>看其他 15 型</span>
-          </Link>
+          </SoundLink>
         </section>
 
         <p className="text-center text-sm text-[var(--color-ink)]/50 mt-4">

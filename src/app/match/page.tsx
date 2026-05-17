@@ -4,6 +4,8 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import HomeToButton from "@/components/HomeToButton";
+import SoundButton from "@/components/SoundButton";
+import SoundLink from "@/components/SoundLink";
 import { ALL_TYPES, type MBTIType } from "@/lib/types";
 import { getMBTIInfo, MBTI_GROUPS } from "@/lib/mbti";
 import { computeMatch, findClassMatches } from "@/lib/match";
@@ -62,18 +64,20 @@ export default function MatchPage() {
 
         {/* 模式切換 */}
         <div className="flex gap-2 justify-center mb-8">
-          <button
+          <SoundButton
+            sound="pop"
             onClick={() => setMode("pair")}
             className={`px-5 py-2.5 rounded-2xl font-black transition ${mode === "pair" ? "bg-[var(--color-coral)] text-white shadow-md" : "bg-white border-2 border-[var(--color-ink)]/15 text-[var(--color-ink)]/70"}`}
           >
             👥 兩人配對
-          </button>
-          <button
+          </SoundButton>
+          <SoundButton
+            sound="pop"
             onClick={() => setMode("class")}
             className={`px-5 py-2.5 rounded-2xl font-black transition ${mode === "class" ? "bg-[var(--color-coral)] text-white shadow-md" : "bg-white border-2 border-[var(--color-ink)]/15 text-[var(--color-ink)]/70"}`}
           >
             🏫 全班配對
-          </button>
+          </SoundButton>
         </div>
 
         {mode === "pair" ? (
@@ -118,12 +122,13 @@ export default function MatchPage() {
             {/* 配對按鈕 */}
             {a && b && (
               <div className="text-center">
-                <button
+                <SoundButton
+                  sound="coin"
                   onClick={showResult}
                   className="btn-3d px-8 py-4 rounded-2xl bg-[var(--color-coral)] text-white text-xl font-black hover:bg-[var(--color-coral)]/90"
                 >
                   💫 看我們有多合拍！
-                </button>
+                </SoundButton>
               </div>
             )}
 
@@ -256,7 +261,7 @@ export default function MatchPage() {
 
         {/* 快速跳轉 */}
         <div className="mt-12 text-center text-sm text-[var(--color-ink)]/60">
-          <p>還沒測過自己的 MBTI？<Link href="/game" className="text-[var(--color-coral)] font-bold hover:underline">先玩一場校園 RPG 找出來 →</Link></p>
+          <p>還沒測過自己的 MBTI？<SoundLink href="/game" sound="click" className="text-[var(--color-coral)] font-bold hover:underline">先玩一場校園 RPG 找出來 →</SoundLink></p>
         </div>
       </div>
     </div>

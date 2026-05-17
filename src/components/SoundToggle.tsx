@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { isBgmOn, isMuted, setBgmOn, setMuted, startBgm, stopBgm, unlock } from "@/lib/sound";
+import { isBgmOn, isMuted, playSound, setBgmOn, setMuted, startBgm, stopBgm, unlock } from "@/lib/sound";
 
 interface Props {
   /** 是否在這個頁面啟動 BGM */
@@ -45,6 +45,9 @@ export default function SoundToggle({ withBgm = false }: Props) {
 
   function toggleMute() {
     const next = !muted;
+    // 先播音效（避免被自己 mute 掉）
+    if (!next) playSound("toggleOn");
+    else playSound("toggleOff");
     setMutedState(next);
     setMuted(next);
     if (next) stopBgm();
@@ -53,6 +56,7 @@ export default function SoundToggle({ withBgm = false }: Props) {
 
   function toggleBgm() {
     const next = !bgm;
+    playSound(next ? "toggleOn" : "toggleOff");
     setBgmState(next);
     setBgmOn(next);
     if (!next) stopBgm();

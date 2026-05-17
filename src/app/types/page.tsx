@@ -1,4 +1,5 @@
 import Link from "next/link";
+import SoundLink from "@/components/SoundLink";
 import { MBTI_GROUPS, getMBTIInfo } from "@/lib/mbti";
 import HomeToButton from "@/components/HomeToButton";
 
@@ -39,9 +40,10 @@ export default function TypesIndexPage() {
                 {group.types.map((t) => {
                   const info = getMBTIInfo(t);
                   return (
-                    <Link
+                    <SoundLink
                       key={t}
                       href={`/types/${t}`}
+                      sound="pop"
                       className={`group bg-gradient-to-br ${info.gradient} p-5 rounded-3xl border-4 border-white shadow-md hover:scale-105 transition`}
                     >
                       <div className="flex items-center justify-between mb-2">
@@ -53,7 +55,7 @@ export default function TypesIndexPage() {
                       <p className="text-white/80 text-xs mt-3 group-hover:translate-x-1 transition-transform">
                         看完整介紹 →
                       </p>
-                    </Link>
+                    </SoundLink>
                   );
                 })}
               </div>
@@ -66,13 +68,14 @@ export default function TypesIndexPage() {
           <p className="text-[var(--color-ink)]/70 mb-5">
             玩一場 10 分鐘的校園冒險，故事的選擇會告訴你答案 ✨
           </p>
-          <Link
+          <SoundLink
             href="/game"
+            sound="click"
             className="btn-3d inline-flex items-center gap-2 px-8 py-4 rounded-2xl bg-[var(--color-coral)] text-white text-xl font-black"
           >
             <span>🚀</span>
             <span>開始冒險</span>
-          </Link>
+          </SoundLink>
         </section>
       </div>
     </div>

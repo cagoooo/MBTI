@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { playSound } from "@/lib/sound";
 
 interface Student {
   name: string;
@@ -70,7 +71,12 @@ export default function CampusIntro() {
                 return (
                   <motion.button
                     key={s.name}
-                    onClick={() => visibleCount >= STUDENTS.length && setActiveIdx(i)}
+                    onClick={() => {
+                      if (visibleCount >= STUDENTS.length) {
+                        playSound("pop");
+                        setActiveIdx(i);
+                      }
+                    }}
                     initial={{ y: 60, opacity: 0, scale: 0.5 }}
                     animate={isVisible ? { y: 0, opacity: 1, scale: 1 } : { y: 60, opacity: 0, scale: 0.5 }}
                     transition={{ type: "spring", stiffness: 260, damping: 18 }}

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import SoundLink from "@/components/SoundLink";
 import { MBTI_GROUPS } from "@/lib/mbti";
 import CampusIntro from "@/components/CampusIntro";
 import BgMusicMount from "@/components/BgMusicMount";
@@ -34,27 +35,30 @@ export default function HomePage() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-            <Link
+            <SoundLink
               href="/game"
+              sound="click"
               className="btn-3d inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-[var(--color-coral)] text-white text-xl font-black hover:bg-[var(--color-coral)]/90"
             >
               <span className="text-2xl">🚀</span>
               <span>開始冒險</span>
-            </Link>
-            <Link
+            </SoundLink>
+            <SoundLink
               href="/types"
+              sound="tap"
               className="btn-3d inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-white border-2 border-[var(--color-ink)]/15 text-xl font-black text-[var(--color-ink)] hover:border-[var(--color-coral)]/40"
             >
               <span className="text-2xl">🔍</span>
               <span>16 型介紹</span>
-            </Link>
-            <Link
+            </SoundLink>
+            <SoundLink
               href="/match"
+              sound="tap"
               className="btn-3d inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-white border-2 border-[var(--color-ink)]/15 text-xl font-black text-[var(--color-ink)] hover:border-[var(--color-coral)]/40"
             >
               <span className="text-2xl">🤝</span>
               <span>麻吉配對</span>
-            </Link>
+            </SoundLink>
           </div>
 
           <div className="pt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-[var(--color-ink)]/60">
@@ -166,12 +170,13 @@ export default function HomePage() {
             ))}
           </div>
           <div className="text-center mt-8">
-            <Link
+            <SoundLink
               href="/types"
+              sound="tap"
               className="inline-flex items-center gap-2 text-[var(--color-coral)] font-bold hover:underline"
             >
               看完整 16 型介紹 →
-            </Link>
+            </SoundLink>
           </div>
         </div>
       </section>
@@ -185,14 +190,15 @@ export default function HomePage() {
             不需要回答抽象問卷就能認識自己的人格傾向。
             適合作為班級活動、輔導課、自我認識主題的引導素材。
           </p>
-          <Link
+          <SoundLink
             href="/class-stats"
+            sound="coin"
             className="mt-5 inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-gradient-to-r from-violet-500 to-purple-500 text-white font-black hover:from-violet-600 hover:to-purple-600 transition shadow-md"
           >
             <span className="text-xl">📊</span>
             <span>老師專用：全班 MBTI 統計</span>
             <span>→</span>
-          </Link>
+          </SoundLink>
           <p className="text-[var(--color-ink)]/60 text-sm mt-3">
             ⚠️ MBTI 為性格傾向參考，並非心理診斷工具。請以開放、好奇的態度引導孩子探索。
           </p>
@@ -201,13 +207,14 @@ export default function HomePage() {
 
       {/* Final CTA */}
       <section className="px-6 py-16 text-center">
-        <Link
+        <SoundLink
           href="/game"
+          sound="click"
           className="btn-3d inline-flex items-center gap-3 px-10 py-5 rounded-2xl bg-[var(--color-coral)] text-white text-2xl font-black hover:bg-[var(--color-coral)]/90"
         >
           <span className="text-3xl">🎒</span>
           <span>準備好了，開始！</span>
-        </Link>
+        </SoundLink>
       </section>
     </div>
   );

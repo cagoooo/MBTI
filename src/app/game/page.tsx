@@ -9,6 +9,7 @@ import type { Branch, Choice, Scene, Scores } from "@/lib/types";
 import ProgressDots from "@/components/ProgressDots";
 import HomeToButton from "@/components/HomeToButton";
 import SoundToggle from "@/components/SoundToggle";
+import SoundButton from "@/components/SoundButton";
 import { playSound } from "@/lib/sound";
 
 interface HistoryEntry {
@@ -110,12 +111,13 @@ export default function GamePage() {
       {/* Top bar */}
       <div className="max-w-3xl mx-auto flex items-center justify-between mb-6">
         <HomeToButton />
-        <button
+        <SoundButton
+          sound="whoosh"
           onClick={handleRestart}
           className="text-xs sm:text-sm text-[var(--color-ink)]/60 hover:text-[var(--color-coral)] underline underline-offset-4"
         >
           ↻ 從頭再玩
-        </button>
+        </SoundButton>
       </div>
 
       <div className="max-w-3xl mx-auto">
@@ -221,12 +223,13 @@ export default function GamePage() {
               <p className="text-lg sm:text-xl text-center leading-relaxed text-[var(--color-ink)]">
                 {showFollowUp}
               </p>
-              <button
+              <SoundButton
+                sound="whoosh"
                 onClick={dismissFollowUp}
                 className="btn-3d mt-6 w-full py-3 rounded-2xl bg-[var(--color-coral)] text-white font-black text-lg hover:bg-[var(--color-coral)]/90"
               >
                 繼續故事 →
-              </button>
+              </SoundButton>
             </motion.div>
           </motion.div>
         )}

@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { ALL_TYPES, type MBTIType } from "@/lib/types";
 import { getMBTIInfo } from "@/lib/mbti";
 import { loadProgress, unlockResult, type UnlockEvent } from "@/lib/badges";
 import { playSound } from "@/lib/sound";
+import SoundLink from "@/components/SoundLink";
 
 interface Props {
   /** 結果頁進入時要解鎖的型 */
@@ -81,9 +81,10 @@ export default function BadgeWall({ newlyUnlocked, branch }: Props) {
             const isNew = newlyUnlocked === t;
             const info = getMBTIInfo(t);
             return (
-              <Link
+              <SoundLink
                 key={t}
                 href={`/types/${t}`}
+                sound={isUnlocked ? "pop" : "tap"}
                 className={`relative aspect-square rounded-xl flex flex-col items-center justify-center text-center transition ${isUnlocked ? `bg-gradient-to-br ${info.gradient} text-white shadow-md hover:scale-105` : "bg-[var(--color-ink)]/10 text-[var(--color-ink)]/30 hover:bg-[var(--color-ink)]/20"}`}
                 aria-label={isUnlocked ? `${t} ${info.nickname}` : `未解鎖 ${t}`}
                 title={isUnlocked ? `${t} - ${info.nickname}` : `未解鎖：${t}`}
@@ -95,7 +96,7 @@ export default function BadgeWall({ newlyUnlocked, branch }: Props) {
                     NEW
                   </span>
                 )}
-              </Link>
+              </SoundLink>
             );
           })}
         </div>

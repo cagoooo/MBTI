@@ -10,7 +10,34 @@
  *   bgm      — 首頁柔和環境音樂 (持續播放)
  */
 
-type SoundKind = "click" | "pageTurn" | "reveal" | "unlock";
+/**
+ * 音效類型清單（給 SoundButton / SoundLink 用）：
+ *
+ * 場景音 (遊戲故事)
+ *   click      - 選項按鈕「叮」(主動作、選擇)
+ *   pageTurn   - 場景翻頁書頁聲
+ *   reveal     - 結果揭曉煙火樂
+ *   unlock     - 徽章解鎖水晶聲
+ *
+ * UI 按鈕音 (依按鈕重要度區分)
+ *   tap        - 輕點：小巧、用於次要按鈕、回主頁、tab 切換
+ *   pop        - Q 彈：用於 modal 開啟、複製、新增動作
+ *   whoosh     - 風聲：page navigation 過場
+ *   coin       - 金幣：完成、確認、成就感的動作
+ *   toggleOn   - 開啟：低→高 兩音上升
+ *   toggleOff  - 關閉：高→低 兩音下降
+ */
+type SoundKind =
+  | "click"
+  | "pageTurn"
+  | "reveal"
+  | "unlock"
+  | "tap"
+  | "pop"
+  | "whoosh"
+  | "coin"
+  | "toggleOn"
+  | "toggleOff";
 
 let ctx: AudioContext | null = null;
 let masterGain: GainNode | null = null;
@@ -173,6 +200,112 @@ export function playSound(kind: SoundKind) {
         osc.connect(g).connect(masterGain!);
         osc.start(now);
         osc.stop(now + 0.65);
+      });
+      break;
+    }
+    case "tap": {
+      // 輕點：高頻 sine 短脈衝，小巧不擾人
+      const osc = c.createOscillator();
+      const g = c.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(1600, now);
+      osc.frequency.exponentialRampToValueAtTime(2200, now + 0.04);
+      g.gain.setValueAtTime(0, now);
+      g.gain.linearRampToValueAtTime(0.12, now + 0.005);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + 0.08);
+      osc.connect(g).connect(masterGain);
+      osc.start(now);
+      osc.stop(now + 0.1);
+      break;
+    }
+    case "pop": {
+      // Q 彈：sine sweep up，泡泡感
+      const osc = c.createOscillator();
+      const g = c.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(500, now);
+      osc.frequency.exponentialRampToValueAtTime(1100, now + 0.08);
+      g.gain.setValueAtTime(0, now);
+      g.gain.linearRampToValueAtTime(0.2, now + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
+      osc.connect(g).connect(masterGain);
+      osc.start(now);
+      osc.stop(now + 0.2);
+      break;
+    }
+    case "whoosh": {
+      // 風聲：白噪音 + 帶通濾波 sweep
+      const dur = 0.22;
+      const buffer = c.createBuffer(1, Math.floor(c.sampleRate * dur), c.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * 0.5;
+      const noise = c.createBufferSource();
+      noise.buffer = buffer;
+      const filter = c.createBiquadFilter();
+      filter.type = "bandpass";
+      filter.Q.value = 1.2;
+      filter.frequency.setValueAtTime(400, now);
+      filter.frequency.exponentialRampToValueAtTime(3000, now + dur);
+      const g = c.createGain();
+      g.gain.setValueAtTime(0, now);
+      g.gain.linearRampToValueAtTime(0.15, now + 0.03);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+      noise.connect(filter).connect(g).connect(masterGain);
+      noise.start(now);
+      noise.stop(now + dur);
+      break;
+    }
+    case "coin": {
+      // 金幣聲：兩個高音上升 (E5 → G5)，明顯成就感
+      const freqs = [659.25, 783.99]; // E5, G5
+      freqs.forEach((freq, i) => {
+        const t = now + i * 0.08;
+        const osc = c.createOscillator();
+        const g = c.createGain();
+        osc.type = "square";
+        osc.frequency.value = freq;
+        g.gain.setValueAtTime(0, t);
+        g.gain.linearRampToValueAtTime(0.1, t + 0.005);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
+        osc.connect(g).connect(masterGain!);
+        osc.start(t);
+        osc.stop(t + 0.2);
+      });
+      break;
+    }
+    case "toggleOn": {
+      // 開啟：兩音上升 (C5 → E5)
+      const freqs = [523.25, 659.25];
+      freqs.forEach((freq, i) => {
+        const t = now + i * 0.05;
+        const osc = c.createOscillator();
+        const g = c.createGain();
+        osc.type = "triangle";
+        osc.frequency.value = freq;
+        g.gain.setValueAtTime(0, t);
+        g.gain.linearRampToValueAtTime(0.14, t + 0.005);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.13);
+        osc.connect(g).connect(masterGain!);
+        osc.start(t);
+        osc.stop(t + 0.15);
+      });
+      break;
+    }
+    case "toggleOff": {
+      // 關閉：兩音下降 (E5 → C5)
+      const freqs = [659.25, 523.25];
+      freqs.forEach((freq, i) => {
+        const t = now + i * 0.05;
+        const osc = c.createOscillator();
+        const g = c.createGain();
+        osc.type = "triangle";
+        osc.frequency.value = freq;
+        g.gain.setValueAtTime(0, t);
+        g.gain.linearRampToValueAtTime(0.12, t + 0.005);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.13);
+        osc.connect(g).connect(masterGain!);
+        osc.start(t);
+        osc.stop(t + 0.15);
       });
       break;
     }

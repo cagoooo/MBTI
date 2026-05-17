@@ -4,10 +4,13 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import HomeToButton from "@/components/HomeToButton";
+import SoundButton from "@/components/SoundButton";
+import SoundLink from "@/components/SoundLink";
 import { computeStats, parseClassInput, type ClassEntry } from "@/lib/parse-class";
 import { ALL_TYPES, type MBTIType } from "@/lib/types";
 import { MBTI_GROUPS, getMBTIInfo } from "@/lib/mbti";
 import StatsExport from "@/components/StatsExport";
+import { playSound } from "@/lib/sound";
 
 const SAMPLE_INPUT = `小明 ENFP
 小芸: INFJ
@@ -32,16 +35,19 @@ export default function ClassStatsPage() {
   const maxCount = Math.max(1, ...ALL_TYPES.map((t) => stats.perType[t]));
 
   function handleAnalyze() {
+    playSound("reveal");
     setSubmitted(true);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function handleReset() {
+    playSound("whoosh");
     setRaw("");
     setSubmitted(false);
   }
 
   function loadSample() {
+    playSound("pop");
     setRaw(SAMPLE_INPUT);
   }
 
@@ -50,12 +56,13 @@ export default function ClassStatsPage() {
       <div className="max-w-5xl mx-auto">
         <div className="mb-6 flex items-center justify-between flex-wrap gap-3">
           <HomeToButton />
-          <Link
+          <SoundLink
             href="/game"
+            sound="tap"
             className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 border-2 border-[var(--color-ink)]/15 text-sm font-bold hover:border-[var(--color-coral)]/40"
           >
             🎮 玩遊戲
-          </Link>
+          </SoundLink>
         </div>
 
         <header className="text-center mb-8">
@@ -115,20 +122,22 @@ export default function ClassStatsPage() {
             </div>
 
             <div className="mt-5 flex flex-col sm:flex-row gap-3">
-              <button
+              <SoundButton
+                sound="coin"
                 onClick={handleAnalyze}
                 disabled={entries.length === 0}
                 className="btn-3d flex-1 px-6 py-3 rounded-2xl bg-[var(--color-coral)] text-white font-black text-lg hover:bg-[var(--color-coral)]/90 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 📊 產生統計圖
-              </button>
+              </SoundButton>
               {raw && (
-                <button
+                <SoundButton
+                  sound="toggleOff"
                   onClick={() => setRaw("")}
                   className="px-6 py-3 rounded-2xl bg-white border-2 border-[var(--color-ink)]/15 text-[var(--color-ink)] font-black hover:border-[var(--color-coral)]/40"
                 >
                   清空
-                </button>
+                </SoundButton>
               )}
             </div>
 
@@ -352,18 +361,20 @@ export default function ClassStatsPage() {
 
             {/* 動作列 */}
             <div className="flex flex-col sm:flex-row gap-3 pt-2 print-hide">
-              <button
+              <SoundButton
+                sound="tap"
                 onClick={() => setSubmitted(false)}
                 className="btn-3d flex-1 px-6 py-3 rounded-2xl bg-white border-2 border-[var(--color-ink)]/15 text-[var(--color-ink)] font-black hover:border-[var(--color-coral)]/40"
               >
                 ← 回去修改名單
-              </button>
-              <button
+              </SoundButton>
+              <SoundButton
+                sound="whoosh"
                 onClick={handleReset}
                 className="btn-3d px-6 py-3 rounded-2xl bg-[var(--color-coral)] text-white font-black hover:bg-[var(--color-coral)]/90"
               >
                 重新開始
-              </button>
+              </SoundButton>
             </div>
           </div>
         )}

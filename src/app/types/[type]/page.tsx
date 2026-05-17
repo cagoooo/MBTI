@@ -1,4 +1,5 @@
 import Link from "next/link";
+import SoundLink from "@/components/SoundLink";
 import { notFound } from "next/navigation";
 import { ALL_TYPES, type MBTIType } from "@/lib/types";
 import { getMBTIInfo } from "@/lib/mbti";
@@ -31,12 +32,13 @@ export default async function TypeDetailPage({ params }: { params: Promise<{ typ
       <div className="max-w-4xl mx-auto">
         <div className="mb-6 flex items-center justify-between flex-wrap gap-3">
           <HomeToButton />
-          <Link
+          <SoundLink
             href="/types"
+            sound="tap"
             className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 border-2 border-[var(--color-ink)]/15 text-sm font-bold hover:border-[var(--color-coral)]/40"
           >
             ← 回 16 型總覽
-          </Link>
+          </SoundLink>
         </div>
 
         {/* Hero */}
@@ -125,9 +127,9 @@ export default async function TypeDetailPage({ params }: { params: Promise<{ typ
         </section>
 
         <section className="mt-8 mb-4 text-center">
-          <Link href="/game" className="btn-3d inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-[var(--color-coral)] text-white text-lg font-black">
+          <SoundLink href="/game" sound="click" className="btn-3d inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-[var(--color-coral)] text-white text-lg font-black">
             <span>🎮</span><span>玩故事測測看是不是這型</span>
-          </Link>
+          </SoundLink>
         </section>
       </div>
     </div>

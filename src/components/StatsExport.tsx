@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { ClassStats } from "@/lib/parse-class";
 import { ALL_TYPES } from "@/lib/types";
 import { getMBTIInfo } from "@/lib/mbti";
+import SoundButton from "@/components/SoundButton";
 
 interface Props {
   stats: ClassStats;
@@ -84,20 +85,22 @@ export default function StatsExport({ stats, className = "" }: Props) {
         <span>📥</span> 匯出 / 保存
       </h3>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <button
+        <SoundButton
+          sound="coin"
           onClick={handlePrint}
           className="btn-3d flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-violet-500 text-white font-black hover:bg-violet-600"
         >
           <span className="text-xl">🖨️</span>
           <span>列印 / 另存 PDF</span>
-        </button>
-        <button
+        </SoundButton>
+        <SoundButton
+          sound="pop"
           onClick={handleCopy}
           className="btn-3d flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-sky-500 text-white font-black hover:bg-sky-600"
         >
           <span className="text-xl">{copied ? "✓" : "📋"}</span>
           <span>{copied ? "已複製文字版！" : "複製文字版"}</span>
-        </button>
+        </SoundButton>
       </div>
       <details className="mt-3 text-sm text-[var(--color-ink)]/60">
         <summary className="cursor-pointer hover:text-[var(--color-coral)]">💡 想要 PNG 圖檔？</summary>

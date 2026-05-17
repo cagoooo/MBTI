@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { MBTIType } from "@/lib/types";
+import SoundButton from "@/components/SoundButton";
 
 interface Props {
   type: MBTIType;
@@ -68,32 +69,35 @@ export default function ShareButtons({ type, nickname, oneLiner, emoji }: Props)
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {/* LINE 分享 */}
-        <button
+        <SoundButton
+          sound="coin"
           onClick={shareToLine}
           className="btn-3d flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-[#06C755] text-white font-black text-base hover:opacity-95"
         >
           <span className="text-xl">💬</span>
           <span>分享到 LINE</span>
-        </button>
+        </SoundButton>
 
         {/* 複製連結 */}
-        <button
+        <SoundButton
+          sound="pop"
           onClick={copyLink}
           className="btn-3d flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-[var(--color-coral)] text-white font-black text-base hover:opacity-95"
         >
           <span className="text-xl">{copied ? "✓" : "🔗"}</span>
           <span>{copied ? "已複製！" : "複製連結"}</span>
-        </button>
+        </SoundButton>
 
         {/* 系統分享 (手機可叫起 IG / FB / 訊息) */}
         {canNativeShare ? (
-          <button
+          <SoundButton
+            sound="whoosh"
             onClick={nativeShare}
             className="btn-3d flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-[var(--color-ink)] text-white font-black text-base hover:opacity-95"
           >
             <span className="text-xl">📤</span>
             <span>更多分享方式</span>
-          </button>
+          </SoundButton>
         ) : (
           <a
             href={`mailto:?subject=${encodeURIComponent(`MBTI 校園奇遇記 - ${type} ${nickname}`)}&body=${encodeURIComponent(`${shareText}\n${url}`)}`}
