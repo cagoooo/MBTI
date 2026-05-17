@@ -6,6 +6,7 @@ import { generatePersonalAnalysis, isGeminiAvailable } from "@/lib/gemini";
 import { loadPretestGuess } from "@/lib/pretest";
 import type { MBTIType } from "@/lib/types";
 import { playSound } from "@/lib/sound";
+import { isTtsAvailable, isTtsOn, speak as speakTts, stop as stopTts } from "@/lib/tts";
 
 interface Props {
   type: MBTIType;
@@ -30,9 +31,11 @@ export default function GeminiAnalysis({ type, nickname }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [branch, setBranch] = useState<string>("main");
+  const [ttsEnabled, setTtsEnabled] = useState(false);
 
   useEffect(() => {
     setAvailable(isGeminiAvailable());
+    setTtsEnabled(isTtsAvailable() && isTtsOn());
     // 拿 sessionStorage 的 branch / 之前快取的結果
     try {
       const raw = sessionStorage.getItem("mbti-result");
@@ -43,7 +46,29 @@ export default function GeminiAnalysis({ type, nickname }: Props) {
       const cached = sessionStorage.getItem(STORAGE_KEY_PREFIX + type);
       if (cached) setResult(cached);
     } catch {}
+    const refreshTts = () => setTtsEnabled(isTtsAvailable() && isTtsOn());
+    window.addEventListener("storage", refreshTts);
+    window.addEventListener("mbti-settings-change", refreshTts);
+    return () => {
+      window.removeEventListener("storage", refreshTts);
+      window.removeEventListener("mbti-settings-change", refreshTts);
+    };
   }, [type]);
+
+  function speakResult(text: string) {
+    if (!ttsEnabled) return;
+    const cleaned = text
+      .replace(/[#*_`>]/g, "")
+      .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, "")
+      .replace(/\s+\n\s+/g, "。")
+      .trim();
+    speakTts(cleaned, { rate: 1.0, pitch: 1.05 });
+  }
+
+  function stopReading() {
+    playSound("toggleOff");
+    stopTts();
+  }
 
   async function generate() {
     setLoading(true);
@@ -61,6 +86,8 @@ export default function GeminiAnalysis({ type, nickname }: Props) {
       try {
         sessionStorage.setItem(STORAGE_KEY_PREFIX + type, text);
       } catch {}
+      // 新生成→自動朗讀
+      setTimeout(() => speakResult(text), 350);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "未知錯誤";
       setError(msg);
@@ -159,16 +186,36 @@ export default function GeminiAnalysis({ type, nickname }: Props) {
               </p>
             ))}
           </div>
-          <div className="flex items-center justify-between gap-2 mt-4 pt-3 border-t border-violet-100">
-            <p className="text-[10px] text-violet-700/60 leading-relaxed flex-1">
+          <div className="flex items-center justify-between gap-2 mt-4 pt-3 border-t border-violet-100 flex-wrap">
+            <p className="text-[10px] text-violet-700/60 leading-relaxed flex-1 min-w-[180px]">
               ✨ 由 Google Gemini AI 生成 · 僅供參考，非心理診斷
             </p>
-            <button
-              onClick={regenerate}
-              className="text-xs px-3 py-1 rounded-full bg-violet-100 border border-violet-300 text-violet-700 font-bold hover:bg-violet-200 transition shrink-0"
-            >
-              🔄 換一段
-            </button>
+            <div className="flex items-center gap-1.5 shrink-0">
+              {ttsEnabled && result && (
+                <>
+                  <button
+                    onClick={() => { playSound("tap"); speakResult(result); }}
+                    title="再聽老師唸一次"
+                    className="text-xs px-3 py-1 rounded-full bg-amber-100 border border-amber-300 text-amber-900 font-bold hover:bg-amber-200 transition"
+                  >
+                    🔊 唸給我聽
+                  </button>
+                  <button
+                    onClick={stopReading}
+                    title="停止朗讀"
+                    className="text-xs px-2.5 py-1 rounded-full bg-white border border-violet-200 text-violet-700 font-bold hover:border-amber-400 transition"
+                  >
+                    ⏸
+                  </button>
+                </>
+              )}
+              <button
+                onClick={regenerate}
+                className="text-xs px-3 py-1 rounded-full bg-violet-100 border border-violet-300 text-violet-700 font-bold hover:bg-violet-200 transition"
+              >
+                🔄 換一段
+              </button>
+            </div>
           </div>
         </motion.div>
       )}

@@ -66,6 +66,25 @@ export default function SelPage() {
     };
   }, [scene?.id, showFollowUp, ttsEnabled, phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // intro phase 進場自動朗讀引言 (TTS 開啟才)
+  useEffect(() => {
+    if (phase !== "intro" || !ttsEnabled) return;
+    const t = setTimeout(() => {
+      speakScene({
+        text: [
+          "逆境裡的你，會怎麼接住自己？",
+          "每個人都會遇到難過、生氣、害怕、被誤會、失敗的時刻。",
+          "重要的不是不要有情緒，而是我可以怎麼接住自己。",
+          "這場活動會幫你發現專屬於你的情緒因應風格與工具箱。",
+        ],
+      });
+    }, 500);
+    return () => {
+      clearTimeout(t);
+      stopTts();
+    };
+  }, [phase, ttsEnabled]);
+
   // followUp 朗讀
   useEffect(() => {
     if (!showFollowUp || !ttsEnabled) return;
@@ -271,7 +290,7 @@ export default function SelPage() {
 
         {/* ─── Result ─── */}
         {phase === "result" && (
-          <SelResultView scores={scores} onRestart={restartFromBeginning} />
+          <SelResultView scores={scores} onRestart={restartFromBeginning} ttsEnabled={ttsEnabled} />
         )}
 
         {/* followUp modal */}
@@ -314,10 +333,62 @@ export default function SelPage() {
 
 // ─────────────────── Result View ───────────────────
 
-function SelResultView({ scores, onRestart }: { scores: SelScores; onRestart: () => void }) {
+function SelResultView({
+  scores,
+  onRestart,
+  ttsEnabled,
+}: {
+  scores: SelScores;
+  onRestart: () => void;
+  ttsEnabled: boolean;
+}) {
   const style = deriveSelStyle(scores);
   const info = getSelStyleInfo(style);
   const percents = selStrengthPercents(scores);
+
+  // 進入結果頁自動朗讀 hero (TTS 開啟才)
+  useEffect(() => {
+    if (!ttsEnabled) return;
+    const t = setTimeout(() => {
+      speakScene({
+        text: [
+          `你的情緒因應風格是 ${info.nickname}`,
+          info.oneLiner,
+          ...info.description,
+        ],
+      });
+    }, 500);
+    return () => {
+      clearTimeout(t);
+      stopTts();
+    };
+  }, [ttsEnabled]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  function speakHero() {
+    playSound("tap");
+    speakScene({
+      text: [
+        `你的情緒因應風格是 ${info.nickname}`,
+        info.oneLiner,
+        ...info.description,
+      ],
+    });
+  }
+
+  function speakToolbox() {
+    playSound("tap");
+    speakScene({
+      text: [
+        `你的情緒工具箱有 5 個小工具`,
+        ...info.toolbox.map((t, i) => `第 ${i + 1} 個：${t}`),
+      ],
+    });
+  }
+
+  function stopSpeak() {
+    playSound("toggleOff");
+    stopTts();
+  }
 
   return (
     <motion.div
@@ -345,6 +416,24 @@ function SelResultView({ scores, onRestart }: { scores: SelScores; onRestart: ()
         <p className="text-lg sm:text-xl text-white/95 max-w-xl mx-auto leading-relaxed font-medium drop-shadow zhuyin-spaced">
           <RubyText>{info.oneLiner}</RubyText>
         </p>
+
+        {/* TTS 控制 (僅 TTS 開啟時顯示) */}
+        {ttsEnabled && (
+          <div className="flex items-center justify-center gap-2 mt-5 relative">
+            <button
+              onClick={speakHero}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/30 backdrop-blur border-2 border-white/50 text-white text-xs font-bold hover:bg-white/40 transition shadow"
+            >
+              <span>🔊</span><span>再唸一次</span>
+            </button>
+            <button
+              onClick={stopSpeak}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/15 backdrop-blur border-2 border-white/30 text-white text-xs font-bold hover:bg-white/25 transition"
+            >
+              <span>⏸</span><span>停止</span>
+            </button>
+          </div>
+        )}
       </section>
 
       {/* 強度條 (4 軸百分比) */}
@@ -447,6 +536,23 @@ function SelResultView({ scores, onRestart }: { scores: SelScores; onRestart: ()
             </li>
           ))}
         </ul>
+        {/* TTS：聽老師唸 5 個工具給你聽 */}
+        {ttsEnabled && (
+          <div className="flex items-center gap-2 mt-4 relative">
+            <button
+              onClick={speakToolbox}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-100 border-2 border-amber-300 text-amber-900 text-xs font-bold hover:bg-amber-200 transition"
+            >
+              <span>🔊</span><span>唸出我的 5 個工具</span>
+            </button>
+            <button
+              onClick={stopSpeak}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border-2 border-amber-200 text-amber-700 text-xs font-bold hover:border-amber-400 transition"
+            >
+              <span>⏸</span><span>停止</span>
+            </button>
+          </div>
+        )}
       </section>
 
       {/* 情緒急救卡 (O4 — 可列印 PDF) */}

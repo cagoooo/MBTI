@@ -12,6 +12,7 @@ import { getMBTIInfo } from "@/lib/mbti";
 import { getSelStyleInfo, type SelStyle } from "@/lib/sel";
 import type { MBTIType, Scores } from "@/lib/types";
 import { deriveType } from "@/lib/scoring";
+import { isTtsAvailable, isTtsOn, speak as speakTts, stop as stopTts } from "@/lib/tts";
 
 /**
  * 🎒 自我探索三部曲 — 一個課程包把 MBTI / SEL / 猜朋友 串起來
@@ -38,18 +39,49 @@ interface JourneyState {
 export default function JourneyPage() {
   const [state, setState] = useState<JourneyState>({ mbti: null, sel: null, guess: null });
   const [showCert, setShowCert] = useState(false);
+  const [ttsEnabled, setTtsEnabled] = useState(false);
+  const [introSpoken, setIntroSpoken] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
     refresh();
+    setTtsEnabled(isTtsAvailable() && isTtsOn());
     // 從別頁回來時也要更新
     window.addEventListener("focus", refresh);
     document.addEventListener("visibilitychange", refresh);
+    const refreshTts = () => setTtsEnabled(isTtsAvailable() && isTtsOn());
+    window.addEventListener("storage", refreshTts);
+    window.addEventListener("mbti-settings-change", refreshTts);
     return () => {
       window.removeEventListener("focus", refresh);
       document.removeEventListener("visibilitychange", refresh);
+      window.removeEventListener("storage", refreshTts);
+      window.removeEventListener("mbti-settings-change", refreshTts);
     };
   }, []);
+
+  // 進場自動朗讀 hero 介紹一次 (只在 TTS 開啟 + 還沒朗讀過)
+  useEffect(() => {
+    if (!ttsEnabled || introSpoken) return;
+    const t = setTimeout(() => {
+      const done = [state.mbti, state.sel, state.guess].filter(Boolean).length;
+      const intro = [
+        "自我探索三部曲！",
+        "一節 45 分鐘輔導課，跑完三段體驗。",
+        done === 0
+          ? "三段都還沒開始，從任何一站開始都可以。"
+          : done === 3
+            ? "恭喜你！三段都完成了，可以看綜合報告囉。"
+            : `你已經完成 ${done} 段，再 ${3 - done} 段就完成全部探索囉！`,
+      ].join("。");
+      speakTts(intro, { rate: 1.0, pitch: 1.08 });
+      setIntroSpoken(true);
+    }, 600);
+    return () => {
+      clearTimeout(t);
+      stopTts();
+    };
+  }, [ttsEnabled, introSpoken]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function refresh() {
     try {
@@ -90,6 +122,46 @@ export default function JourneyPage() {
   function printSummary() {
     playSound("coin");
     window.print();
+  }
+
+  // 徽章打開時朗讀祝賀
+  useEffect(() => {
+    if (!showCert || !ttsEnabled) return;
+    const t = setTimeout(() => {
+      speakTts(
+        "恭喜你獲得自我探索王徽章！你完整跑完三部曲：MBTI、SEL 情緒、猜朋友 — 對自己有了更深的認識。",
+        { rate: 1.0, pitch: 1.1 },
+      );
+    }, 400);
+    return () => {
+      clearTimeout(t);
+      stopTts();
+    };
+  }, [showCert, ttsEnabled]);
+
+  // 朗讀綜合詮釋
+  function speakSummary() {
+    if (!state.mbti || !state.sel) return;
+    playSound("tap");
+    const mbtiInfo = getMBTIInfo(state.mbti.type);
+    const selInfo = getSelStyleInfo(state.sel.style);
+    const guessRate = state.guess ? Math.round((state.guess.correct / state.guess.total) * 100) : 0;
+    const text = [
+      `你的綜合報告：`,
+      `你是一個 ${mbtiInfo.nickname}，MBTI 類型 ${state.mbti.type}。`,
+      mbtiInfo.oneLiner,
+      `面對情緒時，你主要用 ${selInfo.nickname} 的方式接住自己。`,
+      selInfo.oneLiner,
+      state.guess && state.guess.correct / state.guess.total >= 0.5
+        ? `你對朋友的觀察很細，${guessRate}% 猜對。`
+        : `你對朋友的觀察猜中 ${guessRate}%，下次可以多注意他們的選擇細節。`,
+    ].join("。");
+    speakTts(text, { rate: 1.0, pitch: 1.05 });
+  }
+
+  function stopSpeaking() {
+    playSound("toggleOff");
+    stopTts();
   }
 
   return (
@@ -214,7 +286,7 @@ export default function JourneyPage() {
                   <span>🏆</span>
                   <span>你的自我探索綜合報告</span>
                 </h2>
-                <div className="flex gap-2 print-hide">
+                <div className="flex gap-2 print-hide flex-wrap">
                   <SoundButton
                     sound="coin"
                     onClick={printSummary}
@@ -222,6 +294,15 @@ export default function JourneyPage() {
                   >
                     🖨️ 列印 / 存 PDF
                   </SoundButton>
+                  {ttsEnabled && (
+                    <SoundButton
+                      sound="tap"
+                      onClick={speakSummary}
+                      className="px-4 py-2 rounded-xl bg-amber-100 border-2 border-amber-300 text-amber-900 font-bold text-sm hover:bg-amber-200"
+                    >
+                      🔊 唸給我聽
+                    </SoundButton>
+                  )}
                   <button
                     onClick={() => setShowCert((v) => !v)}
                     className="px-4 py-2 rounded-xl bg-white border-2 border-emerald-300 text-emerald-700 font-bold text-sm hover:bg-emerald-50"

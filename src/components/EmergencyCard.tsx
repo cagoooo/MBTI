@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import type { SelStyle } from "@/lib/sel";
 import { getSelStyleInfo } from "@/lib/sel";
 import { playSound } from "@/lib/sound";
+import { isTtsAvailable, isTtsOn, speak as speakTts, stop as stopTts } from "@/lib/tts";
 import appConfig from "../../app.config";
 
 interface Props {
@@ -25,7 +26,19 @@ interface Props {
  */
 export default function EmergencyCard({ style }: Props) {
   const [showPreview, setShowPreview] = useState(false);
+  const [ttsEnabled, setTtsEnabled] = useState(false);
   const info = getSelStyleInfo(style);
+
+  useEffect(() => {
+    setTtsEnabled(isTtsAvailable() && isTtsOn());
+    const refresh = () => setTtsEnabled(isTtsAvailable() && isTtsOn());
+    window.addEventListener("storage", refresh);
+    window.addEventListener("mbti-settings-change", refresh);
+    return () => {
+      window.removeEventListener("storage", refresh);
+      window.removeEventListener("mbti-settings-change", refresh);
+    };
+  }, []);
   // 取工具箱前 5 個短版 (移除冗長描述)
   const shortTools = info.toolbox.map((t) => {
     // 把括弧內的小字去掉、最多 18 字
@@ -39,6 +52,25 @@ export default function EmergencyCard({ style }: Props) {
     setTimeout(() => {
       window.print();
     }, 100);
+  }
+
+  function speakCard() {
+    playSound("tap");
+    speakTts(
+      [
+        `我是 ${info.nickname}。`,
+        info.oneLiner,
+        "我的 5 個情緒工具：",
+        ...info.toolbox.map((t, i) => `第 ${i + 1} 個：${t}`),
+        "緊急時別忘了找家人、朋友、或老師。",
+      ].join("。"),
+      { rate: 1.0, pitch: 1.05 },
+    );
+  }
+
+  function stopReading() {
+    playSound("toggleOff");
+    stopTts();
   }
 
   return (
@@ -78,13 +110,33 @@ export default function EmergencyCard({ style }: Props) {
           </div>
         </div>
 
-        <button
-          onClick={handlePrint}
-          className="btn-3d w-full py-3 rounded-2xl bg-amber-500 text-white font-black text-base hover:bg-amber-600 transition flex items-center justify-center gap-2"
-        >
-          <span className="text-xl">🖨️</span>
-          <span>列印 / 另存 PDF</span>
-        </button>
+        <div className="flex gap-2 items-stretch">
+          <button
+            onClick={handlePrint}
+            className="btn-3d flex-1 py-3 rounded-2xl bg-amber-500 text-white font-black text-base hover:bg-amber-600 transition flex items-center justify-center gap-2"
+          >
+            <span className="text-xl">🖨️</span>
+            <span>列印 / 另存 PDF</span>
+          </button>
+          {ttsEnabled && (
+            <>
+              <button
+                onClick={speakCard}
+                title="念出我的急救卡內容"
+                className="btn-3d py-3 px-4 rounded-2xl bg-white border-2 border-amber-300 text-amber-700 font-black hover:bg-amber-50 transition flex items-center justify-center"
+              >
+                <span className="text-xl">🔊</span>
+              </button>
+              <button
+                onClick={stopReading}
+                title="停止朗讀"
+                className="btn-3d py-3 px-3 rounded-2xl bg-white border-2 border-amber-200 text-amber-600 font-black hover:border-amber-400 transition flex items-center justify-center"
+              >
+                <span>⏸</span>
+              </button>
+            </>
+          )}
+        </div>
         <p className="text-xs text-amber-700/60 text-center mt-2 leading-relaxed">
           💡 列印對話框選「另存 PDF」就能存到電腦 / 手機 · 印出來剪一剪 + 塑封超耐用
         </p>

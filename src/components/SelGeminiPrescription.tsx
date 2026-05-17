@@ -6,6 +6,7 @@ import { generateSelPrescription, isGeminiAvailable } from "@/lib/gemini";
 import type { SelScores, SelStyle } from "@/lib/sel";
 import { getSelStyleInfo } from "@/lib/sel";
 import { playSound } from "@/lib/sound";
+import { isTtsAvailable, isTtsOn, speak as speakTts, stop as stopTts } from "@/lib/tts";
 
 interface Props {
   style: SelStyle;
@@ -28,17 +29,44 @@ export default function SelGeminiPrescription({ style, scores }: Props) {
   const [result, setResult] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [ttsEnabled, setTtsEnabled] = useState(false);
 
   const info = getSelStyleInfo(style);
 
   useEffect(() => {
     setAvailable(isGeminiAvailable());
+    setTtsEnabled(isTtsAvailable() && isTtsOn());
     // 嘗試讀快取
     try {
       const cached = sessionStorage.getItem(STORAGE_KEY_PREFIX + style);
       if (cached) setResult(cached);
     } catch {}
+    // 追蹤 TTS 開關 (使用者中途切換也可即時感知)
+    const refresh = () => setTtsEnabled(isTtsAvailable() && isTtsOn());
+    window.addEventListener("storage", refresh);
+    window.addEventListener("mbti-settings-change", refresh);
+    return () => {
+      window.removeEventListener("storage", refresh);
+      window.removeEventListener("mbti-settings-change", refresh);
+    };
   }, [style]);
+
+  // 新生成的處方自動朗讀 (用 loading→result 的時機，避免重新讀快取也播)
+  function speakResult(text: string) {
+    if (!ttsEnabled) return;
+    // 把 emoji + markdown-ish 符號移除，讓 TTS 唸得順
+    const cleaned = text
+      .replace(/[#*_`>]/g, "")
+      .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, "")
+      .replace(/\s+\n\s+/g, "。")
+      .trim();
+    speakTts(cleaned, { rate: 1.0, pitch: 1.05 });
+  }
+
+  function stopReading() {
+    playSound("toggleOff");
+    stopTts();
+  }
 
   async function generate() {
     setLoading(true);
@@ -54,6 +82,8 @@ export default function SelGeminiPrescription({ style, scores }: Props) {
       try {
         sessionStorage.setItem(STORAGE_KEY_PREFIX + style, text);
       } catch {}
+      // 新生成→自動朗讀 (TTS 開啟時)
+      setTimeout(() => speakResult(text), 350);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "未知錯誤";
       setError(msg);
@@ -151,16 +181,36 @@ export default function SelGeminiPrescription({ style, scores }: Props) {
               </p>
             ))}
           </div>
-          <div className="flex items-center justify-between gap-2 mt-4 pt-3 border-t border-violet-100">
-            <p className="text-[10px] text-violet-700/60 leading-relaxed flex-1">
+          <div className="flex items-center justify-between gap-2 mt-4 pt-3 border-t border-violet-100 flex-wrap">
+            <p className="text-[10px] text-violet-700/60 leading-relaxed flex-1 min-w-[180px]">
               ✨ 由 Google Gemini AI 生成 · 是溫暖建議，不是診斷
             </p>
-            <button
-              onClick={regenerate}
-              className="text-xs px-3 py-1 rounded-full bg-violet-100 border border-violet-300 text-violet-700 font-bold hover:bg-violet-200 transition shrink-0"
-            >
-              🔄 換一份
-            </button>
+            <div className="flex items-center gap-1.5 shrink-0">
+              {ttsEnabled && result && (
+                <>
+                  <button
+                    onClick={() => { playSound("tap"); speakResult(result); }}
+                    title="再聽老師唸一次"
+                    className="text-xs px-3 py-1 rounded-full bg-amber-100 border border-amber-300 text-amber-900 font-bold hover:bg-amber-200 transition"
+                  >
+                    🔊 唸給我聽
+                  </button>
+                  <button
+                    onClick={stopReading}
+                    title="停止朗讀"
+                    className="text-xs px-2.5 py-1 rounded-full bg-white border border-violet-200 text-violet-700 font-bold hover:border-amber-400 transition"
+                  >
+                    ⏸
+                  </button>
+                </>
+              )}
+              <button
+                onClick={regenerate}
+                className="text-xs px-3 py-1 rounded-full bg-violet-100 border border-violet-300 text-violet-700 font-bold hover:bg-violet-200 transition"
+              >
+                🔄 換一份
+              </button>
+            </div>
           </div>
         </motion.div>
       )}
