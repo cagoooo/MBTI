@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { getScene, START_SCENE_ID, TOTAL_CHAPTERS } from "@/lib/scenes";
 import { applyDelta, deriveType, initialScores } from "@/lib/scoring";
@@ -12,6 +12,12 @@ import BgmController from "@/components/BgmController";
 import SoundButton from "@/components/SoundButton";
 import { playSound, type BgmTrackId } from "@/lib/sound";
 import { isTtsAvailable, isTtsOn, speakScene, stop as stopTts, speak as speakTts } from "@/lib/tts";
+import {
+  subscribeRoom,
+  updateStudentProgress,
+  type RoomSnapshot,
+} from "@/lib/classroom-rtdb";
+import { isFirebaseAvailable } from "@/lib/firebase";
 
 /**
  * 場景所屬支線 → BGM track 對應
@@ -34,7 +40,22 @@ interface HistoryEntry {
 }
 
 export default function GamePage() {
+  return (
+    <Suspense fallback={<div className="p-10 text-center">載入中...</div>}>
+      <GameInner />
+    </Suspense>
+  );
+}
+
+interface ClassSession {
+  roomCode: string;
+  studentUid: string;
+}
+
+function GameInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const roomCodeFromUrl = (searchParams.get("room") || "").toUpperCase();
 
   const [sceneId, setSceneId] = useState<string>(START_SCENE_ID);
   const [scores, setScores] = useState<Scores>(initialScores);
@@ -43,6 +64,48 @@ export default function GamePage() {
   const [showFollowUp, setShowFollowUp] = useState<string | null>(null);
   const [pendingNext, setPendingNext] = useState<{ id: string; isEnding: boolean } | null>(null);
   const [ttsEnabled, setTtsEnabled] = useState(false);
+
+  // ─────── 班級模式 sync hook ───────
+  const [classSession, setClassSession] = useState<ClassSession | null>(null);
+  const [pinnedScene, setPinnedScene] = useState<string | null>(null);
+  const [pinReason, setPinReason] = useState<string>("");
+
+  // 從 sessionStorage 拿 class session (從 /join 帶過來)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!roomCodeFromUrl) return;
+    try {
+      const raw = sessionStorage.getItem("mbti-class-session");
+      if (!raw) return;
+      const session = JSON.parse(raw) as ClassSession;
+      if (session.roomCode === roomCodeFromUrl) {
+        setClassSession(session);
+      }
+    } catch {}
+  }, [roomCodeFromUrl]);
+
+  // 訂閱房間，接收 pinnedScene 變動
+  useEffect(() => {
+    if (!classSession || !isFirebaseAvailable()) return;
+    const unsub = subscribeRoom(classSession.roomCode, (snap: RoomSnapshot) => {
+      setPinnedScene(snap.teacherControl?.pinnedScene ?? null);
+      setPinReason(snap.teacherControl?.pinReason ?? "");
+    });
+    return () => unsub();
+  }, [classSession]);
+
+  // 進場景時上傳 progress (含初始 scene_01)
+  useEffect(() => {
+    if (!classSession || !isFirebaseAvailable()) return;
+    void updateStudentProgress(classSession.roomCode, classSession.studentUid, {
+      currentScene: sceneId,
+      currentBranch: branch,
+      score: scores,
+    });
+  }, [classSession, sceneId, branch, scores]);
+
+  // 是否被老師 pin 住
+  const isPinned = !!(classSession && pinnedScene && pinnedScene === sceneId);
 
   // 追蹤 TTS 開關狀態 (避免 SSR mismatch + 使用者中途切換)
   useEffect(() => {
@@ -108,6 +171,11 @@ export default function GamePage() {
   // Click choice
   function handleChoice(choice: Choice, index: number) {
     if (!scene || showFollowUp) return;
+    if (isPinned) {
+      // 被老師 pin 住，無法繼續
+      playSound("toggleOff");
+      return;
+    }
     playSound("click");
 
     const newScores = applyDelta(scores, choice.delta);
@@ -142,12 +210,28 @@ export default function GamePage() {
       } catch {
         // ignore (private mode etc.)
       }
-      router.push(`/result/${type}`);
+      // 班級模式：上傳 finalType 到 RTDB
+      if (classSession) {
+        import("@/lib/classroom-rtdb").then((mod) =>
+          mod.setStudentFinalType(classSession.roomCode, classSession.studentUid, type),
+        );
+      }
+      const suffix = classSession ? `?room=${classSession.roomCode}` : "";
+      router.push(`/result/${type}${suffix}`);
       return;
     }
     setSceneId(nextId);
     playSound("pageTurn");
     window.scrollTo({ top: 0, behavior: "smooth" });
+
+    // 班級模式：上傳當前場景 + 分數
+    if (classSession) {
+      void updateStudentProgress(classSession.roomCode, classSession.studentUid, {
+        currentScene: nextId,
+        currentBranch: branch,
+        score: finalScores,
+      });
+    }
   }
 
   function dismissFollowUp() {
@@ -196,6 +280,34 @@ export default function GamePage() {
       </div>
 
       <div className="max-w-3xl mx-auto">
+        {/* 班級模式 badge */}
+        {classSession && (
+          <div className="text-center mb-3">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-violet-100 border-2 border-violet-300 text-violet-800">
+              🎓 班級模式 ・ 房號 {classSession.roomCode}
+            </span>
+          </div>
+        )}
+
+        {/* 老師 Pin 提示 */}
+        {isPinned && (
+          <motion.div
+            initial={{ y: -30, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            className="bg-gradient-to-r from-rose-500 to-orange-500 text-white rounded-2xl p-4 mb-4 shadow-lg border-4 border-white"
+          >
+            <div className="flex items-start gap-3">
+              <span className="text-3xl">📌</span>
+              <div>
+                <div className="font-black text-lg">老師正在引導大家討論</div>
+                <div className="text-sm opacity-95">
+                  {pinReason || "請等老師讓大家繼續，先想想你想選什麼"}
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
         <ProgressDots chapter={scene.chapter} total={TOTAL_CHAPTERS} />
 
         {/* 支線標籤 */}

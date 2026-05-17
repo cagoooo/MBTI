@@ -190,15 +190,33 @@ export default function HomePage() {
             不需要回答抽象問卷就能認識自己的人格傾向。
             適合作為班級活動、輔導課、自我認識主題的引導素材。
           </p>
-          <SoundLink
-            href="/class-stats"
-            sound="coin"
-            className="mt-5 inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-gradient-to-r from-violet-500 to-purple-500 text-white font-black hover:from-violet-600 hover:to-purple-600 transition shadow-md"
-          >
-            <span className="text-xl">📊</span>
-            <span>老師專用：全班 MBTI 統計</span>
-            <span>→</span>
-          </SoundLink>
+          <div className="mt-5 flex flex-col sm:flex-row gap-3 flex-wrap">
+            <SoundLink
+              href="/teacher/new"
+              sound="coin"
+              className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-gradient-to-r from-violet-500 to-purple-500 text-white font-black hover:from-violet-600 hover:to-purple-600 transition shadow-md"
+            >
+              <span className="text-xl">🎓</span>
+              <span>建立班級房間（全班同步玩）</span>
+              <span>→</span>
+            </SoundLink>
+            <SoundLink
+              href="/class-stats"
+              sound="coin"
+              className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-white border-2 border-violet-300 text-violet-700 font-black hover:bg-violet-50 transition"
+            >
+              <span className="text-xl">📊</span>
+              <span>班級 MBTI 統計</span>
+            </SoundLink>
+            <SoundLink
+              href="/join"
+              sound="tap"
+              className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-white border-2 border-amber-300 text-amber-700 font-black hover:bg-amber-50 transition"
+            >
+              <span className="text-xl">🚪</span>
+              <span>學生加入房間</span>
+            </SoundLink>
+          </div>
           <p className="text-[var(--color-ink)]/60 text-sm mt-3">
             ⚠️ MBTI 為性格傾向參考，並非心理診斷工具。請以開放、好奇的態度引導孩子探索。
           </p>

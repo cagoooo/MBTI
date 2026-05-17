@@ -1,0 +1,49 @@
+{
+  "rules": {
+    "rooms": {
+      "$roomCode": {
+        ".read": "auth != null",
+        ".write": "auth != null",
+        ".validate": "$roomCode.length >= 4 && $roomCode.length <= 8 && $roomCode.matches(/^[A-Z0-9]+$/)",
+
+        "meta": {
+          ".validate": "newData.hasChildren(['teacherUid', 'createdAt', 'isActive', 'passwordHash'])",
+          "teacherUid": { ".validate": "newData.isString()" },
+          "teacherName": { ".validate": "newData.isString() && newData.val().length <= 30" },
+          "passwordHash": { ".validate": "newData.isString() && newData.val().length >= 8" },
+          "createdAt": { ".validate": "newData.isNumber()" },
+          "isActive": { ".validate": "newData.isBoolean()" },
+          "scenarioVersion": { ".validate": "newData.isString()" },
+          "$other": { ".validate": false }
+        },
+
+        "students": {
+          "$studentUid": {
+            ".validate": "newData.hasChildren(['name', 'joinedAt'])",
+            "name": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 20" },
+            "avatar": { ".validate": "newData.isString() && newData.val().length <= 6" },
+            "joinedAt": { ".validate": "newData.isNumber()" },
+            "currentScene": { ".validate": "newData.isString() && newData.val().length <= 30" },
+            "currentBranch": { ".validate": "newData.isString() && newData.val().length <= 10" },
+            "score": {
+              "EI": { ".validate": "newData.isNumber()" },
+              "SN": { ".validate": "newData.isNumber()" },
+              "TF": { ".validate": "newData.isNumber()" },
+              "JP": { ".validate": "newData.isNumber()" }
+            },
+            "lastSeen": { ".validate": "newData.isNumber()" },
+            "finalType": { ".validate": "newData.isString() && newData.val().length === 4" },
+            "lastChoiceIndex": { ".validate": "newData.isNumber()" }
+          }
+        },
+
+        "teacherControl": {
+          ".write": "auth != null && auth.uid === data.parent().child('meta/teacherUid').val()",
+          "pinnedScene": { ".validate": "newData.isString() || newData.val() === null" },
+          "pinReason": { ".validate": "newData.isString() && newData.val().length <= 100" },
+          "broadcast": { ".validate": "newData.isString() && newData.val().length <= 200" }
+        }
+      }
+    }
+  }
+}
