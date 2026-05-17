@@ -140,3 +140,73 @@ ${picksLine ? `- ${picksLine}` : ""}
 
   return generateText(prompt, { temperature: 0.9, maxOutputTokens: 700 });
 }
+
+/**
+ * SEL 結果頁專用：根據 4 軸因應分數 + 主導風格生成「個人化情緒處方」。
+ *
+ * 設計原則:
+ *   - 對象是國小 3-6 年級，用詞溫暖具體
+ *   - 不是「你應該...」，而是「下週可以試試...」
+ *   - 3 段結構: 看見你 / 接下來一週可以練習 / 遇到 OO 情境時可以這樣做
+ *   - 結合主導風格 (鼓勵) + 弱勢軸 (引導發展)
+ */
+export async function generateSelPrescription(input: {
+  style: "express" | "solve" | "calm" | "connect";
+  nickname: string;
+  scores: { express: number; solve: number; calm: number; connect: number };
+}): Promise<string> {
+  const styleNames = {
+    express: "表達型 (情緒會用說的、寫的、畫的表達出來)",
+    solve: "思考型 (用腦袋分析原因、找解法)",
+    calm: "安撫型 (用身體照顧自己、深呼吸、暫離)",
+    connect: "連結型 (找家人、朋友、老師陪伴)",
+  };
+  const main = styleNames[input.style];
+  const { scores } = input;
+  const total = scores.express + scores.solve + scores.calm + scores.connect;
+  const pct = (n: number) => (total > 0 ? Math.round((n / total) * 100) : 25);
+
+  // 找最弱的軸 (鼓勵發展)
+  const axes: Array<["express" | "solve" | "calm" | "connect", number]> = [
+    ["express", scores.express],
+    ["solve", scores.solve],
+    ["calm", scores.calm],
+    ["connect", scores.connect],
+  ];
+  axes.sort((a, b) => a[1] - b[1]);
+  const weakest = axes[0][0];
+  const weakestName = styleNames[weakest];
+
+  const prompt = `
+你是一位溫暖、了解 SEL (社會情緒學習) 的國小輔導老師。
+現在要為一個國小 3-6 年級學生寫一段「個人化情緒處方」(不是診斷，是溫暖的建議)。
+
+學生資訊：
+- 主導因應風格：${input.nickname} — ${main}
+- 4 軸分布：表達 ${pct(scores.express)}% / 思考 ${pct(scores.solve)}% / 安撫 ${pct(scores.calm)}% / 連結 ${pct(scores.connect)}%
+- 最少使用的方式：${weakestName}
+
+請寫 250-300 字「情緒處方」，分成三段（每段開頭加 emoji + 標題）：
+
+🔍 我看見的你
+（30-50 字，用溫暖肯定的語氣描述他的主導風格特色，舉一個生活例子）
+
+🌱 接下來一週可以試試 3 件小事
+（90-120 字，列出 3 件「具體、可執行、今天就能開始」的小練習。
+其中至少 1 件是針對他最少使用的「${weakestName}」方式 — 用「試試看」「也可以」的語氣，不是「你應該」。
+例如：「明天遇到難過時，試著深呼吸 3 次再說話」「下次想哭時，先寫一句話描述感受」）
+
+💌 遇到 OO 情境時可以這樣做
+（80-110 字，舉一個具體常見情境（如：「下次有人誤會你的時候」、「下次比賽輸了的時候」），
+用他主導風格的方式 + 借一點其他方式的智慧，給一個 step-by-step 的建議）
+
+語氣要求：
+- 像愛你的輔導老師在你旁邊輕聲說話
+- 用國小看得懂的詞，不要心理學術語
+- 不要說「你一定要...」「你應該...」，改用「試試看」「也可以」「下次或許可以」
+- 不要列規則式條列，每件事都加情境
+- 純文字，段落間留空行，不要 markdown 標題 (# 之類)
+`.trim();
+
+  return generateText(prompt, { temperature: 0.85, maxOutputTokens: 700 });
+}

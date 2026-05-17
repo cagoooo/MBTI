@@ -72,6 +72,22 @@ export default function HomePage() {
             </SoundLink>
           </div>
 
+          {/* 三部曲課程包 CTA — 給老師最顯眼的入口 */}
+          <div className="pt-4">
+            <SoundLink
+              href="/journey"
+              sound="coin"
+              className="btn-3d inline-flex items-center justify-center gap-3 px-6 py-3 rounded-2xl bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 text-white font-black text-base hover:opacity-95 relative shadow-lg"
+            >
+              <span className="text-xl">🎒</span>
+              <span>自我探索三部曲（45 分鐘完整輔導課）</span>
+              <span className="text-xl">→</span>
+              <span className="absolute -top-2 -right-2 bg-rose-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow border-2 border-white">
+                老師推薦
+              </span>
+            </SoundLink>
+          </div>
+
           <div className="pt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-[var(--color-ink)]/60">
             <span className="flex items-center gap-1.5">
               <span>⏱️</span> 約 10 分鐘
@@ -280,6 +296,27 @@ export default function HomePage() {
               className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-violet-500 text-white font-bold text-sm hover:bg-violet-600 transition"
             >
               <span>進入 SEL 特別篇</span>
+              <span>→</span>
+            </SoundLink>
+          </div>
+
+          {/* 三部曲課程包 — 一節完整輔導課 */}
+          <div className="mt-3 p-4 rounded-2xl bg-gradient-to-r from-emerald-50 to-teal-50 border-2 border-emerald-300">
+            <p className="text-sm font-black text-emerald-900 mb-2 flex items-center gap-2">
+              <span>🎒</span>
+              <span>給輔導老師：45 分鐘完整課程包</span>
+              <span className="text-[10px] bg-rose-500 text-white px-2 py-0.5 rounded-full">2026 新增</span>
+            </p>
+            <p className="text-xs text-emerald-800/80 mb-3 leading-relaxed">
+              把 MBTI 校園奇遇記 + SEL 逆境特別篇 + 猜朋友 MBTI 串成一節完整輔導課。
+              學生跑完三段拿綜合報告 + 自我探索王徽章。老師備課直接用，內含時間規劃 / 教學目標 / 反思題建議。
+            </p>
+            <SoundLink
+              href="/journey"
+              sound="coin"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500 text-white font-bold text-sm hover:bg-emerald-600 transition"
+            >
+              <span>進入三部曲</span>
               <span>→</span>
             </SoundLink>
           </div>

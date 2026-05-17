@@ -120,6 +120,14 @@ export default function GuessGamePage() {
       setCurrentIdx(currentIdx + 1);
       playSound("pageTurn");
     } else {
+      // 結束 → 存完成 flag 給 /journey 看
+      try {
+        const correctCount = guesses.filter((g) => g.guessed === g.person.actual).length;
+        sessionStorage.setItem(
+          "mbti-guess-result",
+          JSON.stringify({ total: people.length, correct: correctCount, at: Date.now() }),
+        );
+      } catch {}
       setPhase("result");
       playSound("reveal");
       window.scrollTo({ top: 0, behavior: "smooth" });

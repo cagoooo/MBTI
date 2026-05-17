@@ -21,6 +21,9 @@ import {
   type SelScores,
   type SelStyle,
 } from "@/lib/sel";
+import SelCelebration from "@/components/SelCelebration";
+import SelGeminiPrescription from "@/components/SelGeminiPrescription";
+import EmergencyCard from "@/components/EmergencyCard";
 
 /**
  * SEL 逆境特別篇 — Social-Emotional Learning
@@ -92,7 +95,14 @@ export default function SelPage() {
       setSceneIdx(sceneIdx + 1);
       window.scrollTo({ top: 0, behavior: "smooth" });
     } else {
-      // 結束 → 結果頁
+      // 結束 → 結果頁；存 result 到 sessionStorage 給 /journey 看完成狀態
+      try {
+        const style = deriveSelStyle(scores);
+        sessionStorage.setItem(
+          "mbti-sel-result",
+          JSON.stringify({ style, scores, at: Date.now() }),
+        );
+      } catch {}
       setPhase("result");
       window.scrollTo({ top: 0, behavior: "smooth" });
       playSound("reveal");
@@ -318,10 +328,12 @@ function SelResultView({ scores, onRestart }: { scores: SelScores; onRestart: ()
     >
       {/* Hero */}
       <section
-        className={`bg-gradient-to-br ${info.gradient} rounded-[2rem] p-6 sm:p-10 text-center text-white shadow-xl border-4 border-white/60 relative overflow-hidden`}
+        className={`bg-gradient-to-br ${info.gradient} rounded-[2rem] p-6 sm:p-10 text-center text-white shadow-xl border-4 border-white/60 relative overflow-hidden min-h-[420px]`}
       >
-        <div className="absolute top-4 right-4 text-7xl opacity-20 animate-wiggle">{info.emoji}</div>
-        <div className="absolute bottom-4 left-4 text-6xl opacity-20 animate-float-slow">🌱</div>
+        {/* 4 種 SEL 風格專屬慶祝動畫 */}
+        <SelCelebration style={style} />
+        <div className="absolute top-4 right-4 text-7xl opacity-15 animate-wiggle">{info.emoji}</div>
+        <div className="absolute bottom-4 left-4 text-6xl opacity-15 animate-float-slow">🌱</div>
 
         <p className="text-xs sm:text-sm font-bold uppercase tracking-[0.3em] text-white/90 mb-2 drop-shadow">
           🌧️ 你的情緒因應風格是
@@ -415,6 +427,9 @@ function SelResultView({ scores, onRestart }: { scores: SelScores; onRestart: ()
         </section>
       </div>
 
+      {/* AI 個人化情緒處方 (R1 — 設了 Gemini API key 才會顯示) */}
+      <SelGeminiPrescription style={style} scores={scores} />
+
       {/* 情緒工具箱 (重點！) */}
       <section className="bg-gradient-to-br from-yellow-50 via-amber-50 to-orange-50 rounded-3xl p-6 sm:p-8 border-2 border-amber-300 shadow-sm relative overflow-hidden">
         <div className="absolute -top-4 -right-4 text-7xl opacity-10">🛠️</div>
@@ -433,6 +448,9 @@ function SelResultView({ scores, onRestart }: { scores: SelScores; onRestart: ()
           ))}
         </ul>
       </section>
+
+      {/* 情緒急救卡 (O4 — 可列印 PDF) */}
+      <EmergencyCard style={style} />
 
       {/* 互補搭檔 */}
       <section className="bg-gradient-to-br from-sky-50 to-blue-50 rounded-3xl p-6 border-2 border-sky-200">
