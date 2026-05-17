@@ -1,45 +1,51 @@
 /**
  * MBTI 校園奇遇記 — Service Worker
  *
- * 策略（依 skill pwa-cache-bust）:
+ * ⚠️ 重要：__BUILD_VERSION__ 是 build-time 注入的占位字串
+ *    由 scripts/gen-version.mjs 在 prebuild 時替換成 e.g. "20260517-0530-abc1234"
+ *    這是讓 SW 內容每次 build 都變 (byte-different) → 瀏覽器才會偵測到更新
+ *
+ * 策略 (依 skill pwa-cache-bust):
  *   - HTML / navigate / version.json → network-first (確保總是最新)
  *   - Next.js hashed assets (_next/static/*) → cache-first (檔名已含 hash 是 cache-bust)
  *   - 音檔 /audio/* → cache-first (預載入 + 之後 instant)
  *   - 其他 → network-first 預設安全
  *
- * 版本變動：CACHE_VERSION 改了之後，舊 caches 在 activate 時自動清除。
- * 由 SwRegister 透過 fetch version.json 偵測，跳 Banner 提示使用者重整。
+ * 版本變動 → activate 時自動清掉所有 stale caches → 強迫拿新 chunks
  */
 
-const CACHE_VERSION = "mbti-v1";
+const BUILD_VERSION = "20260517-0526-c4871b6";
+const CACHE_VERSION = `mbti-${BUILD_VERSION}`;
 const HTML_CACHE = `${CACHE_VERSION}-html`;
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const AUDIO_CACHE = `${CACHE_VERSION}-audio`;
 
-// 不能 cache 的條件
 function shouldSkip(url) {
   if (url.protocol !== "http:" && url.protocol !== "https:") return true;
-  // chrome-extension / data / blob 等跳過
   return false;
 }
 
-self.addEventListener("install", (event) => {
-  // 不等舊 SW 退場，立刻 install
+self.addEventListener("install", () => {
+  // 不等舊 SW 退場，立刻接管
   self.skipWaiting();
 });
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     (async () => {
-      // 清掉所有非當前版本的 cache
+      // 清掉所有非當前版本的 cache (BUILD_VERSION 不同就會被清)
       const keys = await caches.keys();
       await Promise.all(
         keys
           .filter((k) => !k.startsWith(CACHE_VERSION))
           .map((k) => caches.delete(k)),
       );
-      // 立刻接管所有頁面（不等使用者 reload）
       await self.clients.claim();
+      // 通知所有 clients 新 SW 已就緒 → SwRegister 收到後可決定要不要 reload
+      const clients = await self.clients.matchAll({ includeUncontrolled: true });
+      for (const client of clients) {
+        client.postMessage({ type: "SW_ACTIVATED", version: BUILD_VERSION });
+      }
     })(),
   );
 });
@@ -48,7 +54,6 @@ async function networkFirst(request, cacheName) {
   const cache = await caches.open(cacheName);
   try {
     const fresh = await fetch(request);
-    // 只 cache 同源、200 OK 的回應
     if (fresh && fresh.status === 200 && fresh.type !== "opaque") {
       cache.put(request, fresh.clone()).catch(() => {});
     }
@@ -78,7 +83,7 @@ self.addEventListener("fetch", (event) => {
   if (req.method !== "GET") return;
   if (shouldSkip(url)) return;
 
-  // version.json: 永遠 network-first 不 cache (給版本檢查用)
+  // version.json: 永遠 network-only 不 cache (給版本檢查用)
   if (url.pathname.endsWith("/version.json")) {
     event.respondWith(
       fetch(req, { cache: "no-store" }).catch(async () => {
@@ -118,7 +123,7 @@ self.addEventListener("fetch", (event) => {
   event.respondWith(networkFirst(req, STATIC_CACHE));
 });
 
-// 接收主執行緒指令（強制清 cache）
+// 接收主執行緒指令
 self.addEventListener("message", (event) => {
   if (event.data?.type === "SKIP_WAITING") {
     self.skipWaiting();
@@ -130,5 +135,8 @@ self.addEventListener("message", (event) => {
         await Promise.all(keys.map((k) => caches.delete(k)));
       })(),
     );
+  }
+  if (event.data?.type === "GET_VERSION") {
+    event.source?.postMessage({ type: "SW_VERSION", version: BUILD_VERSION });
   }
 });
