@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import Footer from "@/components/Footer";
 import SoundToggle from "@/components/SoundToggle";
+import SwRegister from "@/components/SwRegister";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://cagoooo.github.io/MBTI";
 
@@ -49,6 +50,7 @@ export default function RootLayout({
         <main className="flex-1 flex flex-col">{children}</main>
         <Footer />
         <SoundToggle />
+        <SwRegister />
       </body>
     </html>
   );

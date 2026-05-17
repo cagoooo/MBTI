@@ -1,3 +1,5 @@
+const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION || "dev";
+
 export default function Footer() {
   const year = new Date().getFullYear();
   return (
@@ -19,6 +21,9 @@ export default function Footer() {
         </p>
         <p className="text-xs opacity-50">
           本網站用於 MBTI 性格類型教育推廣，結果僅供參考，不應作為心理診斷依據。
+        </p>
+        <p className="text-[10px] opacity-40 font-mono mt-2">
+          v{APP_VERSION}
         </p>
       </div>
     </footer>
