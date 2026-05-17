@@ -128,9 +128,9 @@ export default function CampusIntro() {
             ✏️ 三年五班・新學期歡迎會
           </div>
 
-          {/* 學生們陳列 */}
-          <div className="px-3 sm:px-6 py-6 sm:py-8">
-            <div className="grid grid-cols-4 sm:grid-cols-8 gap-2 sm:gap-3 mb-6">
+          {/* 學生們陳列 — 手機 4 欄 (兩排) / 平板以上 8 欄 (一排) */}
+          <div className="px-2 sm:px-6 py-5 sm:py-8">
+            <div className="grid grid-cols-4 sm:grid-cols-8 gap-1.5 sm:gap-3 mb-5 sm:mb-6">
               {STUDENTS.map((s, i) => {
                 const isVisible = i < visibleCount;
                 const isActive = i === activeIdx && visibleCount >= STUDENTS.length;
@@ -168,10 +168,10 @@ export default function CampusIntro() {
                         </motion.span>
                       )}
                     </motion.div>
-                    <span className={`mt-1 text-[10px] sm:text-xs font-bold ${isActive ? "text-[var(--color-coral)]" : "text-[var(--color-ink)]/70"}`}>
+                    <span className={`mt-1 text-[11px] sm:text-xs font-bold leading-tight no-zhuyin-spacing ${isActive ? "text-[var(--color-coral)]" : "text-[var(--color-ink)]/70"}`}>
                       {s.name}
                     </span>
-                    <span className={`text-[9px] sm:text-[10px] font-black opacity-60 ${isActive ? "text-[var(--color-coral)] opacity-100" : ""}`}>
+                    <span className={`text-[9px] sm:text-[10px] font-black opacity-60 leading-tight no-zhuyin-spacing ${isActive ? "text-[var(--color-coral)] opacity-100" : ""}`}>
                       {s.type}
                     </span>
                   </motion.button>
@@ -189,7 +189,7 @@ export default function CampusIntro() {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: -10, scale: 0.96 }}
                     transition={{ type: "spring", stiffness: 280, damping: 22 }}
-                    className="relative max-w-md bg-white rounded-2xl px-5 py-3 border-2 border-[var(--color-ink)]/15 shadow-md"
+                    className="relative w-[min(90vw,28rem)] bg-white rounded-2xl px-4 sm:px-5 py-3 border-2 border-[var(--color-ink)]/15 shadow-md"
                   >
                     {/* 三角形小尾巴 */}
                     <div
@@ -204,7 +204,7 @@ export default function CampusIntro() {
                         </span>
                       </span>
                     </div>
-                    <p className="text-[var(--color-ink)] leading-relaxed text-sm sm:text-base">
+                    <p className="text-[var(--color-ink)] leading-relaxed text-sm sm:text-base zhuyin-spaced">
                       {activeLine}
                     </p>
                   </motion.div>

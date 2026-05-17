@@ -6,7 +6,7 @@ import BgmController from "@/components/BgmController";
 
 export default function HomePage() {
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col has-floating-ui">
       <BgmController track="home" />
       {/* Hero */}
       <section className="relative px-6 pt-12 pb-16 sm:pt-20 sm:pb-24 overflow-hidden">

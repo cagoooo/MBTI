@@ -181,7 +181,7 @@ function TeacherDashboard() {
   // 未授權：顯示密碼框
   if (!authorized) {
     return (
-      <div className="px-4 sm:px-6 py-6 sm:py-10">
+      <div className="px-3 sm:px-6 py-5 sm:py-10 has-floating-ui">
         <div className="max-w-md mx-auto">
           <div className="mb-6">
             <HomeToButton />
@@ -223,7 +223,7 @@ function TeacherDashboard() {
   const isRoomEnded = snap?.meta?.isActive === false;
 
   return (
-    <div className="px-4 sm:px-6 py-6 sm:py-10">
+    <div className="px-3 sm:px-6 py-5 sm:py-10 has-floating-ui">
       <div className="max-w-6xl mx-auto">
         <div className="mb-6 flex items-center justify-between flex-wrap gap-3">
           <HomeToButton />

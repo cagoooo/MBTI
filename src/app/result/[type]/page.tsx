@@ -38,7 +38,7 @@ export default async function ResultPage({ params }: { params: Promise<{ type: s
   const info = getMBTIInfo(upper);
 
   return (
-    <div className="px-4 sm:px-6 py-6 sm:py-10">
+    <div className="px-3 sm:px-6 py-5 sm:py-10 has-floating-ui">
       <BgmController track="result" />
       {/* 列印專用：隱藏在螢幕，print 時才顯示 */}
       <PrintSheet info={info} />
@@ -60,13 +60,13 @@ export default async function ResultPage({ params }: { params: Promise<{ type: s
             🎉 你的 MBTI 是
           </p>
           <div className="text-8xl mb-2 animate-pop-in">{info.emoji}</div>
-          <h1 className="text-6xl sm:text-7xl md:text-8xl font-black text-white drop-shadow-lg mb-2">
+          <h1 className="text-6xl sm:text-7xl md:text-8xl font-black text-white drop-shadow-lg mb-2 no-zhuyin-spacing">
             {info.type}
           </h1>
           <h2 className="text-2xl sm:text-3xl font-black text-white drop-shadow mb-4">
             <RubyText>{info.nickname}</RubyText>
           </h2>
-          <p className="text-lg sm:text-xl text-white/95 max-w-xl mx-auto leading-relaxed font-medium drop-shadow">
+          <p className="text-base sm:text-xl text-white/95 max-w-xl mx-auto leading-relaxed font-medium drop-shadow zhuyin-spaced">
             <RubyText>{info.oneLiner}</RubyText>
           </p>
         </section>

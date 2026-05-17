@@ -29,7 +29,7 @@ export default async function TypeDetailPage({ params }: { params: Promise<{ typ
   const info = getMBTIInfo(upper);
 
   return (
-    <div className="px-4 sm:px-6 py-6 sm:py-10">
+    <div className="px-3 sm:px-6 py-5 sm:py-10 has-floating-ui">
       <BgmController track="home" />
       <div className="max-w-4xl mx-auto">
         <div className="mb-6 flex items-center justify-between flex-wrap gap-3">

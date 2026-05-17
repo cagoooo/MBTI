@@ -30,28 +30,52 @@ html {
   font-size: calc(16px * var(--font-scale, 1));
 }
 
-/* 注音（ruby/rt）— 給低年級友善 */
+/* 注音（ruby/rt）— 給低年級友善
+ * RWD 設計：
+ *   1. rt 字級用 clamp 避免手機過小看不見
+ *   2. line-height 用 class .zhuyin-on 切換 (不用 :has() — iOS 15- 不支援)
+ *   3. 行高加倍只套在內容類元素，避免按鈕被撐高造成 layout shift
+ */
 ruby.ruby-char {
   ruby-position: over;
   ruby-align: center;
-  /* 不影響佈局，注音字在上方覆蓋於行間 */
+  /* 防止單個漢字 + 注音被自動斷行拆開 */
+  white-space: nowrap;
 }
 rt.ruby-rt {
-  font-size: 0.45em;
+  /* 手機上至少 0.5em，桌面 0.45em — clamp 確保可讀性 */
+  font-size: clamp(0.5em, 0.45em + 0.5vw, 0.55em);
   font-weight: 500;
   font-family: "Bopomofo", "PingFang TC", "Microsoft JhengHei", sans-serif;
-  color: rgba(45, 48, 71, 0.7);
+  color: rgba(45, 48, 71, 0.72);
   letter-spacing: -0.5px;
   line-height: 1;
   /* iOS 微調 */
-  -webkit-text-fill-color: rgba(45, 48, 71, 0.7);
+  -webkit-text-fill-color: rgba(45, 48, 71, 0.72);
+  /* 防止注音被選取干擾閱讀 */
+  -webkit-user-select: none;
+  user-select: none;
 }
-/* 啟用注音時加大行高，避免注音碰到上一行的字 */
-body:has(ruby.ruby-char) p,
-body:has(ruby.ruby-char) li,
-body:has(ruby.ruby-char) span:not(.no-ruby-spacing),
-body:has(ruby.ruby-char) button {
-  line-height: 2.0;
+/* 啟用注音時加大行高，避免注音碰到上一行字
+ * 用 root class 不用 :has() (相容 iOS Safari 15-)
+ * 只套在「閱讀型」內容：p / li / 對話氣泡 / 場景文字
+ * 不套在按鈕，避免單行 CTA 變太空 */
+html.zhuyin-on p,
+html.zhuyin-on li,
+html.zhuyin-on .zhuyin-spaced {
+  line-height: 2.1;
+}
+/* 按鈕單行注音用較緊的 line-height 1.85 */
+html.zhuyin-on button:not(.no-zhuyin-spacing),
+html.zhuyin-on a.btn-3d,
+html.zhuyin-on .choice-option {
+  line-height: 1.85;
+}
+/* 列表項目 (徽章 / 名人 chip) 不要拉太鬆 */
+html.zhuyin-on .chip,
+html.zhuyin-on .pill,
+html.zhuyin-on [class*="rounded-full"] {
+  line-height: 1.75;
 }
 
 * {
@@ -111,6 +135,36 @@ button, a {
 
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ──────────────── 行動裝置 RWD utilities ────────────────
+ * Safe-area: 給 iPhone 瀏海 / Android 手勢列預留空間
+ * Tap target: 國小生手指較粗，最小 44px */
+
+.safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
+.safe-top { padding-top: env(safe-area-inset-top, 0px); }
+.safe-right { padding-right: env(safe-area-inset-right, 0px); }
+
+/* 浮動 UI 群組: 同時考慮 safe area + 與內容的間距 */
+.floating-bottom-right {
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 0.75rem);
+  right: calc(env(safe-area-inset-right, 0px) + 0.75rem);
+}
+@media (min-width: 640px) {
+  .floating-bottom-right {
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 1rem);
+    right: calc(env(safe-area-inset-right, 0px) + 1rem);
+  }
+}
+
+/* 給 game 頁/結果頁底部足夠 padding, 避免浮動按鈕擋住最後一段文字 */
+.has-floating-ui {
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 80px);
+}
+
+/* 防止 iOS 雙擊縮放 */
+button, a {
+  touch-action: manipulation;
+}
 
 /* ──────────────── 列印 (A4) 樣式 ────────────────
    原則: 螢幕 UI 全部隱藏, 只保留 .print-sheet 區塊

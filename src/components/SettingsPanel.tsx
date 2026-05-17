@@ -6,6 +6,7 @@ import {
   FONT_SCALE_LABELS,
   TTS_RATE_BOUNDS,
   applyFontScale,
+  applyZhuyinClass,
   getFontScale,
   getTtsRate,
   isZhuyinOn,
@@ -46,7 +47,9 @@ export default function SettingsPanel() {
     setFontScaleState(fs);
     applyFontScale(fs);
     setTtsRateState(getTtsRate());
-    setZhuyinState(isZhuyinOn());
+    const zh = isZhuyinOn();
+    setZhuyinState(zh);
+    applyZhuyinClass(zh); // 首次掛載時確保 <html class="zhuyin-on"> 與 localStorage 同步
 
     // 偵測是否已安裝為 PWA
     if (typeof window !== "undefined") {
@@ -132,28 +135,42 @@ export default function SettingsPanel() {
 
   return (
     <>
-      {/* 浮動按鈕 (在 SoundToggle 上方) */}
+      {/* 浮動按鈕 (在 SoundToggle 上方 60px) */}
       <button
         onClick={toggleOpen}
         title="更多設定 (字級 / 朗讀速度 / 安裝 App)"
         aria-label="更多設定"
-        className="fixed bottom-3 right-3 sm:bottom-4 sm:right-4 z-40 w-11 h-11 rounded-full bg-white/90 backdrop-blur border-2 border-[var(--color-ink)]/15 shadow-md flex items-center justify-center text-lg hover:scale-110 transition print:hidden"
-        style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 60px)" }}
+        className="fixed floating-bottom-right z-40 w-11 h-11 rounded-full bg-white/90 backdrop-blur border-2 border-[var(--color-ink)]/15 shadow-md flex items-center justify-center text-lg hover:scale-110 transition print:hidden"
+        style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 0.75rem + 56px)" }}
       >
         {open ? "✕" : "⚙️"}
       </button>
 
-      {/* 抽屜 panel */}
+      {/* 抽屜 panel + backdrop (手機 backdrop 點外面可以關) */}
       <AnimatePresence>
         {open && (
-          <motion.div
-            initial={{ opacity: 0, y: 30, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 30, scale: 0.95 }}
-            transition={{ type: "spring", stiffness: 280, damping: 24 }}
-            className="fixed bottom-20 right-3 sm:bottom-24 sm:right-4 z-40 w-[min(92vw,360px)] bg-white rounded-3xl border-2 border-[var(--color-ink)]/15 shadow-2xl p-5 print:hidden"
-            style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 116px)" }}
-          >
+          <>
+            <motion.div
+              key="backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.18 }}
+              onClick={() => { playSound("toggleOff"); setOpen(false); }}
+              className="fixed inset-0 bg-[var(--color-ink)]/30 backdrop-blur-[2px] z-30 print:hidden sm:bg-transparent sm:backdrop-blur-none"
+            />
+            <motion.div
+              key="panel"
+              initial={{ opacity: 0, y: 30, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 30, scale: 0.95 }}
+              transition={{ type: "spring", stiffness: 280, damping: 24 }}
+              className="fixed z-40 w-[min(92vw,360px)] max-h-[80vh] overflow-y-auto bg-white rounded-3xl border-2 border-[var(--color-ink)]/15 shadow-2xl p-5 print:hidden"
+              style={{
+                bottom: "calc(env(safe-area-inset-bottom, 0px) + 0.75rem + 112px)",
+                right: "calc(env(safe-area-inset-right, 0px) + 0.75rem)",
+              }}
+            >
             <h3 className="text-lg font-black mb-4 flex items-center gap-2">
               <span>⚙️</span> 適性設定
             </h3>
@@ -264,7 +281,8 @@ export default function SettingsPanel() {
             <p className="text-xs text-[var(--color-ink)]/40 mt-4 text-center">
               所有設定都會記住，下次進來不用再設
             </p>
-          </motion.div>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
     </>

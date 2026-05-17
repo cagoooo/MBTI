@@ -21,7 +21,8 @@ export default function SwUpdateBanner({ currentVersion, newVersion, onUpdate, o
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: -80, opacity: 0 }}
         transition={{ type: "spring", stiffness: 280, damping: 24 }}
-        className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[min(90vw,560px)] print:hidden"
+        className="fixed left-1/2 -translate-x-1/2 z-50 w-[min(92vw,560px)] print:hidden"
+        style={{ top: "calc(env(safe-area-inset-top, 0px) + 0.75rem)" }}
       >
         <div className="bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 text-white rounded-2xl shadow-2xl border-4 border-white/40 px-5 py-4">
           <div className="flex items-start gap-3">

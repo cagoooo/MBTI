@@ -84,11 +84,11 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap"
           rel="stylesheet"
         />
-        {/* 避免字級設定首次 paint 閃爍 — 在 client render 前就套用 */}
+        {/* 避免字級 + 注音設定首次 paint 閃爍 — 在 client render 前就套用 */}
         <script
           dangerouslySetInnerHTML={{
             __html:
-              "(function(){try{var v=localStorage.getItem('mbti-font-scale');var m={sm:.9,md:1,lg:1.15,xl:1.3};document.documentElement.style.setProperty('--font-scale',String(m[v]||1));}catch(e){}})();",
+              "(function(){try{var v=localStorage.getItem('mbti-font-scale');var m={sm:.9,md:1,lg:1.15,xl:1.3};document.documentElement.style.setProperty('--font-scale',String(m[v]||1));if(localStorage.getItem('mbti-zhuyin-on')==='1')document.documentElement.classList.add('zhuyin-on');}catch(e){}})();",
           }}
         />
       </head>

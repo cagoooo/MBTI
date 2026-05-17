@@ -96,7 +96,7 @@ export default function SoundToggle() {
   if (!mounted) return null;
 
   return (
-    <div className="fixed bottom-3 right-3 sm:bottom-4 sm:right-4 z-40 flex gap-2 print:hidden">
+    <div className="fixed floating-bottom-right z-40 flex gap-2 print:hidden">
       <button
         onClick={toggleMute}
         title={muted ? "開啟音效" : "靜音"}

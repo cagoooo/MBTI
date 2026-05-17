@@ -297,7 +297,7 @@ function GameInner() {
   }
 
   return (
-    <div className="flex-1 px-4 sm:px-6 py-6 sm:py-10">
+    <div className="flex-1 px-3 sm:px-6 py-5 sm:py-10 has-floating-ui">
       {/* 場景變動時自動切換 BGM track (依當前場景所屬支線) */}
       <BgmController track={scene ? BRANCH_TO_BGM[scene.branch] : "game"} />
       {/* Top bar */}
@@ -365,13 +365,13 @@ function GameInner() {
             exit={{ opacity: 0, rotateY: -30, x: -100, scale: 0.92 }}
             transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
             style={{ transformOrigin: "center center", transformStyle: "preserve-3d" }}
-            className="bg-white rounded-3xl p-6 sm:p-8 border-2 border-[var(--color-ink)]/10 shadow-2xl relative overflow-hidden"
+            className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-8 border-2 border-[var(--color-ink)]/10 shadow-2xl relative overflow-hidden"
           >
-            {/* 翻頁的脊邊陰影（左側陰影模擬書脊光影） */}
-            <div className="absolute inset-y-0 left-0 w-12 pointer-events-none bg-gradient-to-r from-black/8 to-transparent" />
-            <div className="absolute inset-y-0 right-0 w-12 pointer-events-none bg-gradient-to-l from-black/4 to-transparent" />
-            {/* 場景背景 emoji 點綴 */}
-            <div className="absolute -top-6 -right-6 text-9xl opacity-10 select-none pointer-events-none">
+            {/* 翻頁的脊邊陰影（左側陰影模擬書脊光影）— 手機縮窄避免吃內容 */}
+            <div className="absolute inset-y-0 left-0 w-4 sm:w-12 pointer-events-none bg-gradient-to-r from-black/8 to-transparent" />
+            <div className="absolute inset-y-0 right-0 w-4 sm:w-12 pointer-events-none bg-gradient-to-l from-black/4 to-transparent" />
+            {/* 場景背景 emoji 點綴 — 手機縮小避免吃文字 */}
+            <div className="absolute -top-4 -right-4 sm:-top-6 sm:-right-6 text-6xl sm:text-9xl opacity-10 select-none pointer-events-none">
               {scene.bg}
             </div>
 
@@ -388,7 +388,7 @@ function GameInner() {
               </div>
             )}
 
-            <div className="space-y-3 mb-3 text-lg leading-relaxed text-[var(--color-ink)]">
+            <div className="space-y-3 mb-3 text-base sm:text-lg leading-relaxed text-[var(--color-ink)] zhuyin-spaced">
               {scene.text.map((p, i) => (
                 <p key={i}>
                   <RubyText>{p}</RubyText>
@@ -430,19 +430,19 @@ function GameInner() {
                       disabled={!!showFollowUp}
                       whileHover={{ x: 4 }}
                       whileTap={{ scale: 0.98 }}
-                      className={`w-full text-left p-4 rounded-2xl border-2 transition group relative ${
+                      className={`choice-option w-full text-left p-3.5 sm:p-4 rounded-2xl border-2 transition group relative min-h-[56px] ${
                         isVoted
                           ? "border-rose-500 bg-rose-50 ring-2 ring-rose-300/50"
-                          : "border-[var(--color-ink)]/15 hover:border-[var(--color-coral)] hover:bg-[var(--color-cream)]"
+                          : "border-[var(--color-ink)]/15 hover:border-[var(--color-coral)] hover:bg-[var(--color-cream)] active:bg-[var(--color-cream)]"
                       } disabled:opacity-50 disabled:cursor-not-allowed`}
                     >
-                      <div className="flex items-start gap-3">
+                      <div className="flex items-start gap-2.5 sm:gap-3">
                         {c.emoji && (
-                          <span className="text-2xl group-hover:scale-110 transition-transform">
+                          <span className="text-xl sm:text-2xl shrink-0 group-hover:scale-110 transition-transform">
                             {c.emoji}
                           </span>
                         )}
-                        <span className="flex-1 font-medium leading-snug">
+                        <span className="flex-1 font-medium text-sm sm:text-base leading-snug min-w-0">
                           <RubyText>{c.text}</RubyText>
                         </span>
                         {isVoted && (
@@ -485,7 +485,7 @@ function GameInner() {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="text-5xl mb-3 text-center">✨</div>
-              <p className="text-lg sm:text-xl text-center leading-relaxed text-[var(--color-ink)]">
+              <p className="text-base sm:text-xl text-center leading-relaxed text-[var(--color-ink)] zhuyin-spaced">
                 <RubyText>{showFollowUp}</RubyText>
               </p>
               <SoundButton

@@ -33,11 +33,11 @@ export default function RubyText({ children, always = false }: Props) {
     }
     refresh();
     window.addEventListener("storage", refresh);
-    // 1.5s polling for same-tab setting change
-    const iv = window.setInterval(refresh, 1500);
+    // 同 tab 即時通知 (SettingsPanel toggle 後立刻換 ruby)
+    window.addEventListener("mbti-settings-change", refresh);
     return () => {
       window.removeEventListener("storage", refresh);
-      window.clearInterval(iv);
+      window.removeEventListener("mbti-settings-change", refresh);
     };
   }, [always]);
 

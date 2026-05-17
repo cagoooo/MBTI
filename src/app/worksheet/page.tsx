@@ -17,7 +17,7 @@ export default function WorksheetPage() {
   }
 
   return (
-    <div className="px-4 sm:px-6 py-6 sm:py-10">
+    <div className="px-3 sm:px-6 py-5 sm:py-10 has-floating-ui">
       {/* 螢幕版工具列 (列印時隱藏) */}
       <div className="max-w-3xl mx-auto print-hide">
         <div className="mb-6 flex items-center justify-between flex-wrap gap-3">

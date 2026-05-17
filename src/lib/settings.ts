@@ -83,5 +83,13 @@ export function isZhuyinOn(): boolean {
 export function setZhuyinOn(v: boolean) {
   if (typeof window === "undefined") return;
   localStorage.setItem(ZHUYIN_KEY, v ? "1" : "0");
+  applyZhuyinClass(v);
   window.dispatchEvent(new CustomEvent("mbti-settings-change", { detail: { zhuyin: v } }));
+}
+
+/** 在 <html> 上加/移 .zhuyin-on class (給全局 CSS 用，相容 iOS Safari 15-) */
+export function applyZhuyinClass(v?: boolean) {
+  if (typeof window === "undefined") return;
+  const on = v ?? isZhuyinOn();
+  document.documentElement.classList.toggle("zhuyin-on", on);
 }
