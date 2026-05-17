@@ -9,7 +9,7 @@ import SoundButton from "@/components/SoundButton";
 import BgmController from "@/components/BgmController";
 import RubyText from "@/components/RubyText";
 import { playSound } from "@/lib/sound";
-import { isTtsAvailable, isTtsOn, speak as speakTts, speakScene, stop as stopTts } from "@/lib/tts";
+import { isTtsAvailable, isTtsOn, speak as speakTts, speakScene, stop as stopTts, pause as pauseTts, resume as resumeTts, subscribeStatus as subscribeTtsStatus } from "@/lib/tts";
 import {
   ALL_SEL_STYLES,
   SEL_SCENARIOS,
@@ -60,6 +60,18 @@ function SelPageInner() {
   const [scores, setScores] = useState<SelScores>(initialSelScores);
   const [showFollowUp, setShowFollowUp] = useState<string | null>(null);
   const [ttsEnabled, setTtsEnabled] = useState(false);
+  const [ttsStatus, setTtsStatus] = useState<{ speaking: boolean; paused: boolean }>({
+    speaking: false,
+    paused: false,
+  });
+
+  useEffect(() => {
+    if (!ttsEnabled) {
+      setTtsStatus({ speaking: false, paused: false });
+      return;
+    }
+    return subscribeTtsStatus(setTtsStatus);
+  }, [ttsEnabled]);
 
   // 班級模式 session (從 /join 帶過來)
   const [classSession, setClassSession] = useState<ClassSession | null>(null);
@@ -143,6 +155,31 @@ function SelPageInner() {
     setSceneIdx(0);
     setScores(initialSelScores);
     setShowFollowUp(null);
+  }
+
+  /** 從頭朗讀當前 SEL 場景 */
+  function speakCurrentScene() {
+    if (!scene) return;
+    playSound("tap");
+    speakScene({ location: scene.title, text: scene.text });
+  }
+
+  /** 智慧切換: 沒在播 → 從頭播；播放中 → 暫停；暫停中 → 繼續 */
+  function toggleSpeaking() {
+    if (ttsStatus.paused) {
+      playSound("tap");
+      resumeTts();
+    } else if (ttsStatus.speaking) {
+      playSound("toggleOff");
+      pauseTts();
+    } else {
+      speakCurrentScene();
+    }
+  }
+
+  function stopSpeaking() {
+    playSound("toggleOff");
+    stopTts();
   }
 
   function handleChoice(c: SelChoice) {
@@ -310,6 +347,59 @@ function SelPageInner() {
                   <h2 className="text-2xl sm:text-3xl font-black mb-4 text-[var(--color-ink)]">
                     <RubyText>{scene.title}</RubyText>
                   </h2>
+
+                  {/* TTS 控制工具列 — 播 / 暫停 / 繼續 / 停止 */}
+                  {ttsEnabled && (
+                    <div className="tts-toolbar">
+                      <button
+                        onClick={toggleSpeaking}
+                        className="tts-btn-main"
+                        title={
+                          ttsStatus.paused
+                            ? "繼續播放"
+                            : ttsStatus.speaking
+                              ? "暫停 (之後可繼續)"
+                              : "從頭唸這段"
+                        }
+                      >
+                        <span className="tts-btn-icon">
+                          {ttsStatus.paused ? "▶" : ttsStatus.speaking ? "⏸" : "🔊"}
+                        </span>
+                        <span className="tts-btn-label">
+                          {ttsStatus.paused ? "繼續播放" : ttsStatus.speaking ? "暫停" : "唸給我聽"}
+                        </span>
+                      </button>
+
+                      {(ttsStatus.speaking || ttsStatus.paused) && (
+                        <button
+                          onClick={speakCurrentScene}
+                          className="tts-btn-secondary"
+                          title="從頭再唸一次"
+                        >
+                          <span style={{ fontSize: 16 }}>↻</span>
+                          <span className="hidden sm:inline">從頭</span>
+                        </button>
+                      )}
+
+                      {(ttsStatus.speaking || ttsStatus.paused) && (
+                        <button
+                          onClick={stopSpeaking}
+                          className="tts-btn-secondary"
+                          title="停止朗讀（不會繼續）"
+                        >
+                          <span style={{ fontSize: 14 }}>✕</span>
+                          <span className="hidden sm:inline">停止</span>
+                        </button>
+                      )}
+
+                      <div className="tts-status">
+                        <span className={`tts-dot ${ttsStatus.paused ? "paused" : ttsStatus.speaking ? "live" : ""}`}></span>
+                        <span className="hud" style={{ color: "var(--muted)", letterSpacing: 2 }}>
+                          {ttsStatus.paused ? "PAUSED" : ttsStatus.speaking ? "▸ NOW READING" : "READY"}
+                        </span>
+                      </div>
+                    </div>
+                  )}
 
                   <div className="space-y-3 mb-5 text-base sm:text-lg leading-relaxed text-[var(--color-ink)] zhuyin-spaced">
                     {scene.text.map((p, i) => (

@@ -147,7 +147,7 @@ export function speak(text: string, opts: SpeakOptions = {}): void {
   }
 }
 
-/** 停止當前唸誦 */
+/** 停止當前唸誦 (整段取消，不能 resume) */
 export function stop(): void {
   if (!isTtsAvailable()) return;
   try {
@@ -156,9 +156,64 @@ export function stop(): void {
   speakingNow = false;
 }
 
+/**
+ * 暫停當前唸誦 — 可用 resume() 從原處接著唸
+ * 注意：Web Speech API 在 Chrome 桌面 / Firefox 都支援；Safari 部分版本可能 fallback 為 cancel
+ */
+export function pause(): void {
+  if (!isTtsAvailable()) return;
+  try {
+    if (window.speechSynthesis.speaking && !window.speechSynthesis.paused) {
+      window.speechSynthesis.pause();
+    }
+  } catch {}
+}
+
+/** 繼續播放被暫停的唸誦 */
+export function resume(): void {
+  if (!isTtsAvailable()) return;
+  try {
+    if (window.speechSynthesis.paused) {
+      window.speechSynthesis.resume();
+    }
+  } catch {}
+}
+
 export function isSpeaking(): boolean {
   if (!isTtsAvailable()) return false;
   return speakingNow || window.speechSynthesis.speaking;
+}
+
+export function isPaused(): boolean {
+  if (!isTtsAvailable()) return false;
+  return window.speechSynthesis.paused;
+}
+
+/**
+ * 訂閱 TTS 狀態變化 (speaking / paused / ended)
+ * 給 UI 即時更新「正在播 / 暫停中 / 已結束」狀態用
+ * 用 polling (Web Speech API 沒有 onstart/onpause 全域事件)
+ * 回傳 unsubscribe 函式
+ */
+export function subscribeStatus(
+  cb: (status: { speaking: boolean; paused: boolean }) => void,
+): () => void {
+  if (!isTtsAvailable()) return () => {};
+  let last = { speaking: false, paused: false };
+  const tick = () => {
+    const curr = {
+      speaking: window.speechSynthesis.speaking,
+      paused: window.speechSynthesis.paused,
+    };
+    if (curr.speaking !== last.speaking || curr.paused !== last.paused) {
+      last = curr;
+      cb(curr);
+    }
+  };
+  // 立刻通知一次
+  tick();
+  const iv = window.setInterval(tick, 250);
+  return () => window.clearInterval(iv);
 }
 
 /**

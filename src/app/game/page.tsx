@@ -11,7 +11,7 @@ import HomeToButton from "@/components/HomeToButton";
 import BgmController from "@/components/BgmController";
 import SoundButton from "@/components/SoundButton";
 import { playSound, type BgmTrackId } from "@/lib/sound";
-import { isTtsAvailable, isTtsOn, speakScene, stop as stopTts, speak as speakTts } from "@/lib/tts";
+import { isTtsAvailable, isTtsOn, speakScene, stop as stopTts, speak as speakTts, pause as pauseTts, resume as resumeTts, subscribeStatus as subscribeTtsStatus } from "@/lib/tts";
 import {
   setStudentVote,
   subscribeRoom,
@@ -72,6 +72,20 @@ function GameInner() {
   const [showFollowUp, setShowFollowUp] = useState<string | null>(null);
   const [pendingNext, setPendingNext] = useState<{ id: string; isEnding: boolean } | null>(null);
   const [ttsEnabled, setTtsEnabled] = useState(false);
+  // TTS 播放狀態 (給 UI 顯示 ▶/⏸ 切換)
+  const [ttsStatus, setTtsStatus] = useState<{ speaking: boolean; paused: boolean }>({
+    speaking: false,
+    paused: false,
+  });
+
+  useEffect(() => {
+    if (!ttsEnabled) {
+      setTtsStatus({ speaking: false, paused: false });
+      return;
+    }
+    const unsub = subscribeTtsStatus(setTtsStatus);
+    return unsub;
+  }, [ttsEnabled]);
 
   // ─────── 課前快測 modal ───────
   // 只在「真的剛開始 (scene_01) + 沒進度 + 沒做過 pretest」時顯示
@@ -209,9 +223,30 @@ function GameInner() {
     });
   }
 
+  function pauseSpeaking() {
+    playSound("toggleOff");
+    pauseTts();
+  }
+
+  function resumeSpeaking() {
+    playSound("tap");
+    resumeTts();
+  }
+
   function stopSpeaking() {
     playSound("toggleOff");
     stopTts();
+  }
+
+  /** 智慧切換: 沒在播 → 播；播放中 → 暫停；暫停中 → 繼續 */
+  function toggleSpeaking() {
+    if (ttsStatus.paused) {
+      resumeSpeaking();
+    } else if (ttsStatus.speaking) {
+      pauseSpeaking();
+    } else {
+      speakCurrentScene();
+    }
   }
 
   // Click choice
@@ -510,26 +545,63 @@ function GameInner() {
                     <div className="name"><RubyText>{scene.speaker}</RubyText></div>
                     <div className="role">CHARACTER · {scene.speaker === "你的內心" || scene.speaker === "你的肚子" || scene.speaker === "你" ? "INNER · 你的內心" : "NPC · 同學/老師"}</div>
                   </div>
-                  {ttsEnabled && (
+                </div>
+              )}
+
+              {/* TTS 控制工具列 — always visible when TTS on (含旁白場景) */}
+              {ttsEnabled && (
+                <div className="tts-toolbar">
+                  {/* 主切換按鈕：智慧 ▶ / ⏸ / ⏵ */}
+                  <button
+                    onClick={toggleSpeaking}
+                    className="tts-btn-main"
+                    title={
+                      ttsStatus.paused
+                        ? "繼續播放"
+                        : ttsStatus.speaking
+                          ? "暫停 (之後可繼續)"
+                          : "從頭唸這段"
+                    }
+                  >
+                    <span className="tts-btn-icon">
+                      {ttsStatus.paused ? "▶" : ttsStatus.speaking ? "⏸" : "🔊"}
+                    </span>
+                    <span className="tts-btn-label">
+                      {ttsStatus.paused ? "繼續播放" : ttsStatus.speaking ? "暫停" : "唸給我聽"}
+                    </span>
+                  </button>
+
+                  {/* 從頭再唸 (即使在暫停中也能重來) */}
+                  {(ttsStatus.speaking || ttsStatus.paused) && (
                     <button
                       onClick={speakCurrentScene}
-                      title="再唸一次"
-                      style={{
-                        background: "var(--paper-warm)",
-                        border: "2px solid var(--ink)",
-                        padding: "8px 14px",
-                        fontSize: 12,
-                        fontWeight: 700,
-                        cursor: "pointer",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: 6,
-                        flexShrink: 0,
-                      }}
+                      className="tts-btn-secondary"
+                      title="從頭再唸一次"
                     >
-                      🔊 <span className="hidden sm:inline">聽老師說</span>
+                      <span style={{ fontSize: 16 }}>↻</span>
+                      <span className="hidden sm:inline">從頭</span>
                     </button>
                   )}
+
+                  {/* 停止 (整段取消) */}
+                  {(ttsStatus.speaking || ttsStatus.paused) && (
+                    <button
+                      onClick={stopSpeaking}
+                      className="tts-btn-secondary"
+                      title="停止朗讀（不會繼續）"
+                    >
+                      <span style={{ fontSize: 14 }}>✕</span>
+                      <span className="hidden sm:inline">停止</span>
+                    </button>
+                  )}
+
+                  {/* 狀態顯示 (mono HUD 風格) */}
+                  <div className="tts-status">
+                    <span className={`tts-dot ${ttsStatus.paused ? "paused" : ttsStatus.speaking ? "live" : ""}`}></span>
+                    <span className="hud" style={{ color: "var(--muted)", letterSpacing: 2 }}>
+                      {ttsStatus.paused ? "PAUSED" : ttsStatus.speaking ? "▸ NOW READING" : "READY"}
+                    </span>
+                  </div>
                 </div>
               )}
 
@@ -540,26 +612,6 @@ function GameInner() {
                   </p>
                 ))}
               </div>
-
-              {/* TTS 停止按鈕 */}
-              {ttsEnabled && (
-                <div className="flex justify-end mt-2">
-                  <button
-                    onClick={stopSpeaking}
-                    title="停止朗讀"
-                    className="hud"
-                    style={{
-                      background: "none",
-                      border: "none",
-                      cursor: "pointer",
-                      color: "var(--muted)",
-                      padding: "4px 8px",
-                    }}
-                  >
-                    ⏸ 停止朗讀
-                  </button>
-                </div>
-              )}
             </div>
           </motion.div>
         </AnimatePresence>

@@ -23,9 +23,15 @@ export default function SiteNav({ active = "/", ctaLabel = "▶ START", ctaHref 
     { href: "/sel", label: "🌧️ SEL" },
     { href: "/guess", label: "🎲 猜朋友" },
     { href: "/journey", label: "三部曲" },
+    { href: "/teacher/dashboard", label: "👩‍🏫 老師" },
   ];
-  const isActive = (href: string) =>
-    active === href || (href !== "/" && active.startsWith(href));
+  const isActive = (href: string) => {
+    if (active === href) return true;
+    if (href === "/") return false;
+    // /teacher/dashboard 連結涵蓋所有 /teacher/* 子頁
+    if (href === "/teacher/dashboard" && active.startsWith("/teacher/")) return true;
+    return active.startsWith(href);
+  };
 
   return (
     <nav className="nav-design print:hidden">
