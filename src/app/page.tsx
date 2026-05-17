@@ -59,6 +59,17 @@ export default function HomePage() {
               <span className="text-2xl">🤝</span>
               <span>麻吉配對</span>
             </SoundLink>
+            <SoundLink
+              href="/sel"
+              sound="tap"
+              className="btn-3d inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-gradient-to-r from-violet-500 via-purple-500 to-fuchsia-500 text-white text-xl font-black hover:opacity-95 relative"
+            >
+              <span className="text-2xl">🌧️</span>
+              <span>SEL 情緒特別篇</span>
+              <span className="absolute -top-2 -right-2 bg-amber-400 text-amber-900 text-[10px] font-black px-2 py-0.5 rounded-full shadow border-2 border-white">
+                NEW
+              </span>
+            </SoundLink>
           </div>
 
           <div className="pt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-[var(--color-ink)]/60">
@@ -241,6 +252,27 @@ export default function HomePage() {
             >
               <span className="text-xl">📋</span>
               <span>A4 反思學習單（列印給學生）</span>
+            </SoundLink>
+          </div>
+
+          {/* SEL 輔導課專用區塊 */}
+          <div className="mt-4 p-4 rounded-2xl bg-gradient-to-r from-violet-50 to-fuchsia-50 border-2 border-violet-300">
+            <p className="text-sm font-black text-violet-900 mb-2 flex items-center gap-2">
+              <span>🌧️</span>
+              <span>給輔導老師：SEL 社會情緒學習專用</span>
+              <span className="text-[10px] bg-amber-400 text-amber-900 px-2 py-0.5 rounded-full">教育部當前重點</span>
+            </p>
+            <p className="text-xs text-violet-800/80 mb-3 leading-relaxed">
+              另設「🌧️ 逆境特別篇」— 6 個情緒情境 (被誤會 / 失敗 / 被排擠 / 難過 / 生氣 / 害怕) 探索學生的情緒因應風格。
+              適合輔導課、班會、SEL 主題課。約 8 分鐘可完成。
+            </p>
+            <SoundLink
+              href="/sel"
+              sound="tap"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-violet-500 text-white font-bold text-sm hover:bg-violet-600 transition"
+            >
+              <span>進入 SEL 特別篇</span>
+              <span>→</span>
             </SoundLink>
           </div>
           <p className="text-[var(--color-ink)]/60 text-sm mt-3">
