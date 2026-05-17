@@ -22,6 +22,8 @@ import { isFirebaseAvailable } from "@/lib/firebase";
 import RubyText from "@/components/RubyText";
 import PretestQuiz from "@/components/PretestQuiz";
 import { loadPretestGuess } from "@/lib/pretest";
+import SceneBackground from "@/components/SceneBackground";
+import NpcAvatar from "@/components/NpcAvatar";
 
 /**
  * 場景所屬支線 → BGM track 對應
@@ -380,21 +382,30 @@ function GameInner() {
             style={{ transformOrigin: "center center", transformStyle: "preserve-3d" }}
             className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-8 border-2 border-[var(--color-ink)]/10 shadow-2xl relative overflow-hidden"
           >
+            {/* 場景 SVG 背景插畫 (依 location/bg 自動選模板) */}
+            <SceneBackground location={scene.location} bgEmoji={scene.bg} />
             {/* 翻頁的脊邊陰影（左側陰影模擬書脊光影）— 手機縮窄避免吃內容 */}
             <div className="absolute inset-y-0 left-0 w-4 sm:w-12 pointer-events-none bg-gradient-to-r from-black/8 to-transparent" />
             <div className="absolute inset-y-0 right-0 w-4 sm:w-12 pointer-events-none bg-gradient-to-l from-black/4 to-transparent" />
-            {/* 場景背景 emoji 點綴 — 手機縮小避免吃文字 */}
-            <div className="absolute -top-4 -right-4 sm:-top-6 sm:-right-6 text-6xl sm:text-9xl opacity-10 select-none pointer-events-none">
+            {/* 場景 emoji 小貼紙 (改放右上角小尺寸，讓 SVG 背景當主角) */}
+            <div className="absolute top-3 right-3 sm:top-4 sm:right-4 text-3xl sm:text-4xl bg-white/80 rounded-full w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center shadow-md border-2 border-white pointer-events-none z-10">
               {scene.bg}
             </div>
+            {/* 內容區包一層 relative 確保在 SVG 背景上方 */}
+            <div className="relative z-10">
 
             <p className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[var(--color-coral)] mb-1">
               📍 <RubyText>{scene.location}</RubyText>
             </p>
 
             {scene.speaker && (
-              <div className="flex items-center gap-2 mb-4">
-                <span className="text-3xl">{scene.speakerEmoji}</span>
+              <div className="flex items-center gap-2.5 mb-4">
+                {/* 若是 8 主角之一用 SVG avatar，否則用原 emoji */}
+                {["小芸", "阿哲", "小傑", "雅雯", "宇航", "凱莉", "小宇", "婷婷"].includes(scene.speaker) ? (
+                  <NpcAvatar name={scene.speaker} size={40} className="shrink-0" />
+                ) : (
+                  <span className="text-3xl shrink-0">{scene.speakerEmoji}</span>
+                )}
                 <span className="font-bold text-[var(--color-ink)]/80">
                   <RubyText>{scene.speaker}</RubyText>
                 </span>
@@ -474,6 +485,7 @@ function GameInner() {
                 </p>
               )}
             </div>
+            </div>{/* /relative z-10 wrapper */}
           </motion.div>
         </AnimatePresence>
         </div>

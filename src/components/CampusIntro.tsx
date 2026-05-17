@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { playSound } from "@/lib/sound";
+import NpcAvatar from "./NpcAvatar";
 
 interface Student {
   name: string;
@@ -153,11 +154,11 @@ export default function CampusIntro() {
                     <motion.div
                       animate={isActive ? { y: [-4, 0, -4] } : { y: 0 }}
                       transition={isActive ? { duration: 1.4, repeat: Infinity } : { duration: 0 }}
-                      className={`relative w-12 h-12 sm:w-16 sm:h-16 rounded-2xl ${s.badge} flex items-center justify-center text-2xl sm:text-3xl border-2 ${
+                      className={`relative w-12 h-12 sm:w-16 sm:h-16 rounded-2xl ${s.badge} flex items-center justify-center border-2 overflow-hidden ${
                         isActive ? "border-[var(--color-coral)] shadow-lg ring-4 ring-[var(--color-coral)]/30" : "border-white"
                       } transition`}
                     >
-                      {s.emoji}
+                      <NpcAvatar name={s.name} size={isActive ? 60 : 56} className="w-full h-full" />
                       {isActive && (
                         <motion.span
                           initial={{ scale: 0 }}
@@ -196,7 +197,9 @@ export default function CampusIntro() {
                       className="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-white border-l-2 border-t-2 border-[var(--color-ink)]/15 rotate-45"
                     />
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xl">{active.emoji}</span>
+                      <div className="w-8 h-8 rounded-full overflow-hidden bg-white shadow-sm border border-[var(--color-ink)]/10 shrink-0">
+                        <NpcAvatar name={active.name} size={32} />
+                      </div>
                       <span className="font-black text-sm">
                         {active.name}
                         <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded bg-[var(--color-cream)] text-[var(--color-ink)]/60 font-bold">
