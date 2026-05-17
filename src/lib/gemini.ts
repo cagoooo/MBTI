@@ -210,3 +210,79 @@ export async function generateSelPrescription(input: {
 
   return generateText(prompt, { temperature: 0.85, maxOutputTokens: 700 });
 }
+
+/**
+ * 老師班級洞察報告 — 從 SessionSnapshot 生成家長日用的班級分析
+ *
+ * 設計:
+ *   - 對象是老師 / 家長 (不是學生)
+ *   - 講人話、避免心理學術語
+ *   - 包含: 班級整體個性 + 3 個合作建議 + 2 個衝突提示 + 下次活動推薦
+ *   - 約 300-400 字，老師複製到家長日報告或聯絡簿剛好
+ */
+export async function generateClassInsight(input: {
+  sessionLabel: string;
+  totalCount: number;
+  completedCount: number;
+  typeDistribution: Record<string, number>;
+  axisCount: { E: number; I: number; S: number; N: number; T: number; F: number; J: number; P: number };
+}): Promise<string> {
+  // 找出主要 type top 3
+  const topTypes = Object.entries(input.typeDistribution)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3);
+  const topTypesText = topTypes.map(([t, n]) => `${t} (${n}人)`).join("、");
+
+  // 4 軸比例
+  const a = input.axisCount;
+  const ei = a.E + a.I;
+  const sn = a.S + a.N;
+  const tf = a.T + a.F;
+  const jp = a.J + a.P;
+  const pct = (n: number, d: number) => (d > 0 ? Math.round((n / d) * 100) : 50);
+
+  const axisText = [
+    `E ${pct(a.E, ei)}% / I ${pct(a.I, ei)}%`,
+    `S ${pct(a.S, sn)}% / N ${pct(a.N, sn)}%`,
+    `T ${pct(a.T, tf)}% / F ${pct(a.F, tf)}%`,
+    `J ${pct(a.J, jp)}% / P ${pct(a.P, jp)}%`,
+  ].join("，");
+
+  const prompt = `
+你是一位資深輔導老師，要為一個國小班級寫一份「MBTI 班級洞察報告」給家長日 / 老師備課用。
+
+班級資料：
+- 活動：${input.sessionLabel}
+- 參與：${input.completedCount} 人完成 (總 ${input.totalCount} 人)
+- 主要型別：${topTypesText}
+- 4 軸比例：${axisText}
+
+請寫一份 350-400 字的班級報告，分四段（每段開頭加 emoji + 標題）：
+
+🎭 班級整體個性
+（80-100 字：用 1-2 句描述這班是「什麼樣的一群孩子」— 從主要型 + 軸比例推。
+避免標籤化，用「這班整體偏向...」「大部分孩子...」這種有溫度的句子。
+舉一個生活情境例子，例如「下課時這班會比較像 ___ 的樣子」。）
+
+🤝 3 個合作建議
+（80-100 字：列 3 個具體可行的班級活動 / 分組方式建議，每條一行。
+例如「分組時刻意把 P 多的同學跟 J 多的搭配，讓他們互補」「上課發問可以多用視覺圖像，因為 S 偏多」。）
+
+⚠️ 2 個潛在衝突提示
+（70-90 字：列 2 個老師需要留意的點。
+例如「F 偏多代表這班容易因為人際小事影響情緒」「I 偏多的孩子可能需要更多獨處時間」。
+用「老師可以多注意」的語氣，不要寫成「問題」。）
+
+🎯 推薦下次活動
+（60-80 字：根據這班特性，建議下次跑什麼主題的活動。
+例如「可以嘗試 SEL 逆境特別篇 (因為 F 偏多需練習接住情緒)」或「猜朋友 MBTI 模式 (因為差異性大適合互相認識)」。）
+
+語氣：
+- 溫暖、像資深老師在跟同事 / 家長分享觀察
+- 不下標籤、不評判好壞
+- 用具體情境取代抽象描述
+- 純文字段落，不要 markdown 標題 (# 之類)
+`.trim();
+
+  return generateText(prompt, { temperature: 0.85, maxOutputTokens: 900 });
+}

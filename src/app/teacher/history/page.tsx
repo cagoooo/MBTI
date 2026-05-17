@@ -16,6 +16,7 @@ import { ALL_TYPES } from "@/lib/types";
 import type { MBTIType } from "@/lib/types";
 import BgmController from "@/components/BgmController";
 import { playSound } from "@/lib/sound";
+import ClassInsightReport from "@/components/ClassInsightReport";
 
 interface HistoryItem {
   sessionId: string;
@@ -270,12 +271,13 @@ export default function TeacherHistoryPage() {
                   </div>
 
                   {/* 動作 */}
-                  <div className="flex items-center justify-end gap-2 pt-2">
+                  <div className="flex items-center justify-end gap-2 pt-2 flex-wrap">
+                    {/* W1 AI 班級洞察報告 */}
+                    <ClassInsightReport sessionId={it.sessionId} snapshot={it.snapshot} />
                     <Link
                       href={`/class-stats?from=${it.snapshot.roomCode}`}
                       className="text-xs px-3 py-1.5 rounded-full bg-white border-2 border-violet-300 text-violet-700 font-bold hover:bg-violet-50"
                       onClick={() => {
-                        // 把 student 名單暫存到 sessionStorage，讓 class-stats 自動預填
                         const roster = it.snapshot.students.map((s) => `${s.name} ${s.finalType}`).join("\n");
                         try {
                           sessionStorage.setItem(`mbti-class-roster-${it.snapshot.roomCode}`, roster);
