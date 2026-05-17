@@ -168,47 +168,92 @@ export default function GuessGamePage() {
     <div className="container-paper has-floating-ui" style={{paddingTop:0}}>
       <SiteNav active="/guess" />
       <BgmController track="home" />
-      <div className="max-w-3xl mx-auto">
-        <div className="mb-6">
-          
-        </div>
+      <div style={{ maxWidth: 1100, margin: "0 auto", paddingTop: 32 }}>
+
+        {/* Hero */}
+        <section style={{ paddingBottom: 24 }}>
+          <div className="tape sunny rotate-n2" style={{ marginBottom: 24 }}>🎲 STATION · 03 · 班級互動遊戲</div>
+          <div className="f-hand" style={{ fontSize: 30, color: "var(--coral)", transform: "rotate(-2deg)", marginBottom: 6 }}>
+            你眼中的同學，跟你想的一樣嗎？✨
+          </div>
+          <h1 className="f-serif" style={{ fontWeight: 900, fontSize: "clamp(48px, 9vw, 124px)", lineHeight: 0.92, letterSpacing: -2, margin: "0 0 24px" }}>
+            你猜得到<br />
+            <span style={{ color: "var(--coral)" }}>同學是哪型</span>嗎？
+          </h1>
+          <p style={{ fontSize: 18, lineHeight: 1.8, color: "var(--ink-soft)", maxWidth: 680, margin: "0 0 32px" }}>
+            把全班的「名字＋真實 MBTI」貼進來，系統會隨機抽問你猜每個人是哪型。
+            結束時告訴你<b>猜對幾個</b>＋<b>哪幾個最讓你意外</b> — 也是引發班級討論的好素材。
+          </p>
+
+          {/* Phase indicator */}
+          <div className="phase-bar">
+            <div className="tab">◆ 3 PHASES</div>
+            <div>
+              <div className="hud" style={{ marginBottom: 4 }}>CURRENT PHASE</div>
+              <div className="f-serif" style={{ fontWeight: 900, fontSize: 22, lineHeight: 1 }}>
+                {phase === "input" && "名單輸入"}
+                {phase === "guess" && "一題一題猜"}
+                {phase === "result" && "看結果"}
+              </div>
+            </div>
+            <div className="phase-pills hidden lg:flex">
+              <div className={`phase-pill ${phase === "input" ? "current" : "done"}`}>① 輸入名單</div>
+              <span className="phase-arrow">→</span>
+              <div className={`phase-pill ${phase === "guess" ? "current" : phase === "result" ? "done" : ""}`}>② 一題一題猜</div>
+              <span className="phase-arrow">→</span>
+              <div className={`phase-pill ${phase === "result" ? "current" : ""}`}>③ 看結果</div>
+            </div>
+            <div style={{ textAlign: "right" }}>
+              <div className="hud" style={{ marginBottom: 4 }}>PROGRESS</div>
+              <div className="f-mono" style={{ fontSize: 18, fontWeight: 800 }}>
+                {phase === "guess" ? `${currentIdx + 1} / ${people.length}` : `${guesses.length} / ${people.length || 0}`}
+              </div>
+            </div>
+          </div>
+        </section>
 
         {/* ─── Input ─── */}
         {phase === "input" && (
-          <motion.section
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-gradient-to-br from-amber-100 via-yellow-50 to-orange-50 rounded-3xl p-6 sm:p-10 border-4 border-white shadow-xl relative overflow-hidden"
-          >
-            <div className="absolute -top-6 -right-6 text-9xl opacity-15">🤔</div>
-            <p className="text-xs font-bold uppercase tracking-[0.3em] text-orange-700/80 mb-2 relative">
-              🎲 班級互動遊戲
+          <div className="roster-box" style={{ marginBottom: 32 }}>
+            <div className="tab-label">📋 ROSTER · INPUT</div>
+            <h2 className="f-serif" style={{ fontWeight: 900, fontSize: 32, lineHeight: 1, margin: "8px 0 4px" }}>班級名單</h2>
+            <p style={{ fontSize: 14, color: "var(--ink-soft)", margin: "0 0 18px" }}>
+              每行一人，名字 + 真實 MBTI。格式很彈性 — 空格、冒號、逗號都行。
             </p>
-            <h1 className="text-3xl sm:text-5xl font-black mb-3 relative text-[var(--color-ink)]">
-              你猜得到<br className="sm:hidden" />
-              <span className="text-orange-700">同學是哪型嗎？</span>
-            </h1>
-            <p className="text-base sm:text-lg text-[var(--color-ink)]/80 leading-relaxed mb-5 relative">
-              把全班的「名字 + 真實 MBTI」貼進來，系統隨機抽問你猜每個人是哪型 — 結束會告訴你猜對幾個 + 哪幾個最讓你意外。
-            </p>
-
-            <div className="bg-white/70 rounded-2xl p-4 mb-4 relative">
-              <p className="text-sm font-bold mb-2 text-orange-900">📋 班級名單（每行一人）</p>
-              <textarea
-                value={rosterText}
-                onChange={(e) => setRosterText(e.target.value)}
-                placeholder={`小芸 ENFP\n阿哲 INTJ\n小傑 ESTP\n雅雯 INFJ\n宇航 ISFP`}
-                className="w-full h-40 p-3 rounded-xl border-2 border-orange-200 focus:border-orange-500 focus:outline-none font-mono text-sm bg-white"
-              />
-              <p className="text-[11px] text-orange-700/60 mt-2 leading-relaxed">
-                💡 格式很彈性：「小明 INTJ」、「小明: INTJ」、「小明,INTJ」都可以。
-                也可以從<Link href="/class-stats" className="underline font-bold mx-1">📊 班級統計</Link>
-                或<Link href="/teacher/history" className="underline font-bold mx-1">📈 班級歷史</Link>把名單複製過來。
-              </p>
+            <textarea
+              value={rosterText}
+              onChange={(e) => setRosterText(e.target.value)}
+              placeholder={`小芸 ENFP\n阿哲 INTJ\n小傑 ESTP\n雅雯 INFJ\n宇航 ISFP`}
+              className="roster-textarea"
+              spellCheck={false}
+            />
+            <div
+              style={{
+                marginTop: 14,
+                padding: "12px 14px",
+                background: "var(--paper-warm)",
+                borderLeft: "4px solid var(--coral)",
+                fontSize: 12,
+                color: "var(--ink-soft)",
+                lineHeight: 1.65,
+              }}
+            >
+              <b>💡 格式很彈性</b>　「小明 INTJ」、「小明: INTJ」、「小明,INTJ」都可以。
+              也可以從<Link href="/class-stats" className="underline font-bold mx-1">班級統計</Link>
+              或<Link href="/teacher/history" className="underline font-bold mx-1">班級歷史</Link>把名單複製過來。
             </div>
 
             {parseError && (
-              <div className="bg-rose-50 border-2 border-rose-200 rounded-xl p-3 mb-4 text-sm text-rose-800 relative">
+              <div
+                style={{
+                  marginTop: 14,
+                  padding: "12px 14px",
+                  background: "#fde3ea",
+                  border: "2px solid var(--rose)",
+                  fontSize: 13,
+                  color: "#7a1a3a",
+                }}
+              >
                 ⚠️ {parseError}
               </div>
             )}
@@ -216,42 +261,39 @@ export default function GuessGamePage() {
             <button
               onClick={startGuessing}
               disabled={!rosterText.trim()}
-              className="btn-3d w-full py-4 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 text-white text-xl font-black hover:opacity-95 transition flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed relative"
+              className="btn-start"
+              style={{ marginTop: 24, width: "100%", justifyContent: "center", padding: 20 }}
             >
-              <span className="text-2xl">🎲</span>
+              <span style={{ fontSize: 32 }}>🎲</span>
               <span>開始猜！</span>
+              <span className="arrow">→</span>
             </button>
 
-            <div className="mt-5 p-4 rounded-2xl bg-amber-100/50 border border-amber-200 relative">
-              <p className="text-xs font-black text-amber-900 mb-2">🎓 給老師：</p>
-              <ul className="text-xs text-amber-800/80 space-y-1 leading-relaxed">
-                <li>• 適合班級互相認識深化 / 破除刻板印象 / 引發討論</li>
-                <li>• 玩完問學生「為什麼你會這樣猜？」最有教學價值</li>
-                <li>• 結果不公開比較，避免人身評論</li>
-                <li>• 學生先到 <Link href="/teacher/history" className="underline">/teacher/history</Link> 把名單複製過來最方便</li>
+            <div
+              style={{
+                marginTop: 20,
+                padding: 16,
+                background: "var(--paper-2)",
+                border: "1px solid var(--line)",
+                fontSize: 12,
+                color: "var(--ink-soft)",
+                lineHeight: 1.7,
+              }}
+            >
+              <p style={{ fontWeight: 900, marginBottom: 6, color: "var(--ink)" }}>🎓 給老師：</p>
+              <ul style={{ margin: 0, paddingLeft: 18 }}>
+                <li>適合班級互相認識深化 / 破除刻板印象 / 引發討論</li>
+                <li>玩完問學生「為什麼你會這樣猜？」最有教學價值</li>
+                <li>結果不公開比較，避免人身評論</li>
+                <li>學生先到 <Link href="/teacher/history" className="underline">/teacher/history</Link> 把名單複製過來最方便</li>
               </ul>
             </div>
-          </motion.section>
+          </div>
         )}
 
         {/* ─── Guess (1-by-1) ─── */}
         {phase === "guess" && currentPerson && (
           <>
-            {/* 進度 */}
-            <div className="flex items-center justify-center gap-2 mb-4">
-              <span className="text-xs font-bold text-[var(--color-ink)]/60 uppercase tracking-wider">
-                {currentIdx + 1} / {people.length}
-              </span>
-            </div>
-            <div className="bg-[var(--color-ink)]/10 rounded-full h-2 mb-5 overflow-hidden">
-              <motion.div
-                className="h-full bg-gradient-to-r from-orange-400 to-amber-400 rounded-full"
-                animate={{ width: `${((currentIdx + (revealed ? 1 : 0)) / people.length) * 100}%` }}
-                transition={{ duration: 0.4 }}
-              />
-            </div>
-
-            {/* 問題卡 */}
             <AnimatePresence mode="wait">
               <motion.div
                 key={currentPerson.name + currentIdx}
@@ -259,80 +301,88 @@ export default function GuessGamePage() {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -20, scale: 0.95 }}
                 transition={{ duration: 0.3 }}
-                className="bg-white rounded-3xl p-6 sm:p-8 border-2 border-[var(--color-ink)]/10 shadow-xl text-center"
+                className="person-card"
+                style={{ marginBottom: 28, marginTop: 24 }}
               >
-                <p className="text-sm font-bold text-[var(--color-ink)]/50 uppercase tracking-widest mb-3">
-                  你猜這位同學是
-                </p>
-                <h2 className="text-4xl sm:text-6xl font-black mb-2 text-[var(--color-coral)]">
-                  {currentPerson.name}
-                </h2>
-                <p className="text-sm text-[var(--color-ink)]/60 mb-6">他/她是哪一型？</p>
-
-                {/* 16 型 grid */}
-                <div className="grid grid-cols-4 gap-2">
-                  {ALL_TYPES.map((t) => {
-                    const isActual = revealed && t === currentPerson.actual;
-                    const isPicked = revealed && t === revealed;
-                    const isMatch = revealed === currentPerson.actual;
-                    const info = getMBTIInfo(t);
-                    return (
-                      <button
-                        key={t}
-                        onClick={() => pickGuess(t)}
-                        disabled={!!revealed}
-                        className={`p-2 sm:p-3 rounded-xl border-2 transition text-center relative ${
-                          isActual
-                            ? "bg-emerald-100 border-emerald-500 ring-2 ring-emerald-300"
-                            : isPicked && !isMatch
-                              ? "bg-rose-100 border-rose-500 ring-2 ring-rose-300"
-                              : revealed
-                                ? "border-[var(--color-ink)]/10 opacity-40"
-                                : "border-[var(--color-ink)]/15 hover:border-[var(--color-coral)] hover:bg-[var(--color-cream)]"
-                        }`}
-                      >
-                        <div className="text-xl sm:text-2xl">{info.emoji}</div>
-                        <div className="text-[10px] sm:text-xs font-black mt-1 tracking-wider">{t}</div>
-                        {isActual && (
-                          <span className="absolute -top-2 -right-2 text-base">✅</span>
-                        )}
-                        {isPicked && !isMatch && (
-                          <span className="absolute -top-2 -right-2 text-base">👈</span>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* Reveal feedback */}
-                {revealed && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="mt-5 p-4 rounded-2xl bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-200"
-                  >
-                    {revealed === currentPerson.actual ? (
-                      <p className="text-emerald-800 font-black text-lg flex items-center justify-center gap-2">
-                        <span className="text-2xl">🎯</span>
-                        <span>猜對了！{currentPerson.name} 確實是 {currentPerson.actual}</span>
-                      </p>
-                    ) : (
-                      <p className="text-rose-700 font-bold text-base flex flex-col items-center gap-1">
-                        <span>你猜 <span className="font-mono">{revealed}</span>，</span>
-                        <span>實際上 {currentPerson.name} 是 <span className="text-emerald-700 font-black font-mono">{currentPerson.actual}</span> 喔！</span>
-                      </p>
-                    )}
-                    <SoundButton
-                      sound="whoosh"
-                      onClick={nextQuestion}
-                      className="btn-3d mt-3 w-full py-2.5 rounded-xl bg-orange-500 text-white font-black hover:bg-orange-600"
-                    >
-                      {currentIdx < people.length - 1 ? "下一位 →" : "看結果 →"}
-                    </SoundButton>
-                  </motion.div>
-                )}
+                <div className="person-label">▸ QUESTION · {String(currentIdx + 1).padStart(2, "0")} / {String(people.length).padStart(2, "0")}</div>
+                <div className="person-avatar">{currentPerson.name[0]}</div>
+                <h2 className="person-name">{currentPerson.name}</h2>
+                <p className="person-num">他/她是哪一型？</p>
               </motion.div>
+
+              {/* 16 型 pick grid */}
+              <div className="type-pick-grid" key="grid">
+                {ALL_TYPES.map((t) => {
+                  const isActual = revealed && t === currentPerson.actual;
+                  const isPicked = revealed && t === revealed;
+                  const isMatch = revealed === currentPerson.actual;
+                  const info = getMBTIInfo(t);
+                  const groupMap: Record<string, string> = {
+                    INTJ: "NT", INTP: "NT", ENTJ: "NT", ENTP: "NT",
+                    INFJ: "NF", INFP: "NF", ENFJ: "NF", ENFP: "NF",
+                    ISTJ: "SJ", ISFJ: "SJ", ESTJ: "SJ", ESFJ: "SJ",
+                    ISTP: "SP", ISFP: "SP", ESTP: "SP", ESFP: "SP",
+                  };
+                  return (
+                    <button
+                      key={t}
+                      onClick={() => pickGuess(t)}
+                      disabled={!!revealed}
+                      data-group={groupMap[t]}
+                      className={`type-pick ${isActual ? "correct" : isPicked && !isMatch ? "wrong" : ""}`}
+                      style={{ position: "relative" }}
+                    >
+                      <div className="e">{info.emoji}</div>
+                      <div className="code">{t}</div>
+                      <div className="nick">{info.nickname}</div>
+                      {isActual && (
+                        <span style={{ position: "absolute", top: -8, right: -8, fontSize: 18 }}>✅</span>
+                      )}
+                      {isPicked && !isMatch && (
+                        <span style={{ position: "absolute", top: -8, right: -8, fontSize: 18 }}>👈</span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+
             </AnimatePresence>
+
+            {/* Reveal feedback (新 design 樣式) */}
+            {revealed && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className={`reveal-card-guess ${revealed === currentPerson.actual ? "correct" : "wrong"}`}
+              >
+                <div className="reveal-stamp">
+                  {revealed === currentPerson.actual ? "✓ CORRECT" : "✗ MISSED"}
+                </div>
+                {revealed === currentPerson.actual ? (
+                  <p style={{ fontSize: 18, fontWeight: 900, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, margin: 0 }}>
+                    <span style={{ fontSize: 24 }}>🎯</span>
+                    <span>猜對了！{currentPerson.name} 確實是 {currentPerson.actual}</span>
+                  </p>
+                ) : (
+                  <p style={{ fontSize: 16, fontWeight: 700, display: "flex", flexDirection: "column", alignItems: "center", gap: 4, margin: 0 }}>
+                    <span>你猜 <span className="f-mono" style={{ fontWeight: 900 }}>{revealed}</span>，</span>
+                    <span>
+                      實際上 {currentPerson.name} 是{" "}
+                      <span className="f-mono" style={{ fontWeight: 900, color: "var(--mint)" }}>{currentPerson.actual}</span>{" "}
+                      喔！
+                    </span>
+                  </p>
+                )}
+                <SoundButton
+                  sound="whoosh"
+                  onClick={nextQuestion}
+                  className="btn-start"
+                  style={{ marginTop: 20, width: "100%", justifyContent: "center", padding: "14px 20px", fontSize: 18 }}
+                >
+                  {currentIdx < people.length - 1 ? "下一位 →" : "看結果 →"}
+                </SoundButton>
+              </motion.div>
+            )}
           </>
         )}
 
@@ -406,23 +456,33 @@ function GuessResultView({
       transition={{ duration: 0.6 }}
       className="space-y-6"
     >
-      {/* Hero */}
-      <section className="bg-gradient-to-br from-orange-300 via-amber-300 to-yellow-300 rounded-[2rem] p-8 sm:p-10 text-center text-white shadow-xl border-4 border-white/60 relative overflow-hidden">
-        <div className="absolute top-4 right-4 text-7xl opacity-20 animate-wiggle">{verdict.emoji}</div>
-        <p className="text-xs sm:text-sm font-bold uppercase tracking-[0.3em] text-white/95 mb-2 drop-shadow">
-          🎲 你的猜測結果
-        </p>
-        <div className="text-8xl mb-2 animate-pop-in">{verdict.emoji}</div>
-        <h1 className="text-3xl sm:text-5xl font-black drop-shadow-lg mb-2">{verdict.title}</h1>
-        <p className="text-base sm:text-lg text-white/95 max-w-xl mx-auto leading-relaxed drop-shadow">
+      {/* Hero — 新設計 score-display */}
+      <section className="score-display">
+        <div className="score-label">▸ YOUR RESULT · 你的猜測結果</div>
+        <div style={{ fontSize: 40, marginBottom: 8 }}>{verdict.emoji}</div>
+        <h1
+          className="f-serif"
+          style={{ fontWeight: 900, fontSize: "clamp(32px, 5vw, 48px)", lineHeight: 1, margin: "0 0 16px" }}
+        >
+          {verdict.title}
+        </h1>
+        <p
+          style={{
+            fontSize: 16,
+            color: "var(--ink-soft)",
+            maxWidth: 480,
+            margin: "0 auto 24px",
+            lineHeight: 1.7,
+          }}
+        >
           {verdict.subtitle}
         </p>
-        <div className="mt-5 inline-block bg-white/30 backdrop-blur rounded-2xl px-6 py-3">
-          <p className="text-sm font-bold drop-shadow">猜中</p>
-          <p className="text-5xl font-black drop-shadow">
-            {correct}<span className="text-2xl opacity-80"> / {total}</span>
-          </p>
-          <p className="text-sm font-bold drop-shadow mt-1">{accuracy}% 準確率</p>
+        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "center", gap: 4 }}>
+          <span className="big-num">{correct}</span>
+          <span className="of">/{total}</span>
+        </div>
+        <div className="hud" style={{ marginTop: 4 }}>
+          {accuracy}% 準確率
         </div>
       </section>
 

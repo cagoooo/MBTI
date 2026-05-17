@@ -792,6 +792,239 @@ html {
   }
 }
 
+/* ============================================================
+   GUESS GAME (猜朋友 MBTI)
+   ============================================================ */
+.phase-bar {
+  background: #fff; border: 2.5px solid var(--ink);
+  box-shadow: 6px 6px 0 var(--ink);
+  padding: 18px 24px;
+  margin-bottom: 32px;
+  display: grid; grid-template-columns: auto 1fr auto; gap: 24px; align-items: center;
+  position: relative;
+}
+.phase-bar .tab {
+  position: absolute; top: -14px; left: 18px;
+  background: var(--sunny); color: #5a4500;
+  padding: 4px 14px;
+  font-family: var(--font-mono);
+  font-weight: 800; font-size: 11px; letter-spacing: 4px;
+}
+.phase-pills {
+  display: flex; gap: 8px; align-items: center;
+  font-family: var(--font-mono);
+  font-size: 12px; letter-spacing: 2px;
+}
+.phase-pill {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 14px;
+  background: var(--paper-2);
+  border: 2px solid var(--ink);
+  font-weight: 800;
+}
+.phase-pill.done { background: var(--mint); color: #fff; }
+.phase-pill.current {
+  background: var(--sunny); color: #5a4500;
+  transform: scale(1.08);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+.phase-arrow { font-size: 14px; color: var(--muted); }
+
+.roster-box {
+  background: #fff; border: 2.5px solid var(--ink);
+  box-shadow: 8px 8px 0 var(--ink);
+  padding: 28px 32px;
+  position: relative;
+}
+.roster-box .tab-label {
+  position: absolute; top: -16px; left: 24px;
+  background: var(--ink); color: var(--paper);
+  padding: 6px 16px;
+  font-family: var(--font-mono);
+  font-weight: 800; font-size: 12px; letter-spacing: 3px;
+}
+.roster-textarea {
+  width: 100%;
+  min-height: 220px;
+  border: 2px solid var(--line-strong);
+  background: var(--paper);
+  padding: 14px 16px;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--ink);
+  resize: vertical;
+  background-image: repeating-linear-gradient(transparent 0, transparent 24.5px, rgba(135,160,200,0.18) 24.5px, rgba(135,160,200,0.18) 26px);
+  line-height: 26px;
+}
+.roster-textarea:focus {
+  outline: none;
+  border-color: var(--coral);
+  background-color: #fff;
+}
+
+.person-card {
+  background: #fff; border: 3px solid var(--ink);
+  box-shadow: 10px 10px 0 var(--ink);
+  padding: 32px;
+  position: relative;
+  text-align: center;
+}
+.person-card .person-label {
+  position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
+  background: var(--coral); color: #fff;
+  padding: 4px 18px;
+  font-family: var(--font-mono);
+  font-weight: 800; font-size: 12px; letter-spacing: 4px;
+}
+.person-card .person-avatar {
+  width: 140px; height: 140px;
+  border-radius: 50%;
+  border: 3px solid var(--ink);
+  background: linear-gradient(135deg, var(--tape-coral), var(--coral));
+  color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-serif-tc);
+  font-weight: 900; font-size: 64px;
+  margin: 16px auto 20px;
+  box-shadow: 6px 6px 0 var(--ink);
+  position: relative;
+}
+.person-card .person-name {
+  font-family: var(--font-serif-tc);
+  font-weight: 900; font-size: clamp(36px, 8vw, 56px); line-height: 1;
+  margin: 0 0 8px;
+}
+.person-card .person-num {
+  font-family: var(--font-mono);
+  color: var(--muted); font-size: 13px; letter-spacing: 3px;
+}
+
+.type-pick-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+}
+.type-pick {
+  background: #fff;
+  border: 2px solid var(--ink);
+  padding: 14px 12px;
+  cursor: pointer;
+  transition: transform 0.12s, box-shadow 0.12s, background 0.12s;
+  box-shadow: 3px 3px 0 var(--ink);
+  text-align: center;
+  font-family: inherit;
+  display: flex; flex-direction: column; align-items: center;
+}
+.type-pick:hover:not(:disabled) {
+  transform: translate(-2px, -2px);
+  box-shadow: 5px 5px 0 var(--ink);
+  background: var(--paper-warm);
+}
+.type-pick:active:not(:disabled) {
+  transform: translate(3px, 3px);
+  box-shadow: 0 0 0 var(--ink);
+}
+.type-pick:disabled { opacity: 0.4; cursor: not-allowed; }
+.type-pick.correct { background: var(--mint); border-color: var(--mint); }
+.type-pick.wrong { background: #fce8ea; border-color: var(--rose); }
+.type-pick .e { font-size: 24px; margin-bottom: 4px; }
+.type-pick .code {
+  font-family: var(--font-mono);
+  font-weight: 800; font-size: 14px; letter-spacing: 1.5px;
+}
+.type-pick .nick {
+  font-family: var(--font-hand);
+  font-size: 12px; color: var(--ink-soft); margin-top: 2px;
+}
+
+.reveal-card-guess {
+  background: #fff;
+  border: 3px solid var(--ink);
+  box-shadow: 10px 10px 0 var(--ink);
+  padding: 28px 32px;
+  margin-top: 24px;
+  position: relative;
+}
+.reveal-card-guess.correct {
+  border-color: var(--mint);
+  background: linear-gradient(135deg, #fff 0%, #e8f5ed 100%);
+  box-shadow: 10px 10px 0 var(--mint);
+}
+.reveal-card-guess.wrong {
+  border-color: var(--sunny);
+  background: linear-gradient(135deg, #fff 0%, #fef3d0 100%);
+  box-shadow: 10px 10px 0 var(--sunny);
+}
+.reveal-card-guess .reveal-stamp {
+  position: absolute; top: -14px; right: 24px;
+  border: 3px solid;
+  padding: 6px 16px;
+  transform: rotate(8deg);
+  font-family: var(--font-mono);
+  font-weight: 900; font-size: 14px; letter-spacing: 2px;
+  background: rgba(255,255,255,0.85);
+}
+.reveal-card-guess.correct .reveal-stamp { color: var(--mint); border-color: var(--mint); }
+.reveal-card-guess.wrong .reveal-stamp { color: var(--sunny); border-color: var(--sunny); }
+
+.score-display {
+  background: linear-gradient(135deg, #fff 0%, var(--paper-warm) 100%);
+  border: 3px solid var(--ink);
+  box-shadow: 12px 12px 0 var(--ink);
+  padding: 48px 32px;
+  position: relative;
+  text-align: center;
+  overflow: hidden;
+}
+.score-display .big-num {
+  font-family: var(--font-serif-tc);
+  font-weight: 900;
+  font-size: clamp(96px, 22vw, 240px);
+  line-height: 0.9; letter-spacing: -8px;
+  color: var(--coral);
+  margin: 0;
+}
+.score-display .of {
+  font-family: var(--font-serif-tc);
+  font-size: 60px; color: var(--muted);
+  font-weight: 400; font-style: italic;
+  margin-left: -8px;
+}
+.score-display .score-label {
+  font-family: var(--font-mono);
+  font-size: 14px; letter-spacing: 6px;
+  color: var(--coral); font-weight: 800;
+  margin-bottom: 4px;
+}
+
+/* Result rows for full comparison */
+.result-row {
+  display: grid; grid-template-columns: 48px 1fr auto auto; gap: 16px;
+  padding: 12px 16px;
+  align-items: center;
+  border-bottom: 1.5px dashed var(--line);
+}
+.result-row:last-child { border-bottom: none; }
+.result-row .avatar-mini {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  border: 2px solid var(--ink);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-serif-tc);
+  font-weight: 900; font-size: 16px;
+  background: var(--paper-warm);
+}
+.result-row .verdict {
+  display: inline-block;
+  padding: 4px 12px;
+  font-family: var(--font-mono);
+  font-weight: 800; font-size: 11px; letter-spacing: 2px;
+}
+.result-row .verdict.correct { background: var(--mint); color: #fff; }
+.result-row .verdict.wrong { background: var(--sunny); color: #5a4500; }
+.result-row.surprise {
+  background: rgba(255,217,61,0.12);
+  border-left: 4px solid var(--sunny);
+}
+
 /* Type pill (type-detail 用的小膠囊) */
 .type-pill {
   display: inline-flex; align-items: center; gap: 6px;
