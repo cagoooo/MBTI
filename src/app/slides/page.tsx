@@ -5,206 +5,556 @@ import { AnimatePresence, motion } from "framer-motion";
 import HomeToButton from "@/components/HomeToButton";
 import SoundLink from "@/components/SoundLink";
 import { playSound } from "@/lib/sound";
-import { MBTI_GROUPS } from "@/lib/mbti";
+import { MBTI_GROUPS, getMBTIInfo } from "@/lib/mbti";
 import appConfig from "../../../app.config";
+import type { MBTIType } from "@/lib/types";
 
-interface Slide {
-  bg: string; // gradient class
-  emoji?: string;
-  badge?: string;
-  title: string;
-  subtitle?: string;
-  body?: React.ReactNode;
-  footer?: string;
+interface SlideMeta {
+  num: string;
+  brand?: string;
+  /** True 把標題往中間靠 (開場 / 結束張) */
+  centerY?: boolean;
+  bgNum?: string;
+  render: () => React.ReactNode;
 }
 
-const SLIDES: Slide[] = [
-  // 1. 開場
-  {
-    bg: "from-amber-300 via-orange-400 to-rose-400",
-    emoji: "🎮",
-    badge: "今天的課程",
-    title: appConfig.siteName,
-    subtitle: "玩一場校園 RPG，認識自己的人格類型",
-    footer: `by ${appConfig.teacherName} ・ ${appConfig.schoolFullName}`,
-  },
-  // 2. 學習目標
-  {
-    bg: "from-sky-300 via-blue-400 to-indigo-500",
-    emoji: "🎯",
-    badge: "Step 1",
-    title: "今天的學習目標",
-    body: (
-      <ul className="space-y-4 text-left max-w-2xl mx-auto">
-        <li className="flex gap-3"><span className="text-3xl">✨</span><span><strong>認識自己</strong>：知道我是怎麼想事情、怎麼跟人相處</span></li>
-        <li className="flex gap-3"><span className="text-3xl">🤝</span><span><strong>尊重多元</strong>：別人跟我不一樣，那是「不同」不是「不好」</span></li>
-        <li className="flex gap-3"><span className="text-3xl">💡</span><span><strong>練習反思</strong>：玩完想想「我最像哪部分？我想改善什麼？」</span></li>
-      </ul>
-    ),
-  },
-  // 3. MBTI 是什麼
-  {
-    bg: "from-violet-400 via-purple-500 to-fuchsia-500",
-    emoji: "❔",
-    badge: "Step 2",
-    title: "MBTI 是什麼？",
-    body: (
-      <div className="space-y-6 text-left max-w-2xl mx-auto">
-        <p className="text-2xl leading-relaxed">
-          MBTI 是一個<strong className="text-yellow-300">「看你怎麼想事情」</strong>的工具，
-          把人分成 <strong className="text-yellow-300">16 種</strong>不同風格。
+function SlideOpening() {
+  return (
+    <>
+      <div className="tape-deck" style={{ marginBottom: 40 }}>▸ 今天的課程 · OPENING ◂</div>
+
+      <div
+        className="f-hand"
+        style={{
+          fontSize: "clamp(28px, 4vw, 56px)",
+          color: "var(--coral)",
+          transform: "rotate(-2deg)",
+          marginBottom: 48,
+        }}
+      >
+        歡迎來到開學第一天 ✦
+      </div>
+
+      <h1 className="h-mega-deck" style={{ marginBottom: 28 }}>
+        校園<span style={{ color: "var(--coral)" }}>奇</span>遇記
+      </h1>
+
+      <p className="body-xl-deck" style={{ maxWidth: 1100, marginBottom: 36 }}>
+        玩一場校園 RPG，
+        <b style={{ color: "var(--coral)" }}>10 分鐘</b>
+        認識自己的人格類型 — 從開學第一天到校慶大結局，每個選擇都會分支出你的專屬結局。
+      </p>
+
+      <div style={{ display: "flex", gap: 20, alignItems: "center", flexWrap: "wrap" }}>
+        <div className="hud-deck" style={{ letterSpacing: 6 }}>MBTI · CAMPUS · ADVENTURE</div>
+        <div
+          style={{
+            height: 3,
+            flex: 1,
+            maxWidth: 240,
+            background:
+              "repeating-linear-gradient(90deg, var(--coral) 0 12px, transparent 12px 24px)",
+          }}
+        ></div>
+        <div className="f-mono" style={{ fontSize: "clamp(14px, 1.6vw, 22px)", color: "var(--muted)" }}>
+          vol.01 · 2026
+        </div>
+      </div>
+    </>
+  );
+}
+
+function SlideGoals() {
+  return (
+    <>
+      <div className="tape-deck sky" style={{ marginBottom: 18 }}>▸ STEP 01 · 今天要學什麼？</div>
+      <h2 className="h-big-deck" style={{ marginBottom: 36 }}>
+        今天的<br />
+        <span style={{ color: "var(--sky)" }}>學習目標</span>
+      </h2>
+      <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+        <div className="goal-li">
+          <div className="emoji-big">✨</div>
+          <div>
+            <div className="lbl">GOAL · 01 · SELF</div>
+            <div className="text">
+              <b>認識自己</b> — 知道我是怎麼想事情、怎麼跟人相處
+            </div>
+          </div>
+        </div>
+        <div className="goal-li">
+          <div className="emoji-big">🤝</div>
+          <div>
+            <div className="lbl">GOAL · 02 · DIVERSITY</div>
+            <div className="text">
+              <b>尊重多元</b> — 別人跟我不一樣，那是「不同」不是「不好」
+            </div>
+          </div>
+        </div>
+        <div className="goal-li">
+          <div className="emoji-big">💡</div>
+          <div>
+            <div className="lbl">GOAL · 03 · REFLECT</div>
+            <div className="text">
+              <b>練習反思</b> — 玩完想想「我最像哪部分？我想改善什麼？」
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function SlideMBTIIntro() {
+  return (
+    <>
+      <div className="tape-deck plum" style={{ marginBottom: 36 }}>▸ STEP 02 · 概念說明</div>
+      <h2 className="h-big-deck" style={{ marginBottom: 30 }}>
+        <span style={{ color: "var(--plum)" }}>MBTI</span>
+        <br />
+        是什麼？
+      </h2>
+
+      <div
+        style={{
+          background: "#fff",
+          border: "3px solid var(--ink)",
+          boxShadow: "10px 10px 0 var(--ink)",
+          padding: "clamp(22px, 3vw, 40px) clamp(28px, 3.5vw, 48px)",
+          maxWidth: 1100,
+          marginBottom: 24,
+          position: "relative",
+        }}
+      >
+        <div
+          style={{
+            position: "absolute",
+            top: -18,
+            left: 32,
+            background: "var(--ink)",
+            color: "var(--paper)",
+            padding: "6px 18px",
+            fontFamily: "var(--font-mono)",
+            fontWeight: 800,
+            fontSize: "clamp(12px, 1.4vw, 20px)",
+            letterSpacing: 3,
+          }}
+        >
+          ✦ DEFINITION
+        </div>
+        <p className="body-xl-deck" style={{ margin: "8px 0 0", lineHeight: 1.55 }}>
+          MBTI 是一個
+          <b style={{ color: "var(--coral)" }}>「看你怎麼想事情」</b>
+          的工具，
+          <br />
+          把人分成{" "}
+          <b style={{ color: "var(--coral)", fontFamily: "var(--font-mono)" }}>16 種</b>
+          不同風格。
         </p>
-        <div className="bg-white/15 backdrop-blur rounded-2xl p-5 border border-white/30">
-          <p className="text-lg leading-relaxed">
-            ⚠️ <strong>很重要</strong>：MBTI <strong>不是</strong>分類「好」或「壞」，
+      </div>
+
+      <div
+        style={{
+          background: "var(--paper-warm)",
+          borderLeft: "8px solid var(--coral)",
+          padding: "clamp(18px, 2.4vw, 28px) clamp(22px, 2.8vw, 36px)",
+          maxWidth: 1100,
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
+          <span style={{ fontSize: "clamp(36px, 4.5vw, 56px)" }}>⚠️</span>
+          <div className="body-lg-deck">
+            <b style={{ color: "var(--coral)" }}>很重要</b>
+            ：MBTI <b>不是</b>分類「好」或「壞」，
             <br />
             而是看「你比較喜歡哪種方式」。
+            <b style={{ color: "var(--coral)" }}>每一種都很棒，也都會變化！</b>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function SlideDimensions() {
+  const dims: Array<{ color: string; corner: string; cornerBg: string; cornerColor: string; left: string; right: string; desc: React.ReactNode }> = [
+    {
+      color: "var(--coral)",
+      corner: "EXTRAVERSION",
+      cornerBg: "var(--tape-sunny)",
+      cornerColor: "#5a4500",
+      left: "E",
+      right: "I",
+      desc: (
+        <>
+          <b>外向</b>　跟人互動充電 · <b>內向</b>　獨處充電
+        </>
+      ),
+    },
+    {
+      color: "var(--sky)",
+      corner: "SENSING",
+      cornerBg: "var(--tape-sky)",
+      cornerColor: "#1e4a6a",
+      left: "S",
+      right: "N",
+      desc: (
+        <>
+          <b>實感</b>　看眼前細節 · <b>直覺</b>　想像可能性
+        </>
+      ),
+    },
+    {
+      color: "var(--rose)",
+      corner: "THINKING",
+      cornerBg: "var(--tape-rose)",
+      cornerColor: "#6a1f3a",
+      left: "T",
+      right: "F",
+      desc: (
+        <>
+          <b>思考</b>　用邏輯判斷 · <b>情感</b>　看人的感受
+        </>
+      ),
+    },
+    {
+      color: "var(--mint)",
+      corner: "JUDGING",
+      cornerBg: "var(--tape-mint)",
+      cornerColor: "#1f5a3f",
+      left: "J",
+      right: "P",
+      desc: (
+        <>
+          <b>計畫</b>　事先安排 · <b>開放</b>　隨機應變
+        </>
+      ),
+    },
+  ];
+  return (
+    <>
+      <div className="tape-deck mint" style={{ marginBottom: 18 }}>▸ STEP 03 · DIMENSIONS · 4 軸</div>
+      <h2 className="h-big-deck" style={{ marginBottom: 32 }}>
+        MBTI 的<br />
+        <span style={{ color: "var(--mint)" }}>4 個維度</span>
+      </h2>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
+        {dims.map((d, i) => (
+          <div key={i} className="dim-card">
+            <span
+              className="corner-tape"
+              style={{ background: d.cornerBg, color: d.cornerColor }}
+            >
+              {d.corner}
+            </span>
+            <div className="pair">
+              <span className="letter" style={{ color: d.color }}>{d.left}</span>
+              <span className="arrow">↔</span>
+              <span className="letter" style={{ color: d.color }}>{d.right}</span>
+            </div>
+            <div className="desc">{d.desc}</div>
+          </div>
+        ))}
+      </div>
+      <div
+        style={{
+          textAlign: "center",
+          marginTop: 24,
+          fontFamily: "var(--font-hand)",
+          fontSize: "clamp(18px, 2vw, 28px)",
+          color: "var(--muted)",
+          transform: "rotate(-1deg)",
+        }}
+      >
+        4 個維度組合 → 16 型人格 ✦
+      </div>
+    </>
+  );
+}
+
+function Slide16Types() {
+  const groupMeta: Record<string, { emoji: string; ink: string; label: string }> = {
+    NT: { emoji: "🧠", ink: "var(--plum)", label: "NT · 分析家" },
+    NF: { emoji: "💖", ink: "var(--rose)", label: "NF · 外交官" },
+    SJ: { emoji: "🛡️", ink: "var(--mint)", label: "SJ · 守護者" },
+    SP: { emoji: "🌈", ink: "var(--sunny)", label: "SP · 探險家" },
+  };
+  return (
+    <>
+      <div className="tape-deck rose" style={{ marginBottom: 36 }}>▸ STEP 04 · 16 TYPES · 全圖鑑</div>
+      <h2 className="h-big-deck" style={{ marginBottom: 18 }}>
+        <span style={{ color: "var(--rose)" }}>16 種</span>人格類型
+      </h2>
+      <p className="body-md-deck" style={{ marginBottom: 24, maxWidth: 1100 }}>
+        每一種都有自己的超能力 — 沒有好壞之分，只有「適合什麼情境」的差別。
+      </p>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 24 }}>
+        {MBTI_GROUPS.map((g) => {
+          const meta = groupMeta[g.key];
+          return (
+            <div key={g.key}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+                <span style={{ fontSize: "clamp(24px, 3vw, 36px)" }}>{meta.emoji}</span>
+                <div
+                  className="hud-deck"
+                  style={{ color: meta.ink, fontSize: "clamp(14px, 1.5vw, 22px)" }}
+                >
+                  {meta.label}
+                </div>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                {g.types.map((t: MBTIType) => {
+                  const info = getMBTIInfo(t);
+                  return (
+                    <div key={t} className="type-chip" data-group={g.key}>
+                      <div className="code">{t}</div>
+                      <div className="nick">{info.nickname}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </>
+  );
+}
+
+function SlideStartPlaying() {
+  const url = appConfig.productionUrl.replace(/^https?:\/\//, "");
+  return (
+    <>
+      <div className="tape-deck sunny" style={{ marginBottom: 24 }}>▸ STEP 05 · LET&apos;S PLAY!</div>
+      <h2 className="h-big-deck" style={{ marginBottom: 36 }}>
+        現在<br />
+        <span style={{ color: "var(--sunny)" }}>開始玩</span>！
+      </h2>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "minmax(180px, 280px) 1fr",
+          gap: 40,
+          alignItems: "center",
+        }}
+      >
+        <div className="qr-placeholder" style={{ borderColor: "var(--ink)", boxShadow: "8px 8px 0 var(--ink)" }}>
+          <div
+            style={{
+              position: "relative",
+              zIndex: 2,
+              background: "var(--paper)",
+              padding: "12px 18px",
+              fontFamily: "var(--font-mono)",
+              fontWeight: 800,
+              fontSize: "clamp(14px, 1.6vw, 22px)",
+              border: "2px dashed var(--coral)",
+              color: "var(--coral)",
+              textAlign: "center",
+              letterSpacing: 2,
+              lineHeight: 1.4,
+            }}
+          >
+            QR
             <br />
-            每一種都很棒，也都會變化！
+            CODE
+            <br />
+            HERE
+          </div>
+        </div>
+        <div>
+          <div className="hud-deck" style={{ marginBottom: 14, letterSpacing: 6 }}>
+            ▸ 掃 QR · 或 · 瀏覽器輸入
+          </div>
+          <div
+            style={{
+              background: "#fff",
+              border: "3px solid var(--ink)",
+              boxShadow: "8px 8px 0 var(--ink)",
+              padding: "clamp(18px, 2.4vw, 32px) clamp(24px, 2.8vw, 40px)",
+              fontFamily: "var(--font-mono)",
+              fontWeight: 900,
+              fontSize: "clamp(28px, 4vw, 56px)",
+              wordBreak: "break-all",
+              lineHeight: 1.2,
+              marginBottom: 24,
+            }}
+          >
+            {url}
+          </div>
+          <p className="body-md-deck">
+            👉 老師若要<b>全班同步玩 + Pin 場景討論</b>：
+            <br />
+            <span
+              style={{
+                display: "inline-block",
+                marginTop: 12,
+                padding: "8px 18px",
+                background: "var(--plum)",
+                color: "#fff",
+                fontFamily: "var(--font-mono)",
+                fontWeight: 800,
+                fontSize: "clamp(14px, 1.6vw, 22px)",
+                letterSpacing: 3,
+              }}
+            >
+              🎓 建立班級房間
+            </span>
+            　拿 6 位數房號
           </p>
         </div>
       </div>
-    ),
-  },
-  // 4. 四個維度
-  {
-    bg: "from-emerald-400 via-teal-500 to-cyan-600",
-    emoji: "🧬",
-    badge: "Step 3",
-    title: "MBTI 的 4 個維度",
-    body: (
-      <div className="grid grid-cols-2 gap-4 max-w-3xl mx-auto">
-        {[
-          { l: "外向 E", r: "I 內向", desc: "喜歡跟人互動 vs 喜歡獨處充電" },
-          { l: "實感 S", r: "N 直覺", desc: "看眼前細節 vs 想像可能性" },
-          { l: "思考 T", r: "F 情感", desc: "用邏輯判斷 vs 看人的感受" },
-          { l: "判斷 J", r: "P 感知", desc: "事先計畫 vs 隨機應變" },
-        ].map((d, i) => (
-          <div key={i} className="bg-white/15 backdrop-blur rounded-2xl p-4 border border-white/30">
-            <div className="text-xl font-black mb-1">
-              <span className="text-yellow-200">{d.l}</span>
-              <span className="opacity-50 mx-2">↔</span>
-              <span className="text-yellow-200">{d.r}</span>
-            </div>
-            <div className="text-base opacity-90">{d.desc}</div>
+    </>
+  );
+}
+
+function SlideRules() {
+  const rules = [
+    { num: "01", text: <><b>誠實選</b>　不要故意選「看起來酷的」</> },
+    { num: "02", text: <><b>沒有對錯</b>　每個選擇都會有合適的結果</> },
+    { num: "03", text: <><b>不用想太久</b>　跟著「第一直覺」走就對了</> },
+    { num: "04", text: <><b>可以重玩</b>　看看不同選擇會走到哪</> },
+  ];
+  return (
+    <>
+      <div className="tape-deck mint" style={{ marginBottom: 36 }}>▸ STEP 06 · RULES · 玩的時候請記得</div>
+      <h2 className="h-big-deck" style={{ marginBottom: 32 }}>
+        4 件<span style={{ color: "var(--mint)" }}>要記得</span>的事
+      </h2>
+      <div>
+        {rules.map((r) => (
+          <div key={r.num} className="rule-li">
+            <div className="num">{r.num}</div>
+            <div className="text">{r.text}</div>
           </div>
         ))}
       </div>
-    ),
-    footer: "4 個維度組合 → 16 型人格",
-  },
-  // 5. 16 型彩色 grid
-  {
-    bg: "from-rose-400 via-pink-500 to-fuchsia-500",
-    emoji: "🌈",
-    badge: "Step 4",
-    title: "16 種人格類型",
-    body: (
-      <div className="grid grid-cols-4 gap-3 max-w-3xl mx-auto">
-        {MBTI_GROUPS.flatMap((g) =>
-          g.types.map((t) => (
-            <div
-              key={t}
-              className="bg-white/20 backdrop-blur rounded-xl p-3 text-center border border-white/30"
-            >
-              <div className="text-2xl font-black">{t}</div>
-            </div>
-          )),
-        )}
+    </>
+  );
+}
+
+function SlideNextSteps() {
+  const cards = [
+    { num: "01", emoji: "📋", title: "讀詳細介紹", desc: "看「我的超能力」「練習成長的地方」" },
+    { num: "02", emoji: "🤝", title: "麻吉配對", desc: "用「麻吉配對」看跟誰最合拍 / 跟誰需要練習" },
+    { num: "03", emoji: "🖨️", title: "列印學習單", desc: "帶回家給家長看，寫成長反思" },
+    { num: "04", emoji: "🔄", title: "再玩一次", desc: "試試別的選擇，看結果會不會不一樣" },
+  ];
+  return (
+    <>
+      <div className="tape-deck plum" style={{ marginBottom: 18 }}>▸ STEP 07 · NEXT STEPS · 結果出來後</div>
+      <h2 className="h-big-deck" style={{ marginBottom: 32 }}>
+        看完結果，
+        <br />
+        <span style={{ color: "var(--plum)" }}>可以做什麼</span>？
+      </h2>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 22 }}>
+        {cards.map((c) => (
+          <div key={c.num} className="next-card">
+            <div className="lbl">▸ NEXT · {c.num}</div>
+            <div className="emoji">{c.emoji}</div>
+            <div className="title">{c.title}</div>
+            <div className="desc">{c.desc}</div>
+          </div>
+        ))}
       </div>
-    ),
-    footer: "每一種都有自己的超能力，沒有好壞之分",
-  },
-  // 6. 開始遊戲
-  {
-    bg: "from-yellow-300 via-orange-400 to-red-500",
-    emoji: "🚀",
-    badge: "Step 5",
-    title: "現在開始玩！",
-    body: (
-      <div className="space-y-6 max-w-2xl mx-auto">
-        <p className="text-2xl">
-          掃 QR / 在電腦輸入網址：
-        </p>
-        <div className="bg-white text-[var(--color-ink)] rounded-3xl p-6 font-black text-3xl font-mono break-all">
-          cagoooo.github.io/MBTI
+    </>
+  );
+}
+
+function SlideForParents() {
+  const items = [
+    { emoji: "✨", body: <>MBTI <b>不是人生定型</b>，會隨著年齡和經驗變化</> },
+    { emoji: "💖", body: <>問孩子「<b style={{ color: "var(--coral)" }}>你最像哪一段？</b>」勝過「你怎麼是這型？」</> },
+    { emoji: "🌱", body: <>把它當作<b>「認識自己的起點」</b>，不是分類他</> },
+    { emoji: "📝", body: <>跟孩子聊「<b style={{ color: "var(--coral)" }}>你想練習什麼？</b>」帶出成長型思維</> },
+  ];
+  return (
+    <>
+      <div className="tape-deck rose" style={{ marginBottom: 36 }}>▸ FOR · PARENTS · 給家長的話</div>
+      <h2 className="h-big-deck" style={{ marginBottom: 24 }}>
+        請<span style={{ color: "var(--rose)" }}>家長</span>記得 …
+      </h2>
+      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        {items.map((it, i) => (
+          <div
+            key={i}
+            style={{
+              background: "#fff",
+              border: "3px solid var(--ink)",
+              boxShadow: "8px 8px 0 var(--ink)",
+              padding: "clamp(16px, 2vw, 24px) clamp(22px, 2.6vw, 36px)",
+              display: "flex",
+              gap: 18,
+              alignItems: "center",
+            }}
+          >
+            <div style={{ fontSize: "clamp(32px, 4vw, 48px)" }}>{it.emoji}</div>
+            <div style={{ fontSize: "clamp(16px, 2vw, 28px)", lineHeight: 1.5 }}>{it.body}</div>
+          </div>
+        ))}
+      </div>
+    </>
+  );
+}
+
+function SlideEnd() {
+  const url = appConfig.productionUrl.replace(/^https?:\/\//, "");
+  return (
+    <>
+      <div className="tape-deck sunny" style={{ marginBottom: 40 }}>▸ END · 謝謝大家</div>
+      <div
+        className="f-hand"
+        style={{
+          fontSize: "clamp(28px, 4vw, 56px)",
+          color: "var(--coral)",
+          transform: "rotate(-2deg)",
+          marginBottom: 24,
+        }}
+      >
+        玩得開心嗎？✨
+      </div>
+      <h1 className="h-mega-deck" style={{ marginBottom: 24 }}>
+        你最棒的地方，
+        <br />
+        就是<span style={{ color: "var(--coral)" }}>你是你</span>。
+      </h1>
+      <p className="body-xl-deck" style={{ maxWidth: 1200, marginBottom: 28 }}>
+        16 型沒有高低，沒有好壞。每一種都是世界的一塊獨特拼圖。
+        <br />
+        分享給朋友也來玩看看吧 ✦
+      </p>
+      <div style={{ display: "flex", gap: 20, alignItems: "center", flexWrap: "wrap" }}>
+        <div
+          style={{
+            background: "#fff",
+            border: "3px solid var(--ink)",
+            boxShadow: "6px 6px 0 var(--ink)",
+            padding: "12px 24px",
+            fontFamily: "var(--font-mono)",
+            fontWeight: 800,
+            fontSize: "clamp(16px, 1.8vw, 26px)",
+          }}
+        >
+          {url}
         </div>
-        <p className="text-lg opacity-90 leading-relaxed">
-          👉 老師若要全班同步玩 + Pin 場景討論：
-          <br />
-          進「<strong className="text-yellow-200">🎓 建立班級房間</strong>」拿 6 位數房號
-        </p>
+        <div className="hud-deck" style={{ letterSpacing: 6 }}>▸ THANK YOU · 謝謝</div>
       </div>
-    ),
-  },
-  // 7. 玩遊戲時的態度
-  {
-    bg: "from-teal-400 via-emerald-500 to-green-600",
-    emoji: "💎",
-    badge: "Step 6",
-    title: "玩的時候請記得...",
-    body: (
-      <ul className="space-y-5 text-left max-w-2xl mx-auto text-xl">
-        <li className="flex gap-4"><span className="text-3xl shrink-0">✅</span><span><strong>誠實選</strong>，不要故意選「看起來酷的」</span></li>
-        <li className="flex gap-4"><span className="text-3xl shrink-0">🚫</span><span><strong>沒有對錯</strong>，每個選擇都會有合適的結果</span></li>
-        <li className="flex gap-4"><span className="text-3xl shrink-0">⏱️</span><span><strong>不用想太久</strong>，跟著「第一直覺」走就對了</span></li>
-        <li className="flex gap-4"><span className="text-3xl shrink-0">🔁</span><span><strong>可以重玩</strong>，看看不同選擇會走到哪</span></li>
-      </ul>
-    ),
-  },
-  // 8. 看完結果後
-  {
-    bg: "from-fuchsia-500 via-purple-600 to-indigo-700",
-    emoji: "📖",
-    badge: "Step 7",
-    title: "看完結果可以做什麼？",
-    body: (
-      <div className="grid grid-cols-2 gap-4 max-w-3xl mx-auto">
-        {[
-          { icon: "📋", t: "讀詳細介紹", d: "看「我的超能力」「練習成長的地方」" },
-          { icon: "🤝", t: "去配對", d: "用「麻吉配對」看跟誰最合拍" },
-          { icon: "🖨️", t: "列印學習單", d: "帶回家給家長看，寫反思" },
-          { icon: "🔄", t: "再玩一次", d: "下次試試別的選擇，看結果會不會不一樣" },
-        ].map((d, i) => (
-          <div key={i} className="bg-white/15 backdrop-blur rounded-2xl p-5 border border-white/30 text-left">
-            <div className="text-4xl mb-2">{d.icon}</div>
-            <div className="text-xl font-black mb-1">{d.t}</div>
-            <div className="text-base opacity-90">{d.d}</div>
-          </div>
-        ))}
-      </div>
-    ),
-  },
-  // 9. 給家長
-  {
-    bg: "from-rose-300 via-pink-400 to-rose-500",
-    emoji: "💌",
-    badge: "Step 8 (給家長)",
-    title: "請家長記得...",
-    body: (
-      <div className="space-y-4 max-w-2xl mx-auto text-xl leading-relaxed text-left">
-        <p>✨ MBTI <strong>不是人生定型</strong>，會隨著年齡和經驗變化</p>
-        <p>💖 看到孩子的型 → 問他「你最像哪一段？」勝過「你怎麼是這型？」</p>
-        <p>🌱 把它當作一個<strong>「認識自己的起點」</strong>，不是分類他</p>
-        <p>📝 跟孩子聊「你想練習什麼？」帶出成長型思維</p>
-      </div>
-    ),
-  },
-  // 10. 結束
-  {
-    bg: "from-amber-400 via-orange-500 to-red-500",
-    emoji: "🎉",
-    badge: "結束",
-    title: "謝謝大家！",
-    subtitle: "你最棒的地方，就是「你是你」",
-    body: (
-      <div className="mt-8 text-xl opacity-95">
-        <p>玩得開心嗎？分享給朋友也來玩看看吧 ✨</p>
-        <p className="mt-4 font-mono text-2xl">{appConfig.productionUrl.replace(/^https?:\/\//, "")}</p>
-      </div>
-    ),
-    footer: `Made with ❤️ by ${appConfig.teacherName} @ ${appConfig.schoolFullName}`,
-  },
+    </>
+  );
+}
+
+const SLIDES: SlideMeta[] = [
+  { num: "01 / 10", brand: `${appConfig.teacherName} · ${appConfig.schoolFullName} 資訊教育`, centerY: true, render: SlideOpening },
+  { num: "02 / 10", brand: "學習目標", render: SlideGoals },
+  { num: "03 / 10", brand: "MBTI 概念", bgNum: "?", render: SlideMBTIIntro },
+  { num: "04 / 10", brand: "4 個維度", render: SlideDimensions },
+  { num: "05 / 10", brand: "16 型全圖鑑", render: Slide16Types },
+  { num: "06 / 10", brand: "開始遊戲", centerY: true, render: SlideStartPlaying },
+  { num: "07 / 10", brand: "玩的態度", render: SlideRules },
+  { num: "08 / 10", brand: "下一步", render: SlideNextSteps },
+  { num: "09 / 10", brand: "給家長", render: SlideForParents },
+  { num: "10 / 10", brand: "", centerY: false, render: SlideEnd },
 ];
 
 export default function SlidesPage() {
@@ -231,7 +581,6 @@ export default function SlidesPage() {
     });
   }, []);
 
-  // 鍵盤導覽
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
@@ -265,7 +614,6 @@ export default function SlidesPage() {
     }
   }
 
-  // 監聽 fullscreen 變動
   useEffect(() => {
     function onFs() {
       setFullscreen(!!document.fullscreenElement);
@@ -279,58 +627,53 @@ export default function SlidesPage() {
 
   return (
     <div
-      className={`fixed inset-0 bg-black text-white overflow-hidden ${
-        fullscreen ? "" : "z-30"
-      }`}
+      className={`deck-stage ${fullscreen ? "" : "z-30"}`}
+      style={{ color: "var(--ink)" }}
     >
       <AnimatePresence mode="wait">
         <motion.div
           key={current}
-          initial={{ opacity: 0, x: 80 }}
+          initial={{ opacity: 0, x: 60 }}
           animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -80 }}
+          exit={{ opacity: 0, x: -60 }}
           transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-          className={`absolute inset-0 bg-gradient-to-br ${slide.bg} flex flex-col items-center justify-center p-8 text-center`}
+          className="deck-slide"
         >
-          {slide.badge && (
-            <p className="text-base sm:text-lg uppercase tracking-[0.3em] opacity-80 mb-2 drop-shadow">
-              {slide.badge}
-            </p>
-          )}
-          {slide.emoji && (
-            <div className="text-7xl sm:text-8xl mb-4 drop-shadow-2xl">{slide.emoji}</div>
-          )}
-          <h1 className="text-4xl sm:text-6xl md:text-7xl font-black drop-shadow-xl mb-3 max-w-5xl">
-            {slide.title}
-          </h1>
-          {slide.subtitle && (
-            <p className="text-xl sm:text-2xl md:text-3xl font-bold opacity-95 mb-6 drop-shadow max-w-3xl">
-              {slide.subtitle}
-            </p>
-          )}
-          {slide.body && (
-            <div className="mt-4 w-full max-w-5xl text-base sm:text-lg md:text-xl">{slide.body}</div>
-          )}
-          {slide.footer && (
-            <p className="absolute bottom-8 left-1/2 -translate-x-1/2 text-sm opacity-70">
-              {slide.footer}
-            </p>
+          <div className="slide-num">{slide.num}</div>
+          {slide.bgNum && <div className="big-bg-num">{slide.bgNum}</div>}
+          <div
+            className="slide-body-deck"
+            style={{
+              justifyContent: slide.centerY ? "center" : "flex-start",
+            }}
+          >
+            {slide.render()}
+          </div>
+          {slide.brand && (
+            <div className="slide-brand">
+              <b>{slide.brand}</b>　·　校園奇遇記
+            </div>
           )}
         </motion.div>
       </AnimatePresence>
 
-      {/* 頂部工具列 (滑入式) */}
-      <div className="absolute top-0 left-0 right-0 z-50 flex justify-between items-center p-3 bg-gradient-to-b from-black/40 to-transparent print:hidden opacity-30 hover:opacity-100 transition">
+      {/* 頂部工具列 */}
+      <div
+        className="absolute top-0 left-0 right-0 z-50 flex justify-between items-center p-3 bg-gradient-to-b from-black/40 to-transparent print:hidden"
+        style={{ opacity: 0.35, transition: "opacity 0.2s" }}
+        onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
+        onMouseLeave={(e) => (e.currentTarget.style.opacity = "0.35")}
+      >
         <div className="flex items-center gap-2">
           <HomeToButton label="離開投影" />
         </div>
-        <div className="text-xs font-mono opacity-90">
+        <div className="text-xs font-mono opacity-90 text-white">
           {current + 1} / {SLIDES.length}
           <span className="ml-3 opacity-60">← → 翻頁 ・ F 全螢幕 ・ Home/End 跳到頭/尾</span>
         </div>
         <button
           onClick={toggleFullscreen}
-          className="px-3 py-1.5 rounded-full bg-white/20 hover:bg-white/30 text-sm font-bold"
+          className="px-3 py-1.5 rounded-full bg-white/30 hover:bg-white/50 text-sm font-bold text-white"
         >
           {fullscreen ? "⛶ 退出全螢幕" : "⛶ 全螢幕 (F)"}
         </button>
@@ -338,21 +681,29 @@ export default function SlidesPage() {
 
       {/* 底部進度條 + 控制按鈕 */}
       <div className="absolute bottom-0 left-0 right-0 z-50 print:hidden">
-        <div className="h-1 bg-white/20">
+        <div className="h-1 bg-black/20">
           <div
-            className="h-full bg-gradient-to-r from-yellow-300 via-pink-400 to-fuchsia-500 transition-all duration-300"
-            style={{ width: `${progress}%` }}
+            className="h-full transition-all duration-300"
+            style={{
+              width: `${progress}%`,
+              background:
+                "linear-gradient(90deg, var(--coral), var(--sunny), var(--plum))",
+            }}
           />
         </div>
-        <div className="flex justify-between items-center p-3 bg-gradient-to-t from-black/40 to-transparent opacity-30 hover:opacity-100 transition">
+        <div
+          className="flex justify-between items-center p-3 bg-gradient-to-t from-black/40 to-transparent"
+          style={{ opacity: 0.35, transition: "opacity 0.2s" }}
+          onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
+          onMouseLeave={(e) => (e.currentTarget.style.opacity = "0.35")}
+        >
           <button
             onClick={prev}
             disabled={current === 0}
-            className="px-5 py-2 rounded-full bg-white/20 hover:bg-white/30 font-bold disabled:opacity-30 disabled:cursor-not-allowed"
+            className="px-5 py-2 rounded-full bg-white/30 hover:bg-white/50 font-bold disabled:opacity-30 disabled:cursor-not-allowed text-white"
           >
             ← 上一張
           </button>
-          {/* 進度點點 */}
           <div className="flex gap-1.5">
             {SLIDES.map((_, i) => (
               <button
@@ -371,21 +722,23 @@ export default function SlidesPage() {
           <button
             onClick={next}
             disabled={current === SLIDES.length - 1}
-            className="px-5 py-2 rounded-full bg-white/20 hover:bg-white/30 font-bold disabled:opacity-30 disabled:cursor-not-allowed"
+            className="px-5 py-2 rounded-full bg-white/30 hover:bg-white/50 font-bold disabled:opacity-30 disabled:cursor-not-allowed text-white"
           >
             下一張 →
           </button>
         </div>
       </div>
 
-      {/* 最後一張顯示「結束 → 回首頁」浮動按鈕 */}
+      {/* 最後一張的「結束 → 回首頁」浮動按鈕 */}
       {current === SLIDES.length - 1 && (
         <SoundLink
           href="/"
           sound="click"
-          className="absolute bottom-20 left-1/2 -translate-x-1/2 z-50 btn-3d px-6 py-3 rounded-2xl bg-white text-orange-700 font-black text-lg shadow-xl hover:bg-yellow-100"
+          className="absolute bottom-20 left-1/2 -translate-x-1/2 z-50 btn-start"
+          style={{ padding: "14px 28px" }}
         >
           🏠 回首頁 開始玩
+          <span className="arrow">→</span>
         </SoundLink>
       )}
     </div>
