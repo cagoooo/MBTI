@@ -217,6 +217,24 @@ export default function HomePage() {
               <span>學生加入房間</span>
             </SoundLink>
           </div>
+          <div className="mt-3 flex flex-col sm:flex-row gap-3 flex-wrap">
+            <SoundLink
+              href="/slides"
+              sound="whoosh"
+              className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-white border-2 border-sky-300 text-sky-700 font-black hover:bg-sky-50 transition"
+            >
+              <span className="text-xl">🎬</span>
+              <span>10 張教學投影片（備課直接投影）</span>
+            </SoundLink>
+            <SoundLink
+              href="/worksheet"
+              sound="coin"
+              className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-white border-2 border-emerald-300 text-emerald-700 font-black hover:bg-emerald-50 transition"
+            >
+              <span className="text-xl">📋</span>
+              <span>A4 反思學習單（列印給學生）</span>
+            </SoundLink>
+          </div>
           <p className="text-[var(--color-ink)]/60 text-sm mt-3">
             ⚠️ MBTI 為性格傾向參考，並非心理診斷工具。請以開放、好奇的態度引導孩子探索。
           </p>
