@@ -22,10 +22,17 @@ let bgmStarted = false;
 const STORAGE_KEY_MUTE = "mbti-sound-muted";
 const STORAGE_KEY_BGM = "mbti-bgm-on";
 
-/** BGM 檔案路徑 (Next.js basePath 自動由 assetPrefix 處理) */
+/** BGM 檔案路徑
+ *
+ * 注意：Next.js 15 App Router + static export 模式下，`window.__NEXT_DATA__` 不存在（那是舊 Pages Router）。
+ * 必須用 build time inline 的 `process.env.NEXT_PUBLIC_BASE_PATH`，這個會被 Webpack 直接替換成字串常數。
+ * 在 GitHub Pages workflow 內，這個 env 是從 actions/configure-pages 的 base_path 出來，值會是 "/MBTI"。
+ * Dev 環境 (npm run dev) 該值是 ""，所以 `/audio/...` 直接走 localhost root。
+ */
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || "";
+
 function bgmSrc(): string {
-  const base = (typeof window !== "undefined" && (window as unknown as { __NEXT_DATA__?: { assetPrefix?: string } }).__NEXT_DATA__?.assetPrefix) || "";
-  return `${base}/audio/bgm-kawaii-friends.mp3`;
+  return `${BASE_PATH}/audio/bgm-kawaii-friends.mp3`;
 }
 
 function ensureCtx(): AudioContext | null {
