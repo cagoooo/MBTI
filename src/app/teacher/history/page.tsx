@@ -17,6 +17,7 @@ import type { MBTIType } from "@/lib/types";
 import BgmController from "@/components/BgmController";
 import { playSound } from "@/lib/sound";
 import ClassInsightReport from "@/components/ClassInsightReport";
+import { getSelStyleInfo, type SelStyle } from "@/lib/sel";
 
 interface HistoryItem {
   sessionId: string;
@@ -173,8 +174,18 @@ export default function TeacherHistoryPage() {
                 className="w-full text-left p-4 sm:p-5 hover:bg-[var(--color-cream)]/50 transition flex items-start justify-between gap-3"
               >
                 <div className="min-w-0 flex-1">
-                  <div className="font-black text-base sm:text-lg mb-1">
-                    {it.snapshot.sessionLabel ?? "活動"}
+                  <div className="font-black text-base sm:text-lg mb-1 flex items-center gap-2 flex-wrap">
+                    {/* O2: SEL / MBTI mode badge */}
+                    {it.snapshot.mode === "sel" ? (
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-violet-100 border border-violet-300 text-violet-800 font-bold">
+                        🌧️ SEL
+                      </span>
+                    ) : (
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 border border-amber-300 text-amber-800 font-bold">
+                        🎒 MBTI
+                      </span>
+                    )}
+                    <span>{it.snapshot.sessionLabel ?? "活動"}</span>
                   </div>
                   <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--color-ink)]/60">
                     <span>📅 {new Date(it.snapshot.endedAt).toLocaleString("zh-TW")}</span>
@@ -184,7 +195,27 @@ export default function TeacherHistoryPage() {
                     <span>👥 {it.snapshot.completedCount} 人完成 / 共 {it.snapshot.totalCount} 人</span>
                   </div>
 
-                  {/* 主要型 top 3 預覽 */}
+                  {/* SEL session 預覽 (4 風格) */}
+                  {it.snapshot.mode === "sel" && it.snapshot.selStyleDistribution && (
+                    <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                      {Object.entries(it.snapshot.selStyleDistribution)
+                        .sort((a, b) => b[1] - a[1])
+                        .map(([style, count]) => {
+                          const info = getSelStyleInfo(style as SelStyle);
+                          return (
+                            <span
+                              key={style}
+                              className="text-xs px-2 py-0.5 rounded-full bg-violet-50 border border-violet-200 text-violet-800 font-bold"
+                            >
+                              {info.emoji} {info.nickname} ×{count}
+                            </span>
+                          );
+                        })}
+                    </div>
+                  )}
+
+                  {/* MBTI session 預覽 (Top 3 型) */}
+                  {it.snapshot.mode !== "sel" && (
                   <div className="flex flex-wrap items-center gap-1.5 mt-2">
                     {Object.entries(it.snapshot.typeDistribution)
                       .sort((a, b) => b[1] - a[1])
@@ -201,6 +232,7 @@ export default function TeacherHistoryPage() {
                         );
                       })}
                   </div>
+                  )}
                 </div>
                 <span className="text-2xl text-[var(--color-ink)]/30 shrink-0">
                   {expanded === it.sessionId ? "▾" : "▸"}

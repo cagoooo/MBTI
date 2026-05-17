@@ -51,6 +51,9 @@ export async function hashPassword(plain: string): Promise<string> {
 
 // ─────────────────── 老師端 ───────────────────
 
+/** 房間模式：mbti 校園 RPG / sel 逆境特別篇 */
+export type RoomMode = "mbti" | "sel";
+
 export interface RoomMeta {
   teacherUid: string;
   teacherName: string;
@@ -58,12 +61,15 @@ export interface RoomMeta {
   createdAt: number;
   isActive: boolean;
   scenarioVersion: string;
+  /** 房間模式 (v3.16 加；舊房間沒此欄位視為 mbti 向後相容) */
+  mode?: RoomMode;
 }
 
 export interface CreateRoomOptions {
   teacherName: string;
   password: string;
   scenarioVersion?: string;
+  mode?: RoomMode;
 }
 
 /**
@@ -87,6 +93,7 @@ export async function createRoom(opts: CreateRoomOptions): Promise<{
     createdAt: Date.now(),
     isActive: true,
     scenarioVersion: opts.scenarioVersion ?? "1.0",
+    mode: opts.mode ?? "mbti",
   };
 
   // 嘗試 5 次避免碰撞
@@ -176,6 +183,8 @@ export interface SessionSnapshot {
   startedAt: number;
   /** 房號 (給回顧時可以看是哪場) */
   roomCode: string;
+  /** 房間模式 (mbti / sel)，舊資料沒此欄位視為 mbti */
+  mode?: RoomMode;
   /** 老師取名 (用來顯示「三年五班期初活動」之類的) */
   sessionLabel?: string;
   /** 完成人數 (有 finalType 的) */
@@ -188,6 +197,11 @@ export interface SessionSnapshot {
   axisCount: { E: number; I: number; S: number; N: number; T: number; F: number; J: number; P: number };
   /** 個別學生簡略結果 (姓名 + 型) — 給歷史頁面點開展開看 */
   students: Array<{ name: string; finalType: string }>;
+  // SEL 房間額外資料
+  /** SEL 4 風格分布 */
+  selStyleDistribution?: Record<string, number>;
+  /** SEL 學生名單 (姓名 + 風格) */
+  selStudents?: Array<{ name: string; selStyle: string }>;
 }
 
 /**
@@ -205,34 +219,55 @@ export async function saveSessionToHistory(roomCode: string, sessionLabel?: stri
   if (!room.meta) return;
 
   const students = room.students ?? {};
-  const completedStudents = Object.values(students).filter((s) => s.finalType);
+  const mode: RoomMode = room.meta.mode ?? "mbti";
 
-  // 統計 16 型分布
+  // 完成的判斷依 mode 而定
+  const completedStudents = Object.values(students).filter((s) =>
+    mode === "sel" ? !!s.selStyle : !!s.finalType,
+  );
+
+  // 統計 16 型分布 (僅 mbti mode 才有)
   const typeDistribution: Record<string, number> = {};
   const axisCount = { E: 0, I: 0, S: 0, N: 0, T: 0, F: 0, J: 0, P: 0 };
-  for (const s of completedStudents) {
-    const t = s.finalType!;
-    typeDistribution[t] = (typeDistribution[t] ?? 0) + 1;
-    // 統計每軸 — 從字母拆
-    if (t[0] === "E" || t[0] === "I") axisCount[t[0] as "E" | "I"]++;
-    if (t[1] === "S" || t[1] === "N") axisCount[t[1] as "S" | "N"]++;
-    if (t[2] === "T" || t[2] === "F") axisCount[t[2] as "T" | "F"]++;
-    if (t[3] === "J" || t[3] === "P") axisCount[t[3] as "J" | "P"]++;
+  if (mode === "mbti") {
+    for (const s of completedStudents) {
+      const t = s.finalType!;
+      typeDistribution[t] = (typeDistribution[t] ?? 0) + 1;
+      if (t[0] === "E" || t[0] === "I") axisCount[t[0] as "E" | "I"]++;
+      if (t[1] === "S" || t[1] === "N") axisCount[t[1] as "S" | "N"]++;
+      if (t[2] === "T" || t[2] === "F") axisCount[t[2] as "T" | "F"]++;
+      if (t[3] === "J" || t[3] === "P") axisCount[t[3] as "J" | "P"]++;
+    }
   }
 
+  // 統計 SEL 4 風格分布 (僅 sel mode 才有)
+  const selStyleDistribution: Record<string, number> = {};
+  const selStudents: Array<{ name: string; selStyle: string }> = [];
+  if (mode === "sel") {
+    for (const s of completedStudents) {
+      const st = s.selStyle!;
+      selStyleDistribution[st] = (selStyleDistribution[st] ?? 0) + 1;
+      selStudents.push({ name: s.name, selStyle: st });
+    }
+  }
+
+  const dateLabel = new Date(room.meta.createdAt).toLocaleDateString("zh-TW");
+  const modeLabel = mode === "sel" ? "SEL 情緒探索" : "MBTI 校園奇遇記";
   const snapshot: SessionSnapshot = {
     endedAt: Date.now(),
     startedAt: room.meta.createdAt,
     roomCode,
-    sessionLabel: sessionLabel ?? `活動 ${new Date(room.meta.createdAt).toLocaleDateString("zh-TW")}`,
+    mode,
+    sessionLabel: sessionLabel ?? `${modeLabel} ${dateLabel}`,
     completedCount: completedStudents.length,
     totalCount: Object.keys(students).length,
     typeDistribution,
     axisCount,
-    students: completedStudents.map((s) => ({
-      name: s.name,
-      finalType: s.finalType ?? "",
-    })),
+    students:
+      mode === "mbti"
+        ? completedStudents.map((s) => ({ name: s.name, finalType: s.finalType ?? "" }))
+        : [],
+    ...(mode === "sel" && { selStyleDistribution, selStudents }),
   };
 
   const sessionId = `${room.meta.createdAt}-${roomCode}`;
@@ -293,6 +328,13 @@ export interface StudentEntry {
   votingChoice?: number | null;
   /** 對應 votingChoice 是哪個場景的投票 (避免上一場景的投票誤套到當前場景) */
   votingScene?: string;
+  // SEL 房間專用 (O2)
+  /** 當前 SEL 場景 index (0-5) */
+  selSceneIdx?: number;
+  /** SEL 4 軸累積分數 */
+  selScores?: { express: number; solve: number; calm: number; connect: number };
+  /** SEL 最終風格 (完成時填) */
+  selStyle?: string;
 }
 
 export interface JoinRoomOptions {
@@ -374,6 +416,40 @@ export async function leaveRoom(roomCode: string, studentUid: string): Promise<v
   const db = getDb();
   if (!db) return;
   await remove(ref(db, `rooms/${roomCode}/students/${studentUid}`));
+}
+
+// ─────────────────── SEL 房間專用 (O2) ───────────────────
+
+/** SEL 學生進度上傳 (sceneIdx + 4 軸分數) */
+export async function updateSelProgress(
+  roomCode: string,
+  studentUid: string,
+  data: {
+    currentSceneIdx: number;
+    selScores: { express: number; solve: number; calm: number; connect: number };
+  },
+): Promise<void> {
+  const db = getDb();
+  if (!db) return;
+  await update(ref(db, `rooms/${roomCode}/students/${studentUid}`), {
+    selSceneIdx: data.currentSceneIdx,
+    selScores: data.selScores,
+    lastSeen: Date.now(),
+  });
+}
+
+/** SEL 學生完成時填最終風格 */
+export async function setStudentSelStyle(
+  roomCode: string,
+  studentUid: string,
+  selStyle: string,
+): Promise<void> {
+  const db = getDb();
+  if (!db) return;
+  await update(ref(db, `rooms/${roomCode}/students/${studentUid}`), {
+    selStyle,
+    lastSeen: Date.now(),
+  });
 }
 
 /** 學生在被 pin 的場景投票（不前進，老師 unpin 後自動套用） */

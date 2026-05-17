@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import HomeToButton from "@/components/HomeToButton";
 import SoundButton from "@/components/SoundButton";
@@ -25,6 +26,8 @@ import SelCelebration from "@/components/SelCelebration";
 import SelGeminiPrescription from "@/components/SelGeminiPrescription";
 import EmergencyCard from "@/components/EmergencyCard";
 import { addHistory } from "@/lib/history";
+import { setStudentSelStyle, updateSelProgress } from "@/lib/classroom-rtdb";
+import { isFirebaseAvailable } from "@/lib/firebase";
 
 /**
  * SEL 逆境特別篇 — Social-Emotional Learning
@@ -35,12 +38,53 @@ import { addHistory } from "@/lib/history";
 
 type Phase = "intro" | "scene" | "result";
 
+interface ClassSession {
+  roomCode: string;
+  studentUid: string;
+}
+
 export default function SelPage() {
+  return (
+    <Suspense fallback={<div className="p-10 text-center">載入中...</div>}>
+      <SelPageInner />
+    </Suspense>
+  );
+}
+
+function SelPageInner() {
+  const searchParams = useSearchParams();
+  const roomCodeFromUrl = (searchParams.get("room") || "").toUpperCase();
+
   const [phase, setPhase] = useState<Phase>("intro");
   const [sceneIdx, setSceneIdx] = useState(0);
   const [scores, setScores] = useState<SelScores>(initialSelScores);
   const [showFollowUp, setShowFollowUp] = useState<string | null>(null);
   const [ttsEnabled, setTtsEnabled] = useState(false);
+
+  // 班級模式 session (從 /join 帶過來)
+  const [classSession, setClassSession] = useState<ClassSession | null>(null);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!roomCodeFromUrl) return;
+    try {
+      const raw = sessionStorage.getItem("mbti-class-session");
+      if (!raw) return;
+      const session = JSON.parse(raw) as ClassSession;
+      if (session.roomCode === roomCodeFromUrl) {
+        setClassSession(session);
+      }
+    } catch {}
+  }, [roomCodeFromUrl]);
+
+  // 學生在 SEL 房間：每進新場景上傳 progress
+  useEffect(() => {
+    if (!classSession || !isFirebaseAvailable()) return;
+    if (phase !== "scene") return;
+    void updateSelProgress(classSession.roomCode, classSession.studentUid, {
+      currentSceneIdx: sceneIdx,
+      selScores: scores,
+    });
+  }, [classSession, sceneIdx, scores, phase]);
 
   useEffect(() => {
     setTtsEnabled(isTtsAvailable() && isTtsOn());
@@ -125,6 +169,10 @@ export default function SelPage() {
         // U1 學習歷程冊：跨次 localStorage 紀錄
         addHistory({ kind: "sel", style, scores });
       } catch {}
+      // O2 SEL 班級同步：上傳最終風格
+      if (classSession && isFirebaseAvailable()) {
+        void setStudentSelStyle(classSession.roomCode, classSession.studentUid, style);
+      }
       setPhase("result");
       window.scrollTo({ top: 0, behavior: "smooth" });
       playSound("reveal");
@@ -146,6 +194,15 @@ export default function SelPage() {
         <div className="mb-6">
           <HomeToButton />
         </div>
+
+        {/* 班級模式 badge (O2) */}
+        {classSession && (
+          <div className="text-center mb-3">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-violet-100 border-2 border-violet-300 text-violet-800">
+              🎓 班級 SEL 模式 ・ 房號 {classSession.roomCode}
+            </span>
+          </div>
+        )}
 
         {/* ─── Intro ─── */}
         {phase === "intro" && (

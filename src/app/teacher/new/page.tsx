@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import HomeToButton from "@/components/HomeToButton";
 import SoundButton from "@/components/SoundButton";
-import { createRoom } from "@/lib/classroom-rtdb";
+import { createRoom, type RoomMode } from "@/lib/classroom-rtdb";
 import { isFirebaseAvailable } from "@/lib/firebase";
 import appConfig from "../../../../app.config";
 import { playSound } from "@/lib/sound";
@@ -13,6 +13,7 @@ export default function NewRoomPage() {
   const router = useRouter();
   const [teacherName, setTeacherName] = useState("");
   const [password, setPassword] = useState("");
+  const [mode, setMode] = useState<RoomMode>("mbti");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,7 +34,7 @@ export default function NewRoomPage() {
     setBusy(true);
     playSound("coin");
     try {
-      const r = await createRoom({ teacherName: teacherName.trim(), password });
+      const r = await createRoom({ teacherName: teacherName.trim(), password, mode });
       if (!r) {
         setError("建立房間失敗，請稍後再試");
         setBusy(false);
@@ -95,6 +96,48 @@ export default function NewRoomPage() {
             />
             <p className="text-xs text-[var(--color-ink)]/50 mt-1">
               重新整理頁面時要用這個密碼回到 dashboard。學生不需要密碼，只要房號。
+            </p>
+          </div>
+
+          {/* O2: 房間模式選擇 */}
+          <div>
+            <label className="block text-sm font-bold mb-2">📚 活動類型</label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => { setMode("mbti"); playSound("pop"); }}
+                disabled={busy}
+                className={`p-3 rounded-2xl border-2 text-left transition ${
+                  mode === "mbti"
+                    ? "bg-amber-50 border-amber-500 ring-2 ring-amber-300"
+                    : "border-[var(--color-ink)]/15 hover:border-amber-300 hover:bg-amber-50/50"
+                }`}
+              >
+                <div className="text-2xl mb-1">🎒</div>
+                <p className="text-sm font-black">MBTI 校園奇遇記</p>
+                <p className="text-[11px] text-[var(--color-ink)]/60 leading-tight mt-0.5">
+                  30+ 場景 RPG / 約 10 分鐘 / 揭曉 16 型
+                </p>
+              </button>
+              <button
+                type="button"
+                onClick={() => { setMode("sel"); playSound("pop"); }}
+                disabled={busy}
+                className={`p-3 rounded-2xl border-2 text-left transition ${
+                  mode === "sel"
+                    ? "bg-violet-50 border-violet-500 ring-2 ring-violet-300"
+                    : "border-[var(--color-ink)]/15 hover:border-violet-300 hover:bg-violet-50/50"
+                }`}
+              >
+                <div className="text-2xl mb-1">🌧️</div>
+                <p className="text-sm font-black">SEL 逆境特別篇</p>
+                <p className="text-[11px] text-[var(--color-ink)]/60 leading-tight mt-0.5">
+                  6 情緒情境 / 約 8 分鐘 / 因應風格
+                </p>
+              </button>
+            </div>
+            <p className="text-xs text-[var(--color-ink)]/50 mt-2">
+              💡 {mode === "sel" ? "輔導課 / SEL 主題課推薦" : "認識自己人格傾向、常規班會 / 自我探索"}
             </p>
           </div>
           {error && (

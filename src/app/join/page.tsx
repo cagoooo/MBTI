@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import HomeToButton from "@/components/HomeToButton";
 import SoundButton from "@/components/SoundButton";
-import { joinRoom } from "@/lib/classroom-rtdb";
+import { getRoomMeta, joinRoom } from "@/lib/classroom-rtdb";
 import { isFirebaseAvailable } from "@/lib/firebase";
 import { playSound } from "@/lib/sound";
 
@@ -56,8 +56,10 @@ function JoinPageInner() {
         studentUid: r.studentUid,
         joinedAt: Date.now(),
       }));
-      // 進遊戲頁
-      router.push(`/game?room=${r.roomCode}`);
+      // 依房間 mode 決定跳哪一頁 (O2)
+      const meta = await getRoomMeta(code);
+      const target = meta?.mode === "sel" ? "/sel" : "/game";
+      router.push(`${target}?room=${r.roomCode}`);
     } catch (e) {
       setError(`加入失敗：${e instanceof Error ? e.message : String(e)}`);
       setBusy(false);
