@@ -380,7 +380,7 @@ function GameInner() {
             exit={{ opacity: 0, rotateY: -30, x: -100, scale: 0.92 }}
             transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
             style={{ transformOrigin: "center center", transformStyle: "preserve-3d" }}
-            className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-8 border-2 border-[var(--color-ink)]/10 shadow-2xl relative overflow-hidden"
+            className="scene-card-narrow bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-8 border-2 border-[var(--color-ink)]/10 shadow-2xl relative overflow-hidden"
           >
             {/* 場景 SVG 背景插畫 (依 location/bg 自動選模板) */}
             <SceneBackground location={scene.location} bgEmoji={scene.bg} />
@@ -388,7 +388,7 @@ function GameInner() {
             <div className="absolute inset-y-0 left-0 w-4 sm:w-12 pointer-events-none bg-gradient-to-r from-black/8 to-transparent" />
             <div className="absolute inset-y-0 right-0 w-4 sm:w-12 pointer-events-none bg-gradient-to-l from-black/4 to-transparent" />
             {/* 場景 emoji 小貼紙 (改放右上角小尺寸，讓 SVG 背景當主角) */}
-            <div className="absolute top-3 right-3 sm:top-4 sm:right-4 text-3xl sm:text-4xl bg-white/80 rounded-full w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center shadow-md border-2 border-white pointer-events-none z-10">
+            <div className="absolute top-2 right-2 sm:top-4 sm:right-4 text-2xl sm:text-4xl bg-white/80 rounded-full w-10 h-10 sm:w-14 sm:h-14 flex items-center justify-center shadow-md border-2 border-white pointer-events-none z-10">
               {scene.bg}
             </div>
             {/* 內容區包一層 relative 確保在 SVG 背景上方 */}
@@ -460,13 +460,13 @@ function GameInner() {
                           : "border-[var(--color-ink)]/15 hover:border-[var(--color-coral)] hover:bg-[var(--color-cream)] active:bg-[var(--color-cream)]"
                       } disabled:opacity-50 disabled:cursor-not-allowed`}
                     >
-                      <div className="flex items-start gap-2.5 sm:gap-3">
+                      <div className="flex items-start gap-2 sm:gap-3">
                         {c.emoji && (
-                          <span className="text-xl sm:text-2xl shrink-0 group-hover:scale-110 transition-transform">
+                          <span className="text-lg sm:text-2xl shrink-0 group-hover:scale-110 transition-transform leading-none mt-0.5">
                             {c.emoji}
                           </span>
                         )}
-                        <span className="flex-1 font-medium text-sm sm:text-base leading-snug min-w-0">
+                        <span className="flex-1 font-medium text-sm sm:text-base leading-snug min-w-0 break-words">
                           <RubyText>{c.text}</RubyText>
                         </span>
                         {isVoted && (

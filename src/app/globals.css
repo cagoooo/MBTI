@@ -78,6 +78,65 @@ html.zhuyin-on [class*="rounded-full"] {
   line-height: 1.75;
 }
 
+/* 強制 CJK 文字左對齊不要 justify (Chrome 偶爾會自動 justify 換行 CJK) */
+.choice-option,
+.zhuyin-spaced,
+html.zhuyin-on p,
+html.zhuyin-on li {
+  text-align: start;
+  text-align-last: start;
+  word-break: break-word;
+}
+
+/* ──────────────── 極窄寬度補強 (<= 380px) ────────────────
+ * 國小教室筆電 / 直立手機 / 視窗縮小情境
+ * 一次性把所有「太擠」的地方縮小 */
+@media (max-width: 380px) {
+  /* 注音字級再縮一級避免 ruby box 過寬 */
+  rt.ruby-rt {
+    font-size: 0.46em !important;
+    letter-spacing: -1px;
+  }
+  /* 選項按鈕緊湊化 */
+  .choice-option {
+    padding: 0.625rem 0.75rem !important;
+    min-height: 48px !important;
+  }
+  .choice-option .text-sm,
+  .choice-option .sm\:text-base {
+    font-size: 0.8125rem;
+    line-height: 1.4;
+  }
+  /* 注音 mode 下行高再壓一點 */
+  html.zhuyin-on .choice-option {
+    line-height: 1.7;
+  }
+  /* 場景卡 padding 再小 */
+  .scene-card-narrow {
+    padding: 0.75rem !important;
+  }
+  /* 浮動按鈕縮成 40x40 (原 44x44) 給更多畫面空間 */
+  .floating-bottom-right button {
+    width: 2.5rem;
+    height: 2.5rem;
+    font-size: 1rem;
+  }
+}
+
+/* 超窄 (<= 320px iPhone SE 老款) 再壓一級 */
+@media (max-width: 320px) {
+  rt.ruby-rt {
+    font-size: 0.44em !important;
+  }
+  .choice-option {
+    padding: 0.5rem 0.625rem !important;
+  }
+  .choice-option .text-xl,
+  .choice-option .sm\:text-2xl {
+    font-size: 1.125rem !important;
+  }
+}
+
 * {
   -webkit-tap-highlight-color: transparent;
 }
