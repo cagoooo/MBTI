@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { MBTI_GROUPS } from "@/lib/mbti";
 import CampusIntro from "@/components/CampusIntro";
+import BgMusicMount from "@/components/BgMusicMount";
 
 export default function HomePage() {
   return (
     <div className="flex flex-col">
+      <BgMusicMount />
       {/* Hero */}
       <section className="relative px-6 pt-12 pb-16 sm:pt-20 sm:pb-24 overflow-hidden">
         <div className="absolute inset-0 -z-10">
@@ -45,6 +47,13 @@ export default function HomePage() {
             >
               <span className="text-2xl">🔍</span>
               <span>16 型介紹</span>
+            </Link>
+            <Link
+              href="/match"
+              className="btn-3d inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-white border-2 border-[var(--color-ink)]/15 text-xl font-black text-[var(--color-ink)] hover:border-[var(--color-coral)]/40"
+            >
+              <span className="text-2xl">🤝</span>
+              <span>麻吉配對</span>
             </Link>
           </div>
 

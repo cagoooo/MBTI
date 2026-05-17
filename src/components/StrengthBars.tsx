@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import type { Scores } from "@/lib/types";
 import { strengthBars } from "@/lib/scoring";
 
-interface SavedResult {
+export interface SavedResult {
   scores: Scores;
   branch?: string;
   historyLen?: number;

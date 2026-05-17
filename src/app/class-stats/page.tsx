@@ -7,6 +7,7 @@ import HomeToButton from "@/components/HomeToButton";
 import { computeStats, parseClassInput, type ClassEntry } from "@/lib/parse-class";
 import { ALL_TYPES, type MBTIType } from "@/lib/types";
 import { MBTI_GROUPS, getMBTIInfo } from "@/lib/mbti";
+import StatsExport from "@/components/StatsExport";
 
 const SAMPLE_INPUT = `小明 ENFP
 小芸: INFJ
@@ -346,8 +347,11 @@ export default function ClassStatsPage() {
               </details>
             )}
 
+            {/* 匯出 / 保存 */}
+            <StatsExport stats={stats} />
+
             {/* 動作列 */}
-            <div className="flex flex-col sm:flex-row gap-3 pt-2">
+            <div className="flex flex-col sm:flex-row gap-3 pt-2 print-hide">
               <button
                 onClick={() => setSubmitted(false)}
                 className="btn-3d flex-1 px-6 py-3 rounded-2xl bg-white border-2 border-[var(--color-ink)]/15 text-[var(--color-ink)] font-black hover:border-[var(--color-coral)]/40"

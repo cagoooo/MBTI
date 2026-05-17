@@ -8,6 +8,8 @@ import { applyDelta, deriveType, initialScores } from "@/lib/scoring";
 import type { Branch, Choice, Scene, Scores } from "@/lib/types";
 import ProgressDots from "@/components/ProgressDots";
 import HomeToButton from "@/components/HomeToButton";
+import SoundToggle from "@/components/SoundToggle";
+import { playSound } from "@/lib/sound";
 
 interface HistoryEntry {
   sceneId: string;
@@ -31,6 +33,7 @@ export default function GamePage() {
   // Click choice
   function handleChoice(choice: Choice, index: number) {
     if (!scene || showFollowUp) return;
+    playSound("click");
 
     const newScores = applyDelta(scores, choice.delta);
     setScores(newScores);
@@ -68,6 +71,7 @@ export default function GamePage() {
       return;
     }
     setSceneId(nextId);
+    playSound("pageTurn");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -102,6 +106,7 @@ export default function GamePage() {
 
   return (
     <div className="flex-1 px-4 sm:px-6 py-6 sm:py-10">
+      <SoundToggle />
       {/* Top bar */}
       <div className="max-w-3xl mx-auto flex items-center justify-between mb-6">
         <HomeToButton />

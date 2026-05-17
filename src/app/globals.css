@@ -82,3 +82,47 @@ button, a {
 
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ──────────────── 列印 (A4) 樣式 ────────────────
+   原則: 螢幕 UI 全部隱藏, 只保留 .print-sheet 區塊
+   結果單會輸出 A4 直式 (210mm × 297mm) */
+
+@page {
+  size: A4 portrait;
+  margin: 12mm;
+}
+
+@media print {
+  html, body {
+    background: white !important;
+    color: #000 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  /* 隱藏所有 .print-hide 或常見導覽元素 */
+  .print-hide,
+  nav,
+  header.app-nav,
+  footer,
+  button:not(.print-keep),
+  .no-print {
+    display: none !important;
+  }
+  /* 螢幕原本顯示的東西如果不是 print-sheet, 隱藏 */
+  .screen-only { display: none !important; }
+  .print-sheet {
+    display: block !important;
+    page-break-after: always;
+    break-inside: avoid;
+  }
+  a {
+    color: #000 !important;
+    text-decoration: none !important;
+  }
+}
+
+/* 螢幕上預設隱藏列印版 */
+.print-sheet {
+  display: none;
+}
+

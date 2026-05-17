@@ -5,6 +5,10 @@ import { getMBTIInfo } from "@/lib/mbti";
 import StrengthBars from "@/components/StrengthBars";
 import HomeToButton from "@/components/HomeToButton";
 import ShareButtons from "@/components/ShareButtons";
+import PrintSheet from "@/components/PrintSheet";
+import PrintButton from "@/components/PrintButton";
+import ResultBadgeMount from "@/components/ResultBadgeMount";
+import ResultRevealMount from "@/components/ResultRevealMount";
 
 export function generateStaticParams() {
   return ALL_TYPES.map((type) => ({ type }));
@@ -32,9 +36,13 @@ export default async function ResultPage({ params }: { params: Promise<{ type: s
 
   return (
     <div className="px-4 sm:px-6 py-6 sm:py-10">
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-6">
+      {/* 列印專用：隱藏在螢幕，print 時才顯示 */}
+      <PrintSheet info={info} />
+
+      <div className="max-w-4xl mx-auto screen-only">
+        <div className="mb-6 flex items-center gap-3 flex-wrap">
           <HomeToButton />
+          <PrintButton />
         </div>
 
         {/* 賀卡 hero */}
@@ -184,10 +192,18 @@ export default async function ResultPage({ params }: { params: Promise<{ type: s
           </div>
         </section>
 
+        {/* 徽章牆 */}
+        <section className="mt-6">
+          <ResultBadgeMount type={upper} />
+        </section>
+
         {/* 分享卡片 */}
         <section className="mt-6">
           <ShareButtons type={upper} nickname={info.nickname} oneLiner={info.oneLiner} emoji={info.emoji} />
         </section>
+
+        {/* 進入時播煙火音效 */}
+        <ResultRevealMount />
 
         {/* 老師的話 */}
         <section className="mt-6 bg-gradient-to-r from-violet-50 to-purple-50 rounded-3xl p-6 sm:p-8 border-2 border-violet-200">
