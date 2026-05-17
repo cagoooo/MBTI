@@ -428,6 +428,29 @@ html {
   font-family: var(--font-hand);
 }
 
+/* Type pill (type-detail 用的小膠囊) */
+.type-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 14px;
+  background: #fff;
+  border: 2px solid var(--ink);
+  box-shadow: 3px 3px 0 var(--ink);
+  font-family: var(--font-mono);
+  font-weight: 800; font-size: 14px;
+  text-decoration: none; color: var(--ink);
+  transition: transform 0.12s, box-shadow 0.12s;
+}
+.type-pill:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 5px 5px 0 var(--ink);
+}
+
+/* Type collectible (16型 list 大卡，hover 上揚旋轉) */
+.type-collectible:hover {
+  transform: translateY(-6px) rotate(-1deg) !important;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.15) !important;
+}
+
 /* Feature card (hover lift, 用 CSS 取代 JS onMouseEnter) */
 .feature-card {
   text-decoration: none;

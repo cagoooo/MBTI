@@ -1,31 +1,14 @@
 import Link from "next/link";
 import SoundLink from "@/components/SoundLink";
 import BgmController from "@/components/BgmController";
+import SiteNav from "@/components/SiteNav";
 
 export default function HomePage() {
   return (
     <div className="container-paper" style={{ paddingTop: 0, paddingBottom: 0 }}>
       <BgmController track="home" />
 
-      {/* ─────────── NAV ─────────── */}
-      <nav className="nav-design">
-        <Link href="/" className="nav-brand" style={{ textDecoration: "none", color: "inherit" }}>
-          <span className="logo-tag">VOL · 01</span>
-          <span className="logo-name">
-            校園<span style={{ color: "var(--coral)" }}>奇遇</span>記
-          </span>
-        </Link>
-        <div className="nav-links">
-          <Link href="/">首頁</Link>
-          <Link href="/types">16 型圖鑑</Link>
-          <Link href="/sel">🌧️ SEL</Link>
-          <Link href="/guess">🎲 猜朋友</Link>
-          <Link href="/journey">三部曲</Link>
-          <SoundLink href="/game" sound="click" className="nav-cta">
-            ▶ START
-          </SoundLink>
-        </div>
-      </nav>
+      <SiteNav active="/" />
 
       {/* ═══════════════════════════════════════════════════════════
            HERO
