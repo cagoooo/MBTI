@@ -228,6 +228,14 @@ export default function HomePage() {
               <span>班級活動歷史</span>
             </SoundLink>
             <SoundLink
+              href="/guess"
+              sound="tap"
+              className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-white border-2 border-orange-300 text-orange-700 font-black hover:bg-orange-50 transition"
+            >
+              <span className="text-xl">🎲</span>
+              <span>猜朋友 MBTI 遊戲</span>
+            </SoundLink>
+            <SoundLink
               href="/join"
               sound="tap"
               className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-white border-2 border-amber-300 text-amber-700 font-black hover:bg-amber-50 transition"
