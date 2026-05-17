@@ -158,7 +158,123 @@ export async function pinScene(
 export async function endRoom(roomCode: string): Promise<void> {
   const db = getDb();
   if (!db) return;
+  // 結束會議時順手把這次活動 snapshot 存進 history (給 B1 班級歷史用)
+  try {
+    await saveSessionToHistory(roomCode);
+  } catch {
+    // 失敗不阻塞 endRoom
+  }
   await update(ref(db, `rooms/${roomCode}/meta`), { isActive: false });
+}
+
+// ─────────────────── 班級活動歷史 (B1) ───────────────────
+
+export interface SessionSnapshot {
+  /** 活動結束時間 */
+  endedAt: number;
+  /** 開始時間 (從 meta.createdAt) */
+  startedAt: number;
+  /** 房號 (給回顧時可以看是哪場) */
+  roomCode: string;
+  /** 老師取名 (用來顯示「三年五班期初活動」之類的) */
+  sessionLabel?: string;
+  /** 完成人數 (有 finalType 的) */
+  completedCount: number;
+  /** 總參與人數 (含中途離場) */
+  totalCount: number;
+  /** 16 型分布 {INTJ: 3, INTP: 1, ...} */
+  typeDistribution: Record<string, number>;
+  /** 4 軸偏好統計 (誰 E 誰 I 之類) */
+  axisCount: { E: number; I: number; S: number; N: number; T: number; F: number; J: number; P: number };
+  /** 個別學生簡略結果 (姓名 + 型) — 給歷史頁面點開展開看 */
+  students: Array<{ name: string; finalType: string }>;
+}
+
+/**
+ * 結束會議時把這場活動 snapshot 寫入 classHistory
+ * Path: classHistory/{teacherUid}/{sessionId}
+ * sessionId = `${createdAt}-${roomCode}` 確保排序與唯一
+ */
+export async function saveSessionToHistory(roomCode: string, sessionLabel?: string): Promise<void> {
+  const db = getDb();
+  if (!db) return;
+
+  const roomSnap = await get(ref(db, `rooms/${roomCode}`));
+  if (!roomSnap.exists()) return;
+  const room = roomSnap.val() as RoomSnapshot;
+  if (!room.meta) return;
+
+  const students = room.students ?? {};
+  const completedStudents = Object.values(students).filter((s) => s.finalType);
+
+  // 統計 16 型分布
+  const typeDistribution: Record<string, number> = {};
+  const axisCount = { E: 0, I: 0, S: 0, N: 0, T: 0, F: 0, J: 0, P: 0 };
+  for (const s of completedStudents) {
+    const t = s.finalType!;
+    typeDistribution[t] = (typeDistribution[t] ?? 0) + 1;
+    // 統計每軸 — 從字母拆
+    if (t[0] === "E" || t[0] === "I") axisCount[t[0] as "E" | "I"]++;
+    if (t[1] === "S" || t[1] === "N") axisCount[t[1] as "S" | "N"]++;
+    if (t[2] === "T" || t[2] === "F") axisCount[t[2] as "T" | "F"]++;
+    if (t[3] === "J" || t[3] === "P") axisCount[t[3] as "J" | "P"]++;
+  }
+
+  const snapshot: SessionSnapshot = {
+    endedAt: Date.now(),
+    startedAt: room.meta.createdAt,
+    roomCode,
+    sessionLabel: sessionLabel ?? `活動 ${new Date(room.meta.createdAt).toLocaleDateString("zh-TW")}`,
+    completedCount: completedStudents.length,
+    totalCount: Object.keys(students).length,
+    typeDistribution,
+    axisCount,
+    students: completedStudents.map((s) => ({
+      name: s.name,
+      finalType: s.finalType ?? "",
+    })),
+  };
+
+  const sessionId = `${room.meta.createdAt}-${roomCode}`;
+  const path = `classHistory/${room.meta.teacherUid}/${sessionId}`;
+  await set(ref(db, path), snapshot);
+}
+
+/** 老師端：列出自己的歷史活動 (依時間倒序) */
+export async function listTeacherHistory(teacherUid: string): Promise<
+  Array<{ sessionId: string; snapshot: SessionSnapshot }>
+> {
+  const db = getDb();
+  if (!db) return [];
+  const snap = await get(ref(db, `classHistory/${teacherUid}`));
+  if (!snap.exists()) return [];
+  const all = snap.val() as Record<string, SessionSnapshot>;
+  return Object.entries(all)
+    .map(([sessionId, snapshot]) => ({ sessionId, snapshot }))
+    .sort((a, b) => b.snapshot.endedAt - a.snapshot.endedAt);
+}
+
+/** 訂閱歷史活動 (即時更新) */
+export function subscribeTeacherHistory(
+  teacherUid: string,
+  callback: (items: Array<{ sessionId: string; snapshot: SessionSnapshot }>) => void,
+): Unsubscribe {
+  const db = getDb();
+  if (!db) return () => {};
+  return onValue(ref(db, `classHistory/${teacherUid}`), (snap) => {
+    const all = (snap.val() as Record<string, SessionSnapshot> | null) ?? {};
+    const items = Object.entries(all)
+      .map(([sessionId, snapshot]) => ({ sessionId, snapshot }))
+      .sort((a, b) => b.snapshot.endedAt - a.snapshot.endedAt);
+    callback(items);
+  });
+}
+
+/** 老師端：刪除某筆歷史 (誤觸 / 測試誤建) */
+export async function deleteSessionHistory(teacherUid: string, sessionId: string): Promise<void> {
+  const db = getDb();
+  if (!db) return;
+  await remove(ref(db, `classHistory/${teacherUid}/${sessionId}`));
 }
 
 // ─────────────────── 學生端 ───────────────────
