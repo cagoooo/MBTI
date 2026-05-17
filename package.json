@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "gen:images": "node scripts/gen-images.mjs",
     "prebuild": "node scripts/gen-version.mjs",
     "build": "next build",
     "start": "next start",
@@ -24,6 +25,7 @@
     "@types/react": "19.0.7",
     "@types/react-dom": "19.0.3",
     "postcss": "8.5.1",
+    "sharp": "^0.34.5",
     "tailwindcss": "^4.3.0",
     "typescript": "5.7.3"
   }
