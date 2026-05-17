@@ -5,6 +5,7 @@ import type { ClassStats } from "@/lib/parse-class";
 import { ALL_TYPES } from "@/lib/types";
 import { getMBTIInfo } from "@/lib/mbti";
 import SoundButton from "@/components/SoundButton";
+import appConfig from "../../app.config";
 
 interface Props {
   stats: ClassStats;
@@ -51,8 +52,8 @@ function buildTextReport(stats: ClassStats, label: string): string {
   }
   lines.push("");
   lines.push("---");
-  lines.push("製作工具：MBTI 校園奇遇記 https://cagoooo.github.io/MBTI/");
-  lines.push("by 阿凱老師 @ 桃園市龍潭區石門國小");
+  lines.push(`製作工具：${appConfig.siteName} ${appConfig.productionUrl}/`);
+  lines.push(`by ${appConfig.teacherName} @ ${appConfig.schoolFullName}`);
   return lines.join("\n");
 }
 

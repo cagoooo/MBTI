@@ -6,6 +6,7 @@ import HomeToButton from "@/components/HomeToButton";
 import SoundLink from "@/components/SoundLink";
 import { playSound } from "@/lib/sound";
 import { MBTI_GROUPS } from "@/lib/mbti";
+import appConfig from "../../../app.config";
 
 interface Slide {
   bg: string; // gradient class
@@ -23,9 +24,9 @@ const SLIDES: Slide[] = [
     bg: "from-amber-300 via-orange-400 to-rose-400",
     emoji: "🎮",
     badge: "今天的課程",
-    title: "MBTI 校園奇遇記",
+    title: appConfig.siteName,
     subtitle: "玩一場校園 RPG，認識自己的人格類型",
-    footer: "by 阿凱老師 ・ 桃園市龍潭區石門國小",
+    footer: `by ${appConfig.teacherName} ・ ${appConfig.schoolFullName}`,
   },
   // 2. 學習目標
   {
@@ -199,10 +200,10 @@ const SLIDES: Slide[] = [
     body: (
       <div className="mt-8 text-xl opacity-95">
         <p>玩得開心嗎？分享給朋友也來玩看看吧 ✨</p>
-        <p className="mt-4 font-mono text-2xl">cagoooo.github.io/MBTI</p>
+        <p className="mt-4 font-mono text-2xl">{appConfig.productionUrl.replace(/^https?:\/\//, "")}</p>
       </div>
     ),
-    footer: "Made with ❤️ by 阿凱老師 @ 桃園市龍潭區石門國小",
+    footer: `Made with ❤️ by ${appConfig.teacherName} @ ${appConfig.schoolFullName}`,
   },
 ];
 

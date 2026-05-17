@@ -4,9 +4,11 @@
 
 不是無聊問卷！背起書包走進校園，從開學第一天到校慶大結局，每個選擇都會改變故事走向，最後揭曉你的人格類型。
 
-> 📍 **目前版本：v2.0** ｜ 線上版：<https://cagoooo.github.io/MBTI/>
+> 📍 **目前版本：v3.13** ｜ 線上版：<https://cagoooo.github.io/MBTI/>
 >
-> 🗺️ **完整開發路線圖、未來優化建議、版本歷程都寫在 [ROADMAP.md](./ROADMAP.md)** — 包含 30+ 個依優先級分類的開發建議與評估。
+> 🗺️ **完整開發路線圖、未來優化建議、版本歷程都寫在 [ROADMAP.md](./ROADMAP.md)** — 包含 60+ 個依優先級分類的開發建議與評估。
+>
+> 🏫 **想換成自己的學校嗎？** 跳到下方「給其他學校老師：3 分鐘換成你的學校」一節。
 
 ## ✨ 特色
 
@@ -105,9 +107,65 @@ src/
 
 選項裡 `delta: { E: 2 }` 表示這個選擇讓你偏向 E 加 2 分。
 
+## 🏫 給其他學校老師：3 分鐘換成你的學校
+
+這個專案設計成「一鍵 fork 模板」— 你可以把整個故事拿來用，**只需要改一個檔案**就會自動套用到 footer、列印單、投影片、metadata 等所有地方。
+
+### Step 1 — Fork repo
+1. 到 <https://github.com/cagoooo/MBTI> 點右上角 **Fork**
+2. fork 完會變成 `https://github.com/<你的帳號>/MBTI`
+
+### Step 2 — 改一個檔案
+打開 `app.config.ts`，改成你的學校資料：
+
+```ts
+const config: AppConfig = {
+  schoolFullName: "新北市新店區XX國小",        // ← 改這
+  schoolShortName: "XX國小",                  // ← 改這
+  teacherName: "王老師",                       // ← 改這
+  teacherHomepageUrl: "https://你的教師介紹頁",   // ← 改這
+  schoolHomepageUrl: "https://你的學校官網",    // ← 改這
+  productionUrl: "https://你的帳號.github.io/MBTI",  // ← 改這
+  siteName: "MBTI 校園奇遇記",                 // 站名通常不用改
+  siteDescription: "...",                     // 描述通常不用改
+  gradeHint: "適用 3-6 年級",
+};
+```
+
+### Step 3 — 推上去
+```bash
+git add app.config.ts
+git commit -m "🏫 customize: 換成 XX 國小"
+git push
+```
+
+兩分鐘後 GitHub Actions 會自動部署完成，全站 footer / 列印單 / 投影片都會變成你的學校名 ✨
+
+### Step 4 (進階)：客製化故事內容
+- `src/lib/scenes.ts` — 30+ 個校園場景，可以改成你學校的特色
+- `src/lib/mbti.ts` — 16 型介紹文案（中文俗稱、職涯）
+- `public/icon.svg` + `public/og.png` — favicon 與分享卡
+- `src/components/CampusIntro.tsx` — 8 個 NPC 角色設定 (台詞、家庭背景)
+
+### Step 5 (可選)：用班級即時同步功能
+這個功能需要自己建一個 Firebase 專案 (免費)：
+1. 到 <https://console.firebase.google.com/> 建一個新 project
+2. 開 **Realtime Database** (免費額度 1GB / 10GB 流量超夠用)
+3. 開 **Authentication → Anonymous** 登入
+4. 把專案的 Web app config 加到 GitHub repo Secrets:
+   - `NEXT_PUBLIC_FIREBASE_API_KEY`
+   - `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`
+   - `NEXT_PUBLIC_FIREBASE_DATABASE_URL`
+   - 其他 NEXT_PUBLIC_FIREBASE_* 欄位
+5. 推 commit 觸發部署，班級同步功能會自動啟用
+
+若沒設定也沒關係 — 班級同步會自動隱藏，其他功能正常用。
+
+---
+
 ## 📜 授權
 
-教育用途自由使用。若做為教材引用請保留作者署名。
+教育用途自由使用。若做為教材引用請保留作者署名。歡迎其他學校老師 fork、客製化、推廣。
 
 ---
 

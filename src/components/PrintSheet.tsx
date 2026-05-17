@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import type { MBTIInfo } from "@/lib/mbti";
 import { strengthBars } from "@/lib/scoring";
 import type { Scores } from "@/lib/types";
+import appConfig from "../../app.config";
 
 interface SavedResult {
   scores: Scores;
@@ -134,8 +135,8 @@ export default function PrintSheet({ info }: Props) {
 
       {/* 頁腳 */}
       <div style={{ borderTop: "1px solid #ccc", paddingTop: 6, fontSize: 9, color: "#666", display: "flex", justifyContent: "space-between" }}>
-        <span>MBTI 校園奇遇記 · 桃園市龍潭區石門國民小學 · 阿凱老師</span>
-        <span>cagoooo.github.io/MBTI/</span>
+        <span>{appConfig.siteName} · {appConfig.schoolFullName} · {appConfig.teacherName}</span>
+        <span>{appConfig.productionUrl.replace(/^https?:\/\//, "")}/</span>
       </div>
     </div>
   );

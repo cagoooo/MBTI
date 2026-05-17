@@ -5,6 +5,7 @@ import Link from "next/link";
 import HomeToButton from "@/components/HomeToButton";
 import SoundButton from "@/components/SoundButton";
 import { playSound } from "@/lib/sound";
+import appConfig from "../../../app.config";
 
 type WorksheetStyle = "personal" | "group";
 
@@ -124,10 +125,10 @@ function WorksheetA4({ style }: { style: WorksheetStyle }) {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
           <div>
             <div style={{ fontSize: 11, color: "#666", letterSpacing: 2 }}>
-              桃園市龍潭區石門國民小學 ・ 班級輔導活動
+              {appConfig.schoolFullName} ・ 班級輔導活動
             </div>
             <div style={{ fontSize: 28, fontWeight: 900, marginTop: 2 }}>
-              MBTI 校園奇遇記 · {isGroup ? "小組討論" : "個人反思"}學習單
+              {appConfig.siteName} · {isGroup ? "小組討論" : "個人反思"}學習單
             </div>
           </div>
           <div style={{ fontSize: 14 }}>
@@ -235,7 +236,7 @@ function WorksheetA4({ style }: { style: WorksheetStyle }) {
         }}
       >
         <span>
-          MBTI 校園奇遇記 · by 阿凱老師 @ 桃園市龍潭區石門國小 ・ 玩遊戲拿結果：cagoooo.github.io/MBTI/
+          {appConfig.siteName} · by {appConfig.teacherName} @ {appConfig.schoolFullName} ・ 玩遊戲拿結果：{appConfig.productionUrl.replace(/^https?:\/\//, "")}/
         </span>
         <span>
           ⚠️ 結果僅供參考，不代表分類好壞

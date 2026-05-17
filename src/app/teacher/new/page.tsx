@@ -6,6 +6,7 @@ import HomeToButton from "@/components/HomeToButton";
 import SoundButton from "@/components/SoundButton";
 import { createRoom } from "@/lib/classroom-rtdb";
 import { isFirebaseAvailable } from "@/lib/firebase";
+import appConfig from "../../../../app.config";
 import { playSound } from "@/lib/sound";
 
 export default function NewRoomPage() {
@@ -75,7 +76,7 @@ export default function NewRoomPage() {
               value={teacherName}
               onChange={(e) => setTeacherName(e.target.value)}
               maxLength={30}
-              placeholder="例：阿凱老師"
+              placeholder={`例：${appConfig.teacherName}`}
               className="w-full p-3 rounded-2xl border-2 border-[var(--color-ink)]/15 focus:border-[var(--color-coral)] focus:outline-none"
               disabled={busy}
             />

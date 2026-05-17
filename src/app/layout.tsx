@@ -4,19 +4,17 @@ import Footer from "@/components/Footer";
 import SoundToggle from "@/components/SoundToggle";
 import SwRegister from "@/components/SwRegister";
 import SettingsPanel from "@/components/SettingsPanel";
+import appConfig from "../../app.config";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://cagoooo.github.io/MBTI";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || appConfig.productionUrl;
 const BASE = process.env.NEXT_PUBLIC_BASE_PATH || "";
-
-const OG_DESCRIPTION =
-  "丟掉枯燥問卷！跟著主角走進校園，從開學第一天到校慶大結局，每個選擇都會影響你的故事走向，最後揭曉你的 16 型 MBTI 人格。";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   manifest: `${BASE}/manifest.webmanifest`,
   appleWebApp: {
     capable: true,
-    title: "MBTI 校園",
+    title: appConfig.schoolShortName,
     statusBarStyle: "default",
   },
   icons: {
@@ -30,37 +28,37 @@ export const metadata: Metadata = {
     ],
     shortcut: `${BASE}/favicon-32.png`,
   },
-  title: "MBTI 校園奇遇記 ｜ 用故事玩出你的人格類型",
-  description: OG_DESCRIPTION,
+  title: `${appConfig.siteName} ｜ 用故事玩出你的人格類型`,
+  description: appConfig.siteDescription,
   keywords: ["MBTI", "16型人格", "校園 RPG", "互動故事", "性格測驗", "國小教學"],
   openGraph: {
-    title: "MBTI 校園奇遇記 ｜ 玩 10 分鐘故事，找出你的 16 型人格",
-    description: OG_DESCRIPTION,
+    title: `${appConfig.siteName} ｜ 玩 10 分鐘故事，找出你的 16 型人格`,
+    description: appConfig.siteDescription,
     type: "website",
     locale: "zh_TW",
-    siteName: "MBTI 校園奇遇記",
+    siteName: appConfig.siteName,
     url: SITE_URL,
     images: [
       {
         url: `${BASE}/og.png`,
         width: 1200,
         height: 630,
-        alt: "MBTI 校園奇遇記 — 16 型人格 RPG 故事",
+        alt: `${appConfig.siteName} — 16 型人格 RPG 故事`,
         type: "image/png",
       },
       {
         url: `${BASE}/og-square.png`,
         width: 1200,
         height: 1200,
-        alt: "MBTI 校園奇遇記 (方形版)",
+        alt: `${appConfig.siteName} (方形版)`,
         type: "image/png",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "MBTI 校園奇遇記",
-    description: OG_DESCRIPTION,
+    title: appConfig.siteName,
+    description: appConfig.siteDescription,
     images: [`${BASE}/og.png`],
   },
 };
