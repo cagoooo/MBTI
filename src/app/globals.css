@@ -1,34 +1,498 @@
 @import "tailwindcss";
 
+/* ============================================================
+   MBTI 校園奇遇記 — v3.17 Redesign system
+   A+B hybrid · 紙感手帳底 + 電玩 HUD 元素 · 不用深色
+   ============================================================ */
+
 @theme {
-  --color-cream: #fef9f3;
-  --color-peach: #ffd6c0;
-  --color-coral: #ff8364;
-  --color-sky: #a3d8f4;
-  --color-mint: #b8e0d2;
+  /* Paper / ink (new design tokens) */
+  --color-paper: #fbf6ec;
+  --color-paper-warm: #f8efe1;
+  --color-paper-2: #f3ead9;
+  --color-ink: #1d1b18;
+  --color-ink-soft: #3a342c;
+  --color-muted: #8a7d6b;
+  --color-line: #e3d9c5;
+  --color-line-strong: #c8b89e;
+
+  /* Accents */
+  --color-coral: #d65a3a;
+  --color-coral-dark: #8b3417;
+  --color-mint: #3f8a6e;
+  --color-sky: #4a8fbf;
+  --color-sunny: #d49a13;
+  --color-rose: #c44d75;
+  --color-plum: #7c5ec2;
+
+  /* Soft pastel fills (tape colors) */
+  --color-tape-coral: #ffc4a8;
+  --color-tape-mint: #b8e0d2;
+  --color-tape-sky: #a3d8f4;
+  --color-tape-sunny: #ffd93d;
+  --color-tape-rose: #ffc4d6;
+  --color-tape-plum: #c8a8e9;
+
+  /* Group fills */
+  --color-nt-bg: #ede6fc;
+  --color-nf-bg: #fde3ea;
+  --color-sj-bg: #dcefe5;
+  --color-sp-bg: #fff2cf;
+  --color-nt-ink: #7c5ec2;
+  --color-nf-ink: #c44d75;
+  --color-sj-ink: #3f8a6e;
+  --color-sp-ink: #a87a16;
+
+  /* Legacy aliases (避免一次性 break 太多舊頁) */
+  --color-cream: #fbf6ec;
+  --color-peach: #ffc4a8;
   --color-lavender: #c8a8e9;
-  --color-sunny: #ffd93d;
-  --color-rose: #ff6b9d;
-  --color-ink: #2d3047;
 
   --font-display: "Noto Sans TC", system-ui, sans-serif;
+  --font-serif-tc: "Noto Serif TC", serif;
+  --font-hand: "Ma Shan Zheng", cursive;
+  --font-mono: "JetBrains Mono", "IBM Plex Mono", monospace;
+}
 
-  --shadow-cute: 0 8px 0 0 rgba(45, 48, 71, 0.15);
-  --shadow-cute-hover: 0 10px 0 0 rgba(45, 48, 71, 0.25);
+/* Raw CSS variables (給 inline style 用，跟設計檔對齊) */
+:root {
+  --paper: #fbf6ec;
+  --paper-warm: #f8efe1;
+  --paper-2: #f3ead9;
+  --ink: #1d1b18;
+  --ink-soft: #3a342c;
+  --muted: #8a7d6b;
+  --line: #e3d9c5;
+  --line-strong: #c8b89e;
+  --coral: #d65a3a;
+  --coral-dark: #8b3417;
+  --mint: #3f8a6e;
+  --sky: #4a8fbf;
+  --sunny: #d49a13;
+  --rose: #c44d75;
+  --plum: #7c5ec2;
+  --tape-coral: #ffc4a8;
+  --tape-mint: #b8e0d2;
+  --tape-sky: #a3d8f4;
+  --tape-sunny: #ffd93d;
+  --tape-rose: #ffc4d6;
+  --tape-plum: #c8a8e9;
+  --nt-bg: #ede6fc;
+  --nf-bg: #fde3ea;
+  --sj-bg: #dcefe5;
+  --sp-bg: #fff2cf;
+  --nt-ink: #7c5ec2;
+  --nf-ink: #c44d75;
+  --sj-ink: #3f8a6e;
+  --sp-ink: #a87a16;
 }
 
 html, body {
-  background: linear-gradient(180deg, #fef9f3 0%, #fff5ea 100%);
-  color: var(--color-ink);
+  background: var(--paper);
+  color: var(--ink);
   font-family: var(--font-display);
   min-height: 100%;
   overscroll-behavior: none;
+  font-feature-settings: "palt";
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Paper texture: rule lines + warm gradient (整站底色換成紙感) */
+body {
+  background:
+    repeating-linear-gradient(transparent 0, transparent 38px, rgba(135,160,200,0.13) 38px, rgba(135,160,200,0.13) 39px),
+    linear-gradient(180deg, #fbf6ec 0%, #f8efe1 100%);
+}
+
+/* Red margin line on the left, like a notebook */
+body::before {
+  content: '';
+  position: fixed;
+  left: max(28px, calc(50% - 720px));
+  top: 0; bottom: 0;
+  width: 1px;
+  background: rgba(220, 80, 80, 0.28);
+  pointer-events: none;
+  z-index: 1;
+}
+/* 3-hole punch on left margin */
+body::after {
+  content: '';
+  position: fixed;
+  left: max(8px, calc(50% - 740px));
+  top: 240px;
+  width: 18px;
+  height: 100vh;
+  background:
+    radial-gradient(circle at 50% 0px, #e3d9c5 6px, transparent 7px),
+    radial-gradient(circle at 50% 50vh, #e3d9c5 6px, transparent 7px),
+    radial-gradient(circle at 50% 100vh, #e3d9c5 6px, transparent 7px);
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.7;
+}
+@media (max-width: 720px) {
+  body::before, body::after { display: none; }
 }
 
 /* 字級縮放 — 使用者可從 SettingsPanel 切換 */
 html {
   font-size: calc(16px * var(--font-scale, 1));
 }
+
+/* ============================================================
+   DESIGN SYSTEM CLASSES (v3.17 redesign)
+   ============================================================ */
+
+/* TYPE — font helpers */
+.f-serif { font-family: var(--font-serif-tc); }
+.f-mono  { font-family: var(--font-mono); }
+.f-hand  { font-family: var(--font-hand); }
+
+/* HUD / mono label */
+.hud {
+  font-family: var(--font-mono);
+  font-size: 11px; letter-spacing: 4px;
+  color: var(--muted); text-transform: uppercase;
+}
+.hud-coral { color: var(--coral); }
+.hud-strong { color: var(--ink); font-weight: 700; }
+
+/* LAYOUT container — 與設計檔一致的 1440 max + 100/80 padding */
+.container-paper {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 80px 0 100px;
+  position: relative;
+  z-index: 2;
+}
+@media (max-width: 720px) {
+  .container-paper { padding: 0 20px; }
+}
+
+/* NAV (design 系統用，不一定要立刻整合進現有 layout) */
+.nav-design {
+  padding: 22px 0;
+  display: flex; align-items: center; justify-content: space-between;
+  border-bottom: 1.5px dashed var(--line-strong);
+}
+.nav-brand {
+  display: flex; align-items: baseline; gap: 12px;
+  font-family: var(--font-serif-tc); font-weight: 900;
+}
+.nav-brand .logo-tag {
+  font-family: var(--font-mono); font-size: 10px;
+  letter-spacing: 4px; color: var(--coral); padding: 4px 8px;
+  border: 1.5px solid var(--coral);
+}
+.nav-brand .logo-name {
+  font-size: 22px; letter-spacing: -0.5px;
+}
+.nav-links {
+  display: flex; gap: 28px; align-items: center;
+  font-size: 14px; font-weight: 700;
+}
+.nav-links a {
+  color: var(--ink); text-decoration: none;
+  padding: 6px 4px; position: relative;
+  transition: background 0.15s;
+}
+.nav-links a:hover {
+  background: linear-gradient(transparent 60%, var(--tape-sunny) 60%);
+}
+.nav-cta {
+  padding: 10px 18px; background: var(--ink); color: var(--paper) !important;
+  font-family: var(--font-mono); font-size: 13px;
+  letter-spacing: 2px;
+  border: none;
+}
+.nav-cta:hover { background: var(--coral) !important; }
+
+/* BUTTONS — chunky 3D start button (新設計主 CTA) */
+.btn-start {
+  display: inline-flex; align-items: center; gap: 14px;
+  padding: 22px 42px;
+  background: var(--coral);
+  color: #fff;
+  font-weight: 900; font-size: 24px; letter-spacing: 2px;
+  border: 3px solid var(--ink);
+  box-shadow: 7px 7px 0 var(--ink);
+  text-decoration: none;
+  transition: transform 0.12s, box-shadow 0.12s;
+  position: relative;
+  cursor: pointer;
+}
+.btn-start:hover {
+  transform: translate(2px, 2px);
+  box-shadow: 5px 5px 0 var(--ink);
+}
+.btn-start:active {
+  transform: translate(7px, 7px);
+  box-shadow: 0 0 0 var(--ink);
+}
+.btn-start .arrow { display: inline-block; transition: transform 0.2s; }
+.btn-start:hover .arrow { transform: translateX(4px); }
+
+/* Secondary — dashed paper */
+.btn-secondary {
+  display: inline-flex; align-items: center; gap: 12px;
+  padding: 20px 30px;
+  background: transparent;
+  color: var(--ink);
+  font-weight: 800; font-size: 20px;
+  border: 2.5px dashed var(--ink);
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.12s;
+}
+.btn-secondary:hover {
+  background: var(--paper-warm);
+  transform: translateY(-2px);
+}
+
+/* HUD sticker on button */
+.btn-sticker {
+  position: absolute; top: -10px; right: -14px;
+  background: var(--tape-sunny); color: #5a4500;
+  font-family: var(--font-hand); font-size: 16px;
+  padding: 4px 10px; transform: rotate(8deg);
+  border: 2px solid var(--ink);
+}
+
+/* WASHI TAPE */
+.tape {
+  display: inline-block;
+  padding: 8px 22px;
+  font-family: var(--font-mono);
+  font-weight: 700; font-size: 13px; letter-spacing: 4px;
+  color: var(--coral-dark);
+  background: repeating-linear-gradient(45deg, var(--tape-coral) 0 10px, #ffb89a 10px 20px);
+  transform: rotate(-2deg);
+  box-shadow: 0 2px 0 rgba(0,0,0,0.06);
+  position: relative;
+}
+.tape.mint { color: #1f5a3f; background: repeating-linear-gradient(45deg, var(--tape-mint) 0 10px, #9bcdb9 10px 20px); }
+.tape.sky  { color: #1e4a6a; background: repeating-linear-gradient(45deg, var(--tape-sky) 0 10px, #84c5e5 10px 20px); }
+.tape.sunny{ color: #5a4500; background: repeating-linear-gradient(45deg, var(--tape-sunny) 0 10px, #e8be15 10px 20px); }
+.tape.rose { color: #6a1f3a; background: repeating-linear-gradient(45deg, var(--tape-rose) 0 10px, #e8a4bd 10px 20px); }
+.tape.plum { color: #3d2a6a; background: repeating-linear-gradient(45deg, var(--tape-plum) 0 10px, #a98ac9 10px 20px); }
+
+/* CARDS */
+.card-paper {
+  background: #fff;
+  border: 1px solid var(--line);
+  box-shadow: 0 4px 0 var(--line), 0 10px 24px rgba(45,40,30,0.05);
+  padding: 28px;
+  position: relative;
+}
+
+/* Polaroid card */
+.polaroid {
+  background: #fff;
+  padding: 10px 10px 36px;
+  box-shadow: 0 6px 14px rgba(0,0,0,0.10);
+  position: relative;
+  display: inline-block;
+}
+.polaroid .photo {
+  width: 100%; aspect-ratio: 1;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 56px;
+}
+.polaroid .cap {
+  text-align: center; margin-top: 10px;
+  font-family: var(--font-hand); font-size: 18px;
+  color: var(--ink);
+}
+
+/* Pin (thumbtack) */
+.pin {
+  position: absolute;
+  top: -8px; left: 50%; margin-left: -8px;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #ff8b8b, #c83a3a);
+  box-shadow: 0 2px 3px rgba(0,0,0,0.3);
+  z-index: 2;
+}
+.pin.sky { background: radial-gradient(circle at 30% 30%, #8acff0, #2a78a8); }
+.pin.mint { background: radial-gradient(circle at 30% 30%, #9ad9c0, #2a8868); }
+.pin.sunny { background: radial-gradient(circle at 30% 30%, #ffe070, #c89010); }
+
+/* Corner brackets (RPG HUD frame) */
+.bracket-frame {
+  position: relative;
+  padding: 24px;
+}
+.bracket-frame::before,
+.bracket-frame::after,
+.bracket-frame > .bl,
+.bracket-frame > .br {
+  content: '';
+  position: absolute;
+  width: 16px; height: 16px;
+  border-color: var(--coral);
+  border-style: solid;
+}
+.bracket-frame::before { top: -2px; left: -2px;  border-width: 3px 0 0 3px; }
+.bracket-frame::after  { top: -2px; right: -2px; border-width: 3px 3px 0 0; }
+.bracket-frame > .bl   { bottom: -2px; left: -2px;  border-width: 0 0 3px 3px; }
+.bracket-frame > .br   { bottom: -2px; right: -2px; border-width: 0 3px 3px 0; }
+
+/* STAT BAR (HUD-style 4 軸條) */
+.stat-row {
+  display: flex; align-items: center; gap: 10px;
+  font-family: var(--font-mono);
+  font-size: 11px; letter-spacing: 1.5px;
+}
+.stat-label { color: var(--muted); width: 28px; flex-shrink: 0; }
+.stat-bar {
+  flex: 1; height: 8px;
+  background: var(--paper-2);
+  border: 1.5px solid var(--ink);
+  position: relative;
+  overflow: hidden;
+}
+.stat-fill {
+  height: 100%;
+  background: var(--coral);
+  position: relative;
+}
+.stat-fill::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: repeating-linear-gradient(90deg, transparent 0 6px, rgba(0,0,0,0.12) 6px 7px);
+}
+.stat-value { color: var(--ink); font-weight: 700; width: 28px; text-align: right; flex-shrink: 0; }
+.stat-fill.mint { background: var(--mint); }
+.stat-fill.sky { background: var(--sky); }
+.stat-fill.sunny { background: var(--sunny); }
+.stat-fill.rose { background: var(--rose); }
+.stat-fill.plum { background: var(--plum); }
+
+/* SECTION HEADER (HUD style 段落標) */
+.section-header {
+  display: flex; align-items: center; gap: 16px;
+  margin-bottom: 24px;
+}
+.section-header .diamond {
+  width: 12px; height: 12px;
+  background: var(--coral);
+  transform: rotate(45deg);
+  flex-shrink: 0;
+}
+.section-header .label {
+  font-family: var(--font-mono);
+  font-size: 13px; letter-spacing: 6px; color: var(--coral);
+  text-transform: uppercase;
+  font-weight: 700;
+}
+.section-header .rule {
+  flex: 1; height: 2px;
+  background: repeating-linear-gradient(90deg, var(--coral) 0 8px, transparent 8px 16px);
+}
+
+/* STICKER BADGE */
+.sticker {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 12px;
+  border: 2px solid var(--ink);
+  background: #fff;
+  font-family: var(--font-mono);
+  font-size: 11px; letter-spacing: 2px;
+  font-weight: 700;
+  transform: rotate(-1deg);
+}
+
+/* TYPE MINI (16 型 grid card) */
+.type-mini {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: #fff; padding: 14px 8px 12px;
+  border: 1.5px solid rgba(0,0,0,0.08);
+  text-decoration: none; color: var(--ink);
+  transition: transform 0.15s, box-shadow 0.15s;
+  position: relative;
+}
+.type-mini:hover {
+  transform: translateY(-3px) rotate(-1deg);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.1);
+}
+.type-mini .emoji { font-size: 30px; margin-bottom: 6px; }
+.type-mini .code {
+  font-family: var(--font-mono);
+  font-weight: 800; font-size: 15px; letter-spacing: 1.5px;
+  color: var(--coral);
+}
+.type-mini .nick {
+  font-size: 13px; color: var(--ink-soft); margin-top: 2px;
+  font-family: var(--font-hand);
+}
+
+/* Feature card (hover lift, 用 CSS 取代 JS onMouseEnter) */
+.feature-card {
+  text-decoration: none;
+  color: var(--ink);
+  display: flex;
+  flex-direction: column;
+  border: 2.5px solid var(--ink);
+  box-shadow: 8px 8px 0 var(--ink);
+  padding: 32px 32px 28px;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.feature-card:hover {
+  transform: translate(-3px, -3px);
+  box-shadow: 11px 11px 0 var(--ink);
+}
+
+/* TOOL LINK (老師工具卡) */
+.tool-link {
+  display: flex; align-items: center; gap: 14px;
+  padding: 18px 20px;
+  background: #fff;
+  border: 2px solid var(--ink);
+  text-decoration: none;
+  transition: transform 0.12s, box-shadow 0.12s;
+  box-shadow: 4px 4px 0 var(--ink);
+}
+.tool-link:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 var(--ink);
+}
+.tool-link .emoji { font-size: 32px; flex-shrink: 0; }
+.tool-link .t { font-weight: 900; font-size: 16px; line-height: 1.2; margin-bottom: 2px; }
+.tool-link .s { font-size: 12px; opacity: 0.7; }
+.tool-link .arr { margin-left: auto; font-size: 20px; font-weight: 800; }
+.tool-link > div { flex: 1; min-width: 0; }
+
+/* DESIGN-SYSTEM 動畫 (跟現有 anim-pop 等共存) */
+@keyframes design-pop-in {
+  0% { transform: scale(0.85) rotate(-3deg); opacity: 0; }
+  60% { transform: scale(1.05) rotate(1deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0); opacity: 1; }
+}
+@keyframes design-float {
+  0%, 100% { transform: translateY(0) rotate(var(--r, 0deg)); }
+  50% { transform: translateY(-8px) rotate(var(--r, 0deg)); }
+}
+@keyframes design-blink {
+  0%, 50%, 100% { opacity: 1; }
+  25%, 75% { opacity: 0.3; }
+}
+
+.anim-pop  { animation: design-pop-in 0.5s ease-out both; }
+.anim-float { animation: design-float 3.5s ease-in-out infinite; }
+.anim-blink { animation: design-blink 1.4s ease-in-out infinite; }
+
+/* Rotation utilities (跟設計檔同名) */
+.rotate-n2 { transform: rotate(-2deg); }
+.rotate-n1 { transform: rotate(-1deg); }
+.rotate-1  { transform: rotate(1deg); }
+.rotate-2  { transform: rotate(2deg); }
+.rotate-3  { transform: rotate(3deg); }
+
+html { scroll-behavior: smooth; }
 
 /* 注音（ruby/rt）— 給低年級友善
  * RWD 設計：

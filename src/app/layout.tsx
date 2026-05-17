@@ -79,7 +79,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;800;900&family=Noto+Serif+TC:wght@400;500;700;900&family=Ma+Shan+Zheng&family=JetBrains+Mono:wght@400;500;700;800&display=swap"
           rel="stylesheet"
         />
         {/* 避免字級 + 注音設定首次 paint 閃爍 — 在 client render 前就套用 */}
