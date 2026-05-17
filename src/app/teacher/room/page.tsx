@@ -6,6 +6,7 @@ import QRCode from "qrcode";
 import HomeToButton from "@/components/HomeToButton";
 import SoundButton from "@/components/SoundButton";
 import {
+  clearAllVotes,
   endRoom,
   pinScene,
   reauthorizeTeacher,
@@ -13,6 +14,7 @@ import {
   type RoomSnapshot,
   type StudentEntry,
 } from "@/lib/classroom-rtdb";
+import { getScene } from "@/lib/scenes";
 import { ensureSignedIn, isFirebaseAvailable } from "@/lib/firebase";
 import { ALL_TYPES, type MBTIType } from "@/lib/types";
 import { getMBTIInfo } from "@/lib/mbti";
@@ -98,6 +100,16 @@ function TeacherDashboard() {
     if (!confirm("確定要結束會議？學生端會看到「老師已結束會議」")) return;
     playSound("whoosh");
     await endRoom(roomCode);
+    // 帶班級結果跳到 /class-stats 預填輸入框
+    const completedRoster = doneStudents
+      .map((s) => `${s.name} ${s.finalType}`)
+      .join("\n");
+    if (completedRoster) {
+      try {
+        sessionStorage.setItem(`mbti-class-roster-${roomCode}`, completedRoster);
+      } catch {}
+      window.location.href = `${BASE_PATH || ""}/class-stats?from=${roomCode}`;
+    }
   }
 
   const students = snap?.students ?? {};
@@ -105,6 +117,44 @@ function TeacherDashboard() {
   const totalStudents = studentList.length;
   const doneStudents = studentList.filter((s) => s.finalType);
   const pinnedScene = snap?.teacherControl?.pinnedScene;
+
+  // 計算 pinned scene 的投票分布
+  const pinnedSceneData = pinnedScene ? getScene(pinnedScene) : null;
+  const voteCounts = useMemo(() => {
+    if (!pinnedScene || !pinnedSceneData) return [] as Array<{ index: number; count: number; voters: string[] }>;
+    const counts = pinnedSceneData.choices.map((_, idx) => ({
+      index: idx,
+      count: 0,
+      voters: [] as string[],
+    }));
+    for (const s of studentList) {
+      if (s.currentScene === pinnedScene && typeof s.votingChoice === "number" && s.votingScene === pinnedScene) {
+        const c = counts[s.votingChoice];
+        if (c) {
+          c.count++;
+          c.voters.push(s.name);
+        }
+      }
+    }
+    return counts;
+  }, [pinnedScene, pinnedSceneData, studentList]);
+
+  // 在 pinned scene 但尚未投票的學生
+  const undecidedStudents = useMemo(() => {
+    if (!pinnedScene) return [] as typeof studentList;
+    return studentList.filter(
+      (s) =>
+        s.currentScene === pinnedScene &&
+        !s.finalType &&
+        (typeof s.votingChoice !== "number" || s.votingScene !== pinnedScene),
+    );
+  }, [pinnedScene, studentList]);
+
+  async function handleUnpin() {
+    playSound("toggleOff");
+    await clearAllVotes(roomCode, students);
+    await pinScene(roomCode, null, "");
+  }
 
   // 統計每個場景有多少人
   const sceneCounts = useMemo(() => {
@@ -177,8 +227,18 @@ function TeacherDashboard() {
       <div className="max-w-6xl mx-auto">
         <div className="mb-6 flex items-center justify-between flex-wrap gap-3">
           <HomeToButton />
-          <div className="text-xs text-[var(--color-ink)]/50">
-            {snap?.meta?.teacherName ? `👩‍🏫 ${snap.meta.teacherName}` : ""}
+          <div className="flex items-center gap-3 flex-wrap">
+            <a
+              href={`${BASE_PATH}/teacher/room/projector?code=${roomCode}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-violet-100 border-2 border-violet-300 text-sm font-bold text-violet-700 hover:bg-violet-200 transition"
+            >
+              📺 投影模式（新分頁）
+            </a>
+            {snap?.meta?.teacherName && (
+              <span className="text-xs text-[var(--color-ink)]/50">👩‍🏫 {snap.meta.teacherName}</span>
+            )}
           </div>
         </div>
 
@@ -245,7 +305,7 @@ function TeacherDashboard() {
                       {scene !== "__done__" && scene !== "__waiting__" && (
                         <SoundButton
                           sound={isCurrentPin ? "toggleOff" : "click"}
-                          onClick={() => pinScene(roomCode, isCurrentPin ? null : scene, "")}
+                          onClick={() => (isCurrentPin ? handleUnpin() : pinScene(roomCode, scene, ""))}
                           className={`px-3 py-1.5 rounded-full text-xs font-bold ${
                             isCurrentPin
                               ? "bg-rose-500 text-white"
@@ -261,9 +321,63 @@ function TeacherDashboard() {
             </div>
             {pinnedScene && (
               <p className="text-xs text-rose-700 mt-3">
-                ⚠️ 全班正在 <strong>{pinnedScene}</strong> 場景被 pin 住，學生看不到下一場景，討論結束後請點「取消 Pin」。
+                ⚠️ 全班正在 <strong>{pinnedScene}</strong> 場景被 pin 住，學生看不到下一場景。下方有即時投票分布。
               </p>
             )}
+          </section>
+        )}
+
+        {/* Pinned scene 即時投票分布 */}
+        {pinnedScene && pinnedSceneData && (
+          <section className="bg-gradient-to-br from-rose-50 to-pink-50 rounded-3xl p-6 border-2 border-rose-300 mb-6">
+            <h3 className="text-xl font-black mb-2 flex items-center gap-2 text-rose-900">
+              <span>📊</span> 即時投票分布
+            </h3>
+            <p className="text-xs text-rose-700 mb-4">
+              場景：{pinnedSceneData.location}（{pinnedScene}）— {pinnedSceneData.text[0]?.slice(0, 50)}...
+            </p>
+            <div className="space-y-3">
+              {pinnedSceneData.choices.map((choice, idx) => {
+                const data = voteCounts[idx];
+                const total = voteCounts.reduce((s, c) => s + c.count, 0);
+                const pct = total === 0 ? 0 : Math.round((data.count / total) * 100);
+                return (
+                  <div key={idx} className="bg-white rounded-2xl p-3 border-2 border-rose-200">
+                    <div className="flex items-start gap-2 mb-2">
+                      {choice.emoji && <span className="text-xl">{choice.emoji}</span>}
+                      <span className="flex-1 text-sm font-medium leading-snug">{choice.text}</span>
+                      <span className="font-black text-lg text-rose-700 shrink-0">{data.count} 位</span>
+                    </div>
+                    <div className="h-3 rounded-full bg-rose-100 overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-rose-400 to-pink-500 transition-all duration-500"
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                    {data.voters.length > 0 && (
+                      <p className="text-xs text-[var(--color-ink)]/60 mt-1.5 truncate">
+                        🗳️ {data.voters.join("、")}
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            {undecidedStudents.length > 0 && (
+              <div className="mt-3 p-3 rounded-xl bg-amber-50 border border-amber-200 text-sm text-amber-900">
+                <strong>⏳ 還在想：</strong>
+                {undecidedStudents.map((s) => s.name).join("、")}（{undecidedStudents.length} 位）
+              </div>
+            )}
+            <div className="mt-4 flex justify-end">
+              <SoundButton
+                sound="toggleOn"
+                onClick={handleUnpin}
+                className="btn-3d px-5 py-2.5 rounded-2xl bg-emerald-500 text-white font-black hover:bg-emerald-600"
+              >
+                ✅ 討論結束，放開全班繼續
+              </SoundButton>
+            </div>
           </section>
         )}
 

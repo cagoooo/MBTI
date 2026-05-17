@@ -33,7 +33,9 @@
             },
             "lastSeen": { ".validate": "newData.isNumber()" },
             "finalType": { ".validate": "newData.isString() && newData.val().length === 4" },
-            "lastChoiceIndex": { ".validate": "newData.isNumber()" }
+            "lastChoiceIndex": { ".validate": "newData.isNumber()" },
+            "votingChoice": { ".validate": "newData.isNumber() || newData.val() === null" },
+            "votingScene": { ".validate": "newData.isString() && newData.val().length <= 30" }
           }
         },
 

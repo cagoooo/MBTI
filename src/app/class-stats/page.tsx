@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import HomeToButton from "@/components/HomeToButton";
 import SoundButton from "@/components/SoundButton";
@@ -26,9 +27,35 @@ const SAMPLE_INPUT = `小明 ENFP
 依依 INFP
 小綠 ESFP`;
 
-export default function ClassStatsPage() {
+export default function ClassStatsPageWrap() {
+  return (
+    <Suspense fallback={<div className="p-10 text-center">載入中...</div>}>
+      <ClassStatsPage />
+    </Suspense>
+  );
+}
+
+function ClassStatsPage() {
+  const search = useSearchParams();
+  const fromRoom = search.get("from")?.toUpperCase() ?? null;
+
   const [raw, setRaw] = useState("");
   const [submitted, setSubmitted] = useState(false);
+
+  // 自動載入「結束會議」時帶來的班級名單
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!fromRoom) return;
+    try {
+      const roster = sessionStorage.getItem(`mbti-class-roster-${fromRoom}`);
+      if (roster && raw === "") {
+        setRaw(roster);
+        // 自動送出 (有資料就直接看統計)
+        setTimeout(() => setSubmitted(true), 200);
+      }
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fromRoom]);
 
   const { entries, invalidLines } = useMemo(() => parseClassInput(raw), [raw]);
   const stats = useMemo(() => computeStats(entries), [entries]);

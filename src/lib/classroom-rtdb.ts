@@ -173,6 +173,10 @@ export interface StudentEntry {
   lastSeen?: number;
   finalType?: string;
   lastChoiceIndex?: number;
+  /** 在 pinned scene 暫時投票的選項 index (老師 unpin 後會清掉) */
+  votingChoice?: number | null;
+  /** 對應 votingChoice 是哪個場景的投票 (避免上一場景的投票誤套到當前場景) */
+  votingScene?: string;
 }
 
 export interface JoinRoomOptions {
@@ -254,6 +258,37 @@ export async function leaveRoom(roomCode: string, studentUid: string): Promise<v
   const db = getDb();
   if (!db) return;
   await remove(ref(db, `rooms/${roomCode}/students/${studentUid}`));
+}
+
+/** 學生在被 pin 的場景投票（不前進，老師 unpin 後自動套用） */
+export async function setStudentVote(
+  roomCode: string,
+  studentUid: string,
+  votingScene: string,
+  votingChoice: number | null,
+): Promise<void> {
+  const db = getDb();
+  if (!db) return;
+  await update(ref(db, `rooms/${roomCode}/students/${studentUid}`), {
+    votingChoice,
+    votingScene,
+    lastSeen: Date.now(),
+  });
+}
+
+/** 老師 unpin 後清掉所有人的 votingChoice */
+export async function clearAllVotes(
+  roomCode: string,
+  students: Record<string, StudentEntry>,
+): Promise<void> {
+  const db = getDb();
+  if (!db) return;
+  const updates: Record<string, null> = {};
+  for (const uid of Object.keys(students)) {
+    updates[`rooms/${roomCode}/students/${uid}/votingChoice`] = null;
+    updates[`rooms/${roomCode}/students/${uid}/votingScene`] = null;
+  }
+  await update(ref(db), updates);
 }
 
 // ─────────────────── 工具 ───────────────────

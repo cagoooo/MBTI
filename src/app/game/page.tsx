@@ -13,6 +13,7 @@ import SoundButton from "@/components/SoundButton";
 import { playSound, type BgmTrackId } from "@/lib/sound";
 import { isTtsAvailable, isTtsOn, speakScene, stop as stopTts, speak as speakTts } from "@/lib/tts";
 import {
+  setStudentVote,
   subscribeRoom,
   updateStudentProgress,
   type RoomSnapshot,
@@ -107,6 +108,33 @@ function GameInner() {
   // 是否被老師 pin 住
   const isPinned = !!(classSession && pinnedScene && pinnedScene === sceneId);
 
+  // pin 期間的投票暫存（解 pin 後自動套用）
+  const [pendingVote, setPendingVote] = useState<{ sceneId: string; choiceIndex: number } | null>(null);
+
+  // 監聽 unpin → 若有 pendingVote 且場景對應 → 自動 proceed
+  useEffect(() => {
+    if (!classSession) return;
+    if (isPinned) return; // 還被 pin 中
+    if (!pendingVote) return;
+    if (pendingVote.sceneId !== sceneId) {
+      setPendingVote(null);
+      return;
+    }
+    // unpin 了，套用 pendingVote
+    const choice = scene?.choices[pendingVote.choiceIndex];
+    if (!choice) {
+      setPendingVote(null);
+      return;
+    }
+    // 清 RTDB votingChoice
+    void setStudentVote(classSession.roomCode, classSession.studentUid, sceneId, null);
+    setPendingVote(null);
+    // 直接執行原本的 handleChoice (但要避免無限迴圈，所以稍延遲)
+    const t = setTimeout(() => handleChoice(choice, pendingVote.choiceIndex), 150);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPinned, pendingVote, sceneId, classSession]);
+
   // 追蹤 TTS 開關狀態 (避免 SSR mismatch + 使用者中途切換)
   useEffect(() => {
     setTtsEnabled(isTtsAvailable() && isTtsOn());
@@ -172,8 +200,12 @@ function GameInner() {
   function handleChoice(choice: Choice, index: number) {
     if (!scene || showFollowUp) return;
     if (isPinned) {
-      // 被老師 pin 住，無法繼續
-      playSound("toggleOff");
+      // 被老師 pin 住，記錄投票但不前進
+      playSound("pop");
+      setPendingVote({ sceneId: scene.id, choiceIndex: index });
+      if (classSession) {
+        void setStudentVote(classSession.roomCode, classSession.studentUid, scene.id, index);
+      }
       return;
     }
     playSound("click");
@@ -384,26 +416,43 @@ function GameInner() {
             <div className="border-t-2 border-dashed border-[var(--color-ink)]/15 pt-5">
               <p className="text-sm font-bold text-[var(--color-ink)]/60 mb-3">💭 你會怎麼做？</p>
               <div className="space-y-3">
-                {scene.choices.map((c, i) => (
-                  <motion.button
-                    key={i}
-                    onClick={() => handleChoice(c, i)}
-                    disabled={!!showFollowUp}
-                    whileHover={{ x: 4 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="w-full text-left p-4 rounded-2xl border-2 border-[var(--color-ink)]/15 hover:border-[var(--color-coral)] hover:bg-[var(--color-cream)] disabled:opacity-50 disabled:cursor-not-allowed transition group"
-                  >
-                    <div className="flex items-start gap-3">
-                      {c.emoji && (
-                        <span className="text-2xl group-hover:scale-110 transition-transform">
-                          {c.emoji}
-                        </span>
-                      )}
-                      <span className="flex-1 font-medium leading-snug">{c.text}</span>
-                    </div>
-                  </motion.button>
-                ))}
+                {scene.choices.map((c, i) => {
+                  const isVoted = pendingVote && pendingVote.sceneId === sceneId && pendingVote.choiceIndex === i;
+                  return (
+                    <motion.button
+                      key={i}
+                      onClick={() => handleChoice(c, i)}
+                      disabled={!!showFollowUp}
+                      whileHover={{ x: 4 }}
+                      whileTap={{ scale: 0.98 }}
+                      className={`w-full text-left p-4 rounded-2xl border-2 transition group relative ${
+                        isVoted
+                          ? "border-rose-500 bg-rose-50 ring-2 ring-rose-300/50"
+                          : "border-[var(--color-ink)]/15 hover:border-[var(--color-coral)] hover:bg-[var(--color-cream)]"
+                      } disabled:opacity-50 disabled:cursor-not-allowed`}
+                    >
+                      <div className="flex items-start gap-3">
+                        {c.emoji && (
+                          <span className="text-2xl group-hover:scale-110 transition-transform">
+                            {c.emoji}
+                          </span>
+                        )}
+                        <span className="flex-1 font-medium leading-snug">{c.text}</span>
+                        {isVoted && (
+                          <span className="px-2 py-0.5 rounded-full bg-rose-500 text-white text-xs font-black animate-pulse">
+                            ✓ 已投
+                          </span>
+                        )}
+                      </div>
+                    </motion.button>
+                  );
+                })}
               </div>
+              {isPinned && pendingVote && pendingVote.sceneId === sceneId && (
+                <p className="text-xs text-rose-700 mt-3 text-center font-bold">
+                  💡 你已投票，等老師結束討論後會自動往下走（可改投別的選項）
+                </p>
+              )}
             </div>
           </motion.div>
         </AnimatePresence>
