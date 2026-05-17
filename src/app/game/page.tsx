@@ -21,9 +21,10 @@ import {
 import { isFirebaseAvailable } from "@/lib/firebase";
 import RubyText from "@/components/RubyText";
 import PretestQuiz from "@/components/PretestQuiz";
-import { loadPretestGuess } from "@/lib/pretest";
+import { countMatchedAxes, loadPretestGuess } from "@/lib/pretest";
 import SceneBackground from "@/components/SceneBackground";
 import NpcAvatar from "@/components/NpcAvatar";
+import { addHistory } from "@/lib/history";
 
 /**
  * 場景所屬支線 → BGM track 對應
@@ -255,6 +256,16 @@ function GameInner() {
           "mbti-result",
           JSON.stringify({ scores: finalScores, branch, historyLen: history.length + 1 }),
         );
+        // U1 學習歷程冊：跨次 localStorage 紀錄
+        const pretest = loadPretestGuess();
+        addHistory({
+          kind: "mbti",
+          type,
+          scores: finalScores,
+          branch,
+          pretestGuess: pretest?.guess,
+          pretestMatched: pretest ? countMatchedAxes(pretest.guess, type) : undefined,
+        });
       } catch {
         // ignore (private mode etc.)
       }

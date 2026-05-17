@@ -10,6 +10,7 @@ import { playSound } from "@/lib/sound";
 import { ALL_TYPES, type MBTIType } from "@/lib/types";
 import { getMBTIInfo } from "@/lib/mbti";
 import { parseClassInput } from "@/lib/parse-class";
+import { addHistory } from "@/lib/history";
 
 /**
  * 🤔 「猜朋友的 MBTI」遊戲模式
@@ -121,12 +122,21 @@ export default function GuessGamePage() {
       playSound("pageTurn");
     } else {
       // 結束 → 存完成 flag 給 /journey 看
+      const correctCount = guesses.filter((g) => g.guessed === g.person.actual).length;
       try {
-        const correctCount = guesses.filter((g) => g.guessed === g.person.actual).length;
         sessionStorage.setItem(
           "mbti-guess-result",
           JSON.stringify({ total: people.length, correct: correctCount, at: Date.now() }),
         );
+        // U1 學習歷程冊：跨次 localStorage 紀錄
+        const axes = { EI: 0, SN: 0, TF: 0, JP: 0 };
+        for (const g of guesses) {
+          if (g.guessed[0] === g.person.actual[0]) axes.EI++;
+          if (g.guessed[1] === g.person.actual[1]) axes.SN++;
+          if (g.guessed[2] === g.person.actual[2]) axes.TF++;
+          if (g.guessed[3] === g.person.actual[3]) axes.JP++;
+        }
+        addHistory({ kind: "guess", total: people.length, correct: correctCount, axes });
       } catch {}
       setPhase("result");
       playSound("reveal");

@@ -73,7 +73,7 @@ export default function HomePage() {
           </div>
 
           {/* 三部曲課程包 CTA — 給老師最顯眼的入口 */}
-          <div className="pt-4">
+          <div className="pt-4 flex flex-col sm:flex-row gap-3 justify-center items-center">
             <SoundLink
               href="/journey"
               sound="coin"
@@ -85,6 +85,14 @@ export default function HomePage() {
               <span className="absolute -top-2 -right-2 bg-rose-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow border-2 border-white">
                 老師推薦
               </span>
+            </SoundLink>
+            <SoundLink
+              href="/me"
+              sound="tap"
+              className="btn-3d inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-white border-2 border-amber-400 text-amber-700 font-black text-sm hover:bg-amber-50"
+            >
+              <span className="text-xl">📓</span>
+              <span>我的學習歷程冊</span>
             </SoundLink>
           </div>
 

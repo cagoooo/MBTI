@@ -24,6 +24,7 @@ import {
 import SelCelebration from "@/components/SelCelebration";
 import SelGeminiPrescription from "@/components/SelGeminiPrescription";
 import EmergencyCard from "@/components/EmergencyCard";
+import { addHistory } from "@/lib/history";
 
 /**
  * SEL 逆境特別篇 — Social-Emotional Learning
@@ -115,12 +116,14 @@ export default function SelPage() {
       window.scrollTo({ top: 0, behavior: "smooth" });
     } else {
       // 結束 → 結果頁；存 result 到 sessionStorage 給 /journey 看完成狀態
+      const style = deriveSelStyle(scores);
       try {
-        const style = deriveSelStyle(scores);
         sessionStorage.setItem(
           "mbti-sel-result",
           JSON.stringify({ style, scores, at: Date.now() }),
         );
+        // U1 學習歷程冊：跨次 localStorage 紀錄
+        addHistory({ kind: "sel", style, scores });
       } catch {}
       setPhase("result");
       window.scrollTo({ top: 0, behavior: "smooth" });
