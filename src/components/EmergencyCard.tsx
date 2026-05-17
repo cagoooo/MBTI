@@ -13,21 +13,22 @@ interface Props {
 }
 
 /**
- * 情緒急救卡 — 信用卡大小可印可放錢包
+ * 情緒急救卡 — 信用卡 / 錢包大小可印 PDF
  *
- * 設計：
- *   - 一張 A4 紙上印 2 張同樣的卡 (前+後) 學生可剪下來
- *   - 標準信用卡尺寸 85.6mm x 53.98mm (CR80)
- *   - 用 @media print + @page A4 + .emergency-card-sheet 控制
- *   - 學生填名字、聯絡人後可塑封
- *
- * 用瀏覽器原生 window.print() → 「另存 PDF」就 OK
- * 不裝額外 PDF lib (vs jsPDF +200KB bundle)
+ * 設計 (依 emergency-card.html):
+ *   - 一張 A4 印 4 張同樣的卡 (2x2 grid，學生剪下分享)
+ *   - 卡：✂ 角剪 + SOS banner (黑底 mono) + style hero (gradient bg)
+ *        + oneliner (paper-warm 引言塊) + tools list + contacts blanks + 學校 footer
+ *   - 用 @media print + @page A4 + body.printing-card class 控制
+ *   - 學生填名字/聯絡人後可塑封
  */
 export default function EmergencyCard({ style }: Props) {
-  const [showPreview, setShowPreview] = useState(false);
   const [ttsEnabled, setTtsEnabled] = useState(false);
   const info = getSelStyleInfo(style);
+  // 工具箱前 5 個短版 (去除括弧內冗長註)
+  const shortTools = info.toolbox.map((t) =>
+    t.replace(/（[^）]*）/g, "").replace(/\([^)]*\)/g, "").slice(0, 22),
+  );
 
   useEffect(() => {
     setTtsEnabled(isTtsAvailable() && isTtsOn());
@@ -39,18 +40,14 @@ export default function EmergencyCard({ style }: Props) {
       window.removeEventListener("mbti-settings-change", refresh);
     };
   }, []);
-  // 取工具箱前 5 個短版 (移除冗長描述)
-  const shortTools = info.toolbox.map((t) => {
-    // 把括弧內的小字去掉、最多 18 字
-    return t.replace(/（[^）]*）/g, "").replace(/\([^)]*\)/g, "").slice(0, 18);
-  });
 
   function handlePrint() {
     playSound("coin");
-    setShowPreview(true);
-    // 等 DOM 更新後 print
+    document.body.classList.add("printing-card");
     setTimeout(() => {
       window.print();
+      // 列印 dialog 關閉後移除 class (用 setTimeout 確保 paint 完)
+      setTimeout(() => document.body.classList.remove("printing-card"), 1000);
     }, 100);
   }
 
@@ -61,7 +58,7 @@ export default function EmergencyCard({ style }: Props) {
         `我是 ${info.nickname}。`,
         info.oneLiner,
         "我的 5 個情緒工具：",
-        ...info.toolbox.map((t, i) => `第 ${i + 1} 個：${t}`),
+        ...shortTools.map((t, i) => `第 ${i + 1} 個：${t}`),
         "緊急時別忘了找家人、朋友、或老師。",
       ].join("。"),
       { rate: 1.0, pitch: 1.05 },
@@ -73,49 +70,48 @@ export default function EmergencyCard({ style }: Props) {
     stopTts();
   }
 
+  const dateLabel = new Date().toLocaleDateString("zh-TW");
+
   return (
     <>
+      {/* ON-SCREEN PROMO BLOCK */}
       <motion.section
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5, duration: 0.5 }}
-        className="mt-6 bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 rounded-3xl p-6 sm:p-8 border-2 border-amber-300 shadow-sm relative overflow-hidden print-hide screen-only"
+        className="ecard-toolbar print:hidden"
+        style={{ marginTop: 48, marginBottom: 24 }}
       >
-        <div className="absolute -top-4 -right-4 text-7xl opacity-10">🆘</div>
-        <h3 className="text-xl sm:text-2xl font-black flex items-center gap-2 text-amber-900 mb-2">
-          <span>🆘</span>
-          <span>下載我的情緒急救卡</span>
+        <div className="tab">🆘 EMERGENCY · CARD · 口袋大小</div>
+        <h3
+          className="f-serif"
+          style={{
+            margin: "8px 0 4px",
+            fontWeight: 900,
+            fontSize: 24,
+          }}
+        >
+          下載我的情緒急救卡
         </h3>
-        <p className="text-sm text-amber-800/80 mb-4">
-          錢包 / 鉛筆盒大小，列印剪下塑封 — 遇到難過時拿出來看，提醒自己有這些工具可以用 ✨
+        <p
+          style={{
+            fontSize: 13,
+            color: "var(--muted)",
+            margin: "0 0 16px",
+            lineHeight: 1.6,
+          }}
+        >
+          錢包 / 鉛筆盒大小的口袋卡，列印剪下塑封 — 遇到難過時拿出來看，提醒自己有這些工具可以用 ✨
+          一張 A4 印 <b>4 張</b>，剪下後給朋友也行。
         </p>
 
-        {/* 螢幕預覽迷你版 */}
-        <div className="bg-white rounded-2xl p-5 border-2 border-amber-200 max-w-sm mx-auto mb-5 shadow-md">
-          <p className="text-[10px] font-bold text-amber-700 uppercase tracking-widest mb-2 text-center">
-            🆘 我的情緒急救卡
-          </p>
-          <div className={`bg-gradient-to-br ${info.gradient} rounded-xl p-3 text-white text-center mb-3 shadow`}>
-            <div className="text-3xl">{info.emoji}</div>
-            <p className="font-black text-lg leading-tight">{info.nickname}</p>
-          </div>
-          <p className="text-[11px] font-bold text-amber-900 mb-1">💡 我的 5 個情緒工具：</p>
-          <ul className="text-[11px] text-amber-800/90 space-y-1 leading-relaxed">
-            {shortTools.map((t, i) => (
-              <li key={i} className="flex gap-1.5"><span>{i + 1}.</span> <span>{t}</span></li>
-            ))}
-          </ul>
-          <div className="mt-2 pt-2 border-t border-amber-200">
-            <p className="text-[10px] text-amber-700/70">📞 我的聯絡人 (請自己填)：________________</p>
-          </div>
-        </div>
-
-        <div className="flex gap-2 items-stretch">
+        <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "stretch" }}>
           <button
             onClick={handlePrint}
-            className="btn-3d flex-1 py-3 rounded-2xl bg-amber-500 text-white font-black text-base hover:bg-amber-600 transition flex items-center justify-center gap-2"
+            className="btn-start"
+            style={{ flex: 1, minWidth: 200, fontSize: 18, padding: "16px 24px", justifyContent: "center" }}
           >
-            <span className="text-xl">🖨️</span>
+            <span style={{ fontSize: 22 }}>🖨️</span>
             <span>列印 / 另存 PDF</span>
           </button>
           {ttsEnabled && (
@@ -123,211 +119,189 @@ export default function EmergencyCard({ style }: Props) {
               <button
                 onClick={speakCard}
                 title="念出我的急救卡內容"
-                className="btn-3d py-3 px-4 rounded-2xl bg-white border-2 border-amber-300 text-amber-700 font-black hover:bg-amber-50 transition flex items-center justify-center"
+                className="btn-secondary"
+                style={{ padding: "16px 18px", fontSize: 14, justifyContent: "center" }}
               >
-                <span className="text-xl">🔊</span>
+                <span style={{ fontSize: 18 }}>🔊</span>
+                <span className="hidden sm:inline">唸給我聽</span>
               </button>
               <button
                 onClick={stopReading}
                 title="停止朗讀"
-                className="btn-3d py-3 px-3 rounded-2xl bg-white border-2 border-amber-200 text-amber-600 font-black hover:border-amber-400 transition flex items-center justify-center"
+                className="btn-secondary"
+                style={{ padding: "16px 14px", fontSize: 14, justifyContent: "center" }}
               >
-                <span>⏸</span>
+                ⏸
               </button>
             </>
           )}
         </div>
-        <p className="text-xs text-amber-700/60 text-center mt-2 leading-relaxed">
-          💡 列印對話框選「另存 PDF」就能存到電腦 / 手機 · 印出來剪一剪 + 塑封超耐用
-        </p>
+
+        <div
+          style={{
+            marginTop: 14,
+            padding: "12px 16px",
+            background: "var(--paper-warm)",
+            borderLeft: "4px solid var(--coral)",
+            fontSize: 13,
+            color: "var(--ink-soft)",
+            lineHeight: 1.7,
+          }}
+        >
+          <b>💡 列印小提示</b>
+          <br />
+          ① 列印對話框選「另存 PDF」就能存到電腦／手機
+          <br />
+          ② 印出來後沿著虛線剪下 4 張卡
+          <br />
+          ③ 塑封（去文具店有便宜的）— 放錢包／鉛筆盒帶在身上
+          <br />
+          ④ 多印一份送好朋友也很 OK
+        </div>
       </motion.section>
 
-      {/* 列印用 sheet — 螢幕看不見，print 時才顯示 */}
-      <div className="emergency-card-sheet">
-        {/* 2 張一樣的卡 (前面 + 背面，學生可剪下黏一起或對折) */}
-        {[0, 1].map((idx) => (
-          <div key={idx} className="ec-card">
-            {/* 正面 */}
-            <div className="ec-front">
-              <div className="ec-header">🆘 情緒急救卡</div>
-              <div className="ec-style-block" style={{ background: gradientCss(style) }}>
-                <div className="ec-emoji">{info.emoji}</div>
-                <div className="ec-style-name">{info.nickname}</div>
-              </div>
-              <p className="ec-oneliner">{info.oneLiner}</p>
-              <div className="ec-footer">
-                <span>by {appConfig.teacherName}</span>
-                <span>{appConfig.schoolShortName}</span>
-              </div>
-            </div>
-            {/* 背面 */}
-            <div className="ec-back">
-              <p className="ec-tools-title">💡 我的 5 個情緒工具</p>
-              <ol className="ec-tools-list">
-                {shortTools.map((t, i) => (
-                  <li key={i}>{t}</li>
-                ))}
-              </ol>
-              <div className="ec-contacts">
-                <p className="ec-contacts-title">📞 緊急聯絡 (請自己填)：</p>
-                <p>家人：__________________</p>
-                <p>朋友：__________________</p>
-                <p>老師：__________________</p>
-              </div>
-            </div>
-          </div>
-        ))}
+      {/* A4 PRINT SHEET — 螢幕也顯示 1:1 預覽，print 時自動撐滿一頁 */}
+      <div className="print:hidden" style={{ textAlign: "center", marginTop: 16, marginBottom: 12 }}>
+        <span className="hud">▼ A4 列印預覽 · 1:1 真實大小 ▼</span>
       </div>
 
-      <style jsx>{`
-        .emergency-card-sheet {
-          display: none;
-        }
+      <div style={{ overflow: "auto", padding: "0 0 20px" }}>
+        <div className="a4-sheet">
+          {/* Header */}
+          <div className="a4-head">
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <span style={{ fontSize: 24 }}>🆘</span>
+                <div className="title">
+                  情緒急救卡 ·{" "}
+                  <span style={{ color: "var(--coral)" }}>{info.nickname}</span>
+                </div>
+              </div>
+              <div className="sub">SEL 因應風格 · 口袋大小 · 4 cards per A4</div>
+            </div>
+            <div
+              style={{
+                fontFamily: "var(--font-mono)",
+                fontSize: 10,
+                letterSpacing: 2,
+                color: "var(--coral)",
+                textAlign: "right",
+              }}
+            >
+              ✂ CUT ALONG DASHED LINE
+              <br />
+              {dateLabel}
+            </div>
+          </div>
 
-        @media print {
-          /* 隱藏其他所有東西 */
-          :global(body > *) {
-            visibility: hidden;
-          }
-          .emergency-card-sheet,
-          .emergency-card-sheet * {
-            visibility: visible;
-          }
-          .emergency-card-sheet {
-            display: block;
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            background: white;
-            padding: 20mm;
-            font-family: "Noto Sans TC", sans-serif;
-            color: #000;
-          }
-        }
+          {/* Card 2x2 grid */}
+          <div className="a4-card-grid">
+            {[0, 1, 2, 3].map((idx) => (
+              <SingleECard
+                key={idx}
+                style={style}
+                info={info}
+                shortTools={shortTools}
+                idx={idx + 1}
+              />
+            ))}
+          </div>
 
-        @page {
-          size: A4;
-          margin: 0;
-        }
-
-        .ec-card {
-          display: flex;
-          gap: 4mm;
-          margin-bottom: 8mm;
-          page-break-inside: avoid;
-        }
-
-        .ec-front,
-        .ec-back {
-          width: 85.6mm;
-          height: 53.98mm;
-          border: 2px dashed #ccc;
-          border-radius: 3mm;
-          padding: 3mm 4mm;
-          box-sizing: border-box;
-          display: flex;
-          flex-direction: column;
-          background: white;
-        }
-
-        .ec-header {
-          font-size: 9pt;
-          font-weight: 900;
-          color: #b45309;
-          letter-spacing: 0.5pt;
-          text-align: center;
-          margin-bottom: 2mm;
-        }
-
-        .ec-style-block {
-          flex: 1;
-          border-radius: 2mm;
-          padding: 2mm;
-          color: white;
-          text-align: center;
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-        }
-
-        .ec-emoji {
-          font-size: 18pt;
-          line-height: 1;
-        }
-
-        .ec-style-name {
-          font-size: 14pt;
-          font-weight: 900;
-          margin-top: 1mm;
-        }
-
-        .ec-oneliner {
-          font-size: 7.5pt;
-          color: #44403c;
-          line-height: 1.3;
-          margin: 2mm 0 0;
-          text-align: center;
-        }
-
-        .ec-footer {
-          display: flex;
-          justify-content: space-between;
-          font-size: 6pt;
-          color: #78716c;
-          margin-top: auto;
-        }
-
-        .ec-tools-title {
-          font-size: 8pt;
-          font-weight: 900;
-          color: #b45309;
-          margin: 0 0 1mm;
-        }
-
-        .ec-tools-list {
-          margin: 0;
-          padding-left: 4mm;
-          font-size: 7.5pt;
-          line-height: 1.5;
-          color: #292524;
-          flex: 1;
-        }
-
-        .ec-tools-list li {
-          margin-bottom: 0.5mm;
-        }
-
-        .ec-contacts {
-          border-top: 0.5pt solid #d6d3d1;
-          padding-top: 1.5mm;
-          margin-top: 1.5mm;
-        }
-
-        .ec-contacts-title {
-          font-size: 7pt;
-          font-weight: 700;
-          color: #b45309;
-          margin: 0 0 0.5mm;
-        }
-
-        .ec-contacts p {
-          font-size: 7pt;
-          color: #57534e;
-          margin: 0.3mm 0;
-        }
-      `}</style>
+          {/* A4 footer */}
+          <div
+            style={{
+              position: "absolute",
+              bottom: "8mm",
+              left: "14mm",
+              right: "14mm",
+              paddingTop: "4mm",
+              borderTop: "1.5px dashed #c8b89e",
+              display: "flex",
+              justifyContent: "space-between",
+              fontFamily: "var(--font-mono)",
+              fontSize: 9,
+              letterSpacing: 2,
+              color: "#999",
+            }}
+          >
+            <span>
+              {appConfig.siteName} · by {appConfig.teacherName} @ {appConfig.schoolShortName}
+            </span>
+            <span>v2026 · 印 4 張，剪下塑封最耐用</span>
+          </div>
+        </div>
+      </div>
     </>
   );
 }
 
-/** 從 Tailwind gradient class 取 CSS (印不出 Tailwind 在 inline style) */
-function gradientCss(style: SelStyle): string {
-  const colors: Record<SelStyle, string> = {
-    express: "linear-gradient(135deg, #f9a8d4 0%, #fda4af 50%, #f0abfc 100%)",
-    solve: "linear-gradient(135deg, #7dd3fc 0%, #60a5fa 50%, #818cf8 100%)",
-    calm: "linear-gradient(135deg, #6ee7b7 0%, #5eead4 50%, #67e8f9 100%)",
-    connect: "linear-gradient(135deg, #fcd34d 0%, #fdba74 50%, #fda4af 100%)",
-  };
-  return colors[style];
+// ───────── Single card sub-component ─────────
+function SingleECard({
+  style,
+  info,
+  shortTools,
+  idx,
+}: {
+  style: SelStyle;
+  info: ReturnType<typeof getSelStyleInfo>;
+  shortTools: string[];
+  idx: number;
+}) {
+  return (
+    <div className="ecard">
+      {/* SOS banner */}
+      <div className="ecard-banner">
+        <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          🆘 SOS · 我的情緒工具
+        </span>
+        <span className="right">CARD · {String(idx).padStart(2, "0")}/04</span>
+      </div>
+
+      {/* Style hero */}
+      <div className={`ecard-hero ${style}`}>
+        <span className="big-e">{info.emoji}</span>
+        <div className="text">
+          <div className="nick">{info.nickname}</div>
+          <div className="code">SEL · STYLE · {style.toUpperCase()}</div>
+        </div>
+      </div>
+
+      {/* Oneliner */}
+      <div className="ecard-oneliner">「{info.oneLiner}」</div>
+
+      {/* Tools */}
+      <div className="ecard-tools-head">💡 MY · 5 · TOOLS</div>
+      <ul className="ecard-tools">
+        {shortTools.map((t, i) => (
+          <li key={i}>
+            <span className="num">{String(i + 1).padStart(2, "0")}</span>
+            <span>{t}</span>
+          </li>
+        ))}
+      </ul>
+
+      {/* Contacts */}
+      <div className="ecard-contacts">
+        <div className="head">📞 EMERGENCY · CONTACTS</div>
+        <div className="row">
+          <span className="lbl">家人</span>
+          <span className="blank"></span>
+        </div>
+        <div className="row">
+          <span className="lbl">朋友</span>
+          <span className="blank"></span>
+        </div>
+        <div className="row">
+          <span className="lbl">老師</span>
+          <span className="blank"></span>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="ecard-foot">
+        <span className="school">@ {appConfig.schoolShortName}</span>
+        <span>FOLD · CUT · LAMINATE</span>
+      </div>
+    </div>
+  );
 }

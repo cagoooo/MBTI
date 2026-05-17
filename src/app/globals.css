@@ -428,6 +428,370 @@ html {
   font-family: var(--font-hand);
 }
 
+/* ============================================================
+   GAME SCENE styles (依 game-scene.html 設計)
+   ============================================================ */
+.stage {
+  background: #fff;
+  border: 2.5px solid var(--ink);
+  box-shadow: 8px 8px 0 var(--ink);
+  padding: 0;
+  margin-bottom: 28px;
+  position: relative;
+}
+.stage-bg {
+  aspect-ratio: 24 / 10;
+  display: flex; align-items: center; justify-content: center;
+  position: relative; overflow: hidden;
+  border-bottom: 2px solid var(--ink);
+}
+.stage-bg::before {
+  content: '';
+  position: absolute; inset: 0;
+  background-image: radial-gradient(rgba(255,255,255,0.4) 1.5px, transparent 2px);
+  background-size: 14px 14px;
+}
+.stage-bg .stage-emoji {
+  font-size: clamp(120px, 18vw, 220px);
+  position: relative; z-index: 1;
+  filter: drop-shadow(0 16px 32px rgba(0,0,0,0.18));
+}
+.stage-loc-tag {
+  position: absolute; top: 24px; left: 24px;
+  background: rgba(255,255,255,0.92);
+  border: 2px solid var(--ink);
+  padding: 8px 16px;
+  font-family: var(--font-mono);
+  font-size: 12px; letter-spacing: 2px; font-weight: 700;
+  box-shadow: 3px 3px 0 var(--ink);
+  z-index: 2;
+}
+.stage-ch-stamp {
+  position: absolute; top: 20px; right: 20px;
+  transform: rotate(8deg);
+  border: 3px solid var(--coral); color: var(--coral);
+  padding: 8px 18px; background: rgba(255,255,255,0.85);
+  font-family: var(--font-mono);
+  font-weight: 900; font-size: 16px; letter-spacing: 3px;
+  z-index: 2;
+}
+.stage-corner-tape {
+  position: absolute; width: 110px; height: 22px;
+  background: repeating-linear-gradient(45deg, var(--tape-coral) 0 10px, #ffb89a 10px 20px);
+  opacity: 0.85;
+  z-index: 2;
+}
+.stage-corner-tape.tl { top: -8px; left: 60px; transform: rotate(-3deg); }
+.stage-corner-tape.tr { top: -8px; right: 60px; transform: rotate(3deg); }
+
+/* Dialogue */
+.scene-dialogue {
+  padding: 28px 32px 24px;
+  background: #fff;
+  position: relative;
+}
+.scene-speaker {
+  display: flex; gap: 16px; align-items: center; margin-bottom: 18px;
+}
+.scene-speaker .avatar {
+  width: 64px; height: 64px;
+  border: 2.5px solid var(--ink);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 36px;
+  box-shadow: 3px 3px 0 var(--ink);
+  flex-shrink: 0;
+  background: var(--paper-warm);
+  overflow: hidden;
+}
+.scene-speaker .name-block { flex: 1; min-width: 0; }
+.scene-speaker .name {
+  font-family: var(--font-serif-tc); font-weight: 900;
+  font-size: 22px; line-height: 1;
+}
+.scene-speaker .role {
+  font-family: var(--font-mono); font-size: 11px;
+  letter-spacing: 3px; color: var(--muted); margin-top: 4px;
+}
+.dialogue-text {
+  font-size: 17px; line-height: 1.95; color: var(--ink);
+  padding: 20px 24px; background: var(--paper-warm);
+  border-left: 5px solid var(--coral);
+  position: relative;
+}
+.dialogue-text p { margin: 0; }
+.dialogue-text p + p { margin-top: 14px; }
+
+/* Choices */
+.choices-header {
+  display: flex; align-items: center; gap: 14px; margin: 28px 0 16px;
+  font-family: var(--font-mono);
+  font-size: 13px; letter-spacing: 5px; color: var(--coral); font-weight: 700;
+}
+.choices-header::before, .choices-header::after {
+  content: ''; flex: 1; height: 2px;
+  background: repeating-linear-gradient(90deg, var(--coral) 0 8px, transparent 8px 16px);
+}
+.choice-scene {
+  background: #fff; border: 2.5px solid var(--ink);
+  padding: 18px 22px; margin-bottom: 14px;
+  cursor: pointer; text-decoration: none; color: var(--ink);
+  display: grid; grid-template-columns: 52px 1fr auto; gap: 16px; align-items: center;
+  transition: transform 0.12s, box-shadow 0.12s, background 0.12s;
+  box-shadow: 5px 5px 0 var(--ink);
+  position: relative;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+}
+.choice-scene:hover:not(:disabled) {
+  transform: translate(-3px, -3px);
+  box-shadow: 8px 8px 0 var(--ink);
+  background: var(--paper-warm);
+}
+.choice-scene:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.choice-scene .emoji-box {
+  width: 52px; height: 52px;
+  background: var(--paper-warm); border: 2px solid var(--ink);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 30px;
+}
+.choice-scene .choice-text {
+  font-size: 16px; line-height: 1.55; font-weight: 600;
+}
+.choice-scene .choice-meta {
+  display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+}
+.choice-scene .choice-key {
+  font-family: var(--font-mono);
+  font-size: 11px; letter-spacing: 1px; font-weight: 800;
+  background: var(--ink); color: var(--paper);
+  padding: 4px 8px;
+}
+.choice-scene .choice-arr {
+  font-size: 22px; font-weight: 900; color: var(--coral);
+  opacity: 0; transition: opacity 0.15s, transform 0.15s;
+}
+.choice-scene:hover:not(:disabled) .choice-arr {
+  opacity: 1; transform: translateX(4px);
+}
+@media (max-width: 640px) {
+  .choice-scene {
+    grid-template-columns: 44px 1fr auto;
+    padding: 14px 16px;
+    gap: 12px;
+  }
+  .choice-scene .emoji-box { width: 44px; height: 44px; font-size: 24px; }
+  .choice-scene .choice-text { font-size: 14px; }
+}
+
+/* ============================================================
+   EMERGENCY CARD (情緒急救卡 / A4 4-up)
+   ============================================================ */
+.ecard {
+  border: 2.5px dashed var(--coral);
+  padding: 8mm 8mm 6mm;
+  position: relative;
+  display: flex; flex-direction: column;
+  background:
+    repeating-linear-gradient(transparent 0, transparent 6mm, rgba(135,160,200,0.08) 6mm, rgba(135,160,200,0.08) 6.5mm),
+    #fff;
+}
+.ecard::before {
+  content: '✂';
+  position: absolute; top: -10px; left: -2px;
+  background: #fff;
+  padding: 0 4px;
+  color: var(--coral);
+  font-size: 14px;
+}
+.ecard-banner {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 5px 12px;
+  background: #1d1b18; color: #fff;
+  font-family: var(--font-mono);
+  font-weight: 800; font-size: 11px; letter-spacing: 3px;
+  margin: -3mm -3mm 10px;
+}
+.ecard-banner .right { font-size: 9px; opacity: 0.7; }
+.ecard-hero {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px;
+  border: 2px solid #1d1b18;
+  color: #fff;
+  margin-bottom: 8px;
+}
+.ecard-hero.express { background: linear-gradient(135deg, #ffc4d6, #c44d75); }
+.ecard-hero.solve   { background: linear-gradient(135deg, #c5e3f5, #4a8fbf); }
+.ecard-hero.calm    { background: linear-gradient(135deg, #c3e3d0, #3f8a6e); }
+.ecard-hero.connect { background: linear-gradient(135deg, #ffd9a8, #d49a13); }
+.ecard-hero .big-e {
+  font-size: 36px;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
+}
+.ecard-hero .text { flex: 1; text-shadow: 0 1px 0 rgba(0,0,0,0.1); }
+.ecard-hero .nick {
+  font-family: var(--font-serif-tc);
+  font-weight: 900; font-size: 18px; line-height: 1.1;
+}
+.ecard-hero .code {
+  font-family: var(--font-mono);
+  font-size: 9px; letter-spacing: 2.5px; margin-top: 2px;
+  opacity: 0.9;
+}
+.ecard-oneliner {
+  font-family: var(--font-serif-tc);
+  font-style: italic; font-size: 11px; line-height: 1.5;
+  padding: 6px 8px;
+  background: var(--paper-warm);
+  border-left: 3px solid var(--coral);
+  margin-bottom: 8px;
+}
+.ecard-tools-head {
+  font-family: var(--font-mono);
+  font-size: 9px; letter-spacing: 2px;
+  color: #999; margin-bottom: 3px;
+}
+.ecard-tools { margin: 0; padding: 0; list-style: none; flex: 1; }
+.ecard-tools li {
+  display: flex; gap: 6px;
+  font-size: 10.5px; line-height: 1.45;
+  padding: 2px 0;
+  color: #1d1b18;
+}
+.ecard-tools li .num {
+  font-family: var(--font-mono);
+  font-weight: 800; color: var(--coral);
+  width: 14px; flex-shrink: 0;
+}
+.ecard-contacts {
+  margin-top: 6px; padding-top: 6px;
+  border-top: 1.5px dashed #c8b89e;
+}
+.ecard-contacts .head {
+  font-family: var(--font-mono);
+  font-size: 9px; letter-spacing: 2px; color: #999;
+  margin-bottom: 4px;
+}
+.ecard-contacts .row {
+  display: flex; align-items: center; gap: 4px;
+  font-size: 10.5px;
+  margin: 2px 0;
+}
+.ecard-contacts .lbl { width: 32px; font-weight: 700; flex-shrink: 0; }
+.ecard-contacts .blank {
+  flex: 1; border-bottom: 1px solid #1d1b18;
+  height: 14px;
+}
+.ecard-foot {
+  margin-top: 4px; padding-top: 4px;
+  border-top: 1px solid #e3d9c5;
+  display: flex; justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 8px; letter-spacing: 1.5px;
+  color: #999;
+}
+.ecard-foot .school { font-weight: 700; }
+
+/* A4 print sheet */
+.a4-sheet {
+  background: #fff;
+  width: 210mm;
+  min-height: 297mm;
+  padding: 14mm 12mm;
+  color: #1d1b18;
+  box-shadow: 0 16px 40px rgba(0,0,0,0.15);
+  position: relative;
+  margin: 0 auto;
+}
+.a4-head {
+  display: flex; justify-content: space-between; align-items: flex-end;
+  border-bottom: 2px dashed #c8b89e;
+  padding-bottom: 6mm; margin-bottom: 6mm;
+}
+.a4-head .title {
+  font-family: var(--font-serif-tc);
+  font-weight: 900; font-size: 22px; line-height: 1;
+}
+.a4-head .sub {
+  font-family: var(--font-mono);
+  font-size: 10px; letter-spacing: 2px; color: #999;
+  margin-top: 4px;
+}
+.a4-card-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 6mm;
+  min-height: calc(297mm - 14mm - 14mm - 22mm - 12mm);
+}
+
+/* On-screen toolbar for /emergency-card */
+.ecard-toolbar {
+  background: #fff;
+  border: 2.5px solid var(--ink);
+  box-shadow: 6px 6px 0 var(--ink);
+  padding: 28px 32px;
+  margin: 32px 0;
+  position: relative;
+}
+.ecard-toolbar .tab {
+  position: absolute; top: -16px; left: 24px;
+  background: var(--coral); color: #fff;
+  padding: 6px 16px;
+  font-family: var(--font-mono);
+  font-weight: 800; font-size: 12px; letter-spacing: 3px;
+}
+.style-opt {
+  background: #fff;
+  border: 2.5px solid var(--ink);
+  box-shadow: 4px 4px 0 var(--ink);
+  padding: 16px;
+  cursor: pointer;
+  text-align: center;
+  transition: transform 0.12s, box-shadow 0.12s;
+  font-family: inherit;
+}
+.style-opt:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 var(--ink);
+}
+.style-opt.active {
+  background: var(--paper-warm);
+  box-shadow: 4px 4px 0 currentColor;
+  border-color: currentColor;
+}
+.style-opt .big-e { font-size: 44px; }
+.style-opt .nick {
+  font-family: var(--font-serif-tc);
+  font-weight: 900; font-size: 20px; margin-top: 4px;
+}
+.style-opt .mono-tag {
+  font-family: var(--font-mono);
+  font-size: 10px; letter-spacing: 2px; color: var(--muted); margin-top: 2px;
+}
+
+/* Print rules */
+@page { size: A4 portrait; margin: 0; }
+@media print {
+  body.printing-card { background: #fff !important; }
+  body.printing-card::before, body.printing-card::after { display: none !important; }
+  body.printing-card .container-paper { max-width: none !important; padding: 0 !important; margin: 0 !important; }
+  body.printing-card .nav-design, body.printing-card .ecard-toolbar,
+  body.printing-card .top-section, body.printing-card footer,
+  body.printing-card .print-hide { display: none !important; }
+  body.printing-card .a4-sheet {
+    box-shadow: none !important;
+    width: 210mm !important;
+    min-height: 297mm !important;
+    page-break-after: always;
+    background: #fff !important;
+  }
+}
+
 /* Type pill (type-detail 用的小膠囊) */
 .type-pill {
   display: inline-flex; align-items: center; gap: 6px;

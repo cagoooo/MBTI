@@ -473,7 +473,7 @@ function GameInner() {
           </motion.div>
         )}
 
-        {/* 透視容器：讓子層的 rotateY 看起來有翻書感 */}
+        {/* 透視容器：讓子層的翻頁感保留 */}
         <div style={{ perspective: 1400 }} className="relative">
         <AnimatePresence mode="wait">
           <motion.div
@@ -483,114 +483,170 @@ function GameInner() {
             exit={{ opacity: 0, rotateY: -30, x: -100, scale: 0.92 }}
             transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
             style={{ transformOrigin: "center center", transformStyle: "preserve-3d" }}
-            className="scene-card-narrow bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-8 border-2 border-[var(--color-ink)]/10 shadow-2xl relative overflow-hidden"
+            className="stage"
           >
-            {/* 場景 SVG 背景插畫 (依 location/bg 自動選模板) */}
-            <SceneBackground location={scene.location} bgEmoji={scene.bg} />
-            {/* 翻頁的脊邊陰影（左側陰影模擬書脊光影）— 手機縮窄避免吃內容 */}
-            <div className="absolute inset-y-0 left-0 w-4 sm:w-12 pointer-events-none bg-gradient-to-r from-black/8 to-transparent" />
-            <div className="absolute inset-y-0 right-0 w-4 sm:w-12 pointer-events-none bg-gradient-to-l from-black/4 to-transparent" />
-            {/* 場景 emoji 小貼紙 (改放右上角小尺寸，讓 SVG 背景當主角) */}
-            <div className="absolute top-2 right-2 sm:top-4 sm:right-4 text-2xl sm:text-4xl bg-white/80 rounded-full w-10 h-10 sm:w-14 sm:h-14 flex items-center justify-center shadow-md border-2 border-white pointer-events-none z-10">
-              {scene.bg}
-            </div>
-            {/* 內容區包一層 relative 確保在 SVG 背景上方 */}
-            <div className="relative z-10">
-
-            <p className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[var(--color-coral)] mb-1">
-              📍 <RubyText>{scene.location}</RubyText>
-            </p>
-
-            {scene.speaker && (
-              <div className="flex items-center gap-2.5 mb-4">
-                {/* 若是 8 主角之一用 SVG avatar，否則用原 emoji */}
-                {["小芸", "阿哲", "小傑", "雅雯", "宇航", "凱莉", "小宇", "婷婷"].includes(scene.speaker) ? (
-                  <NpcAvatar name={scene.speaker} size={40} className="shrink-0" />
-                ) : (
-                  <span className="text-3xl shrink-0">{scene.speakerEmoji}</span>
-                )}
-                <span className="font-bold text-[var(--color-ink)]/80">
-                  <RubyText>{scene.speaker}</RubyText>
-                </span>
-              </div>
-            )}
-
-            <div className="space-y-3 mb-3 text-base sm:text-lg leading-relaxed text-[var(--color-ink)] zhuyin-spaced">
-              {scene.text.map((p, i) => (
-                <p key={i}>
-                  <RubyText>{p}</RubyText>
-                </p>
-              ))}
+            {/* Stage background — 場景 SVG + 大 emoji + 角落紙膠帶 */}
+            <div className="stage-bg" style={{ background: "linear-gradient(135deg, var(--tape-sky) 0%, var(--tape-mint) 50%, var(--tape-sunny) 100%)" }}>
+              <span className="stage-corner-tape tl"></span>
+              <span className="stage-corner-tape tr"></span>
+              <SceneBackground location={scene.location} bgEmoji={scene.bg} />
+              <span className="stage-emoji" style={{ position: "relative", zIndex: 1 }}>{scene.bg}</span>
+              <span className="stage-loc-tag">▸ <RubyText>{scene.location}</RubyText></span>
+              <span className="stage-ch-stamp hidden sm:block">SCENE {String(scene.chapter).padStart(2, "0")}</span>
             </div>
 
-            {/* TTS 控制 (僅 TTS 開啟時顯示) */}
-            {ttsEnabled && (
-              <div className="flex items-center gap-2 mb-5">
-                <button
-                  onClick={speakCurrentScene}
-                  title="再唸一次"
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-100 border-2 border-amber-300 text-amber-900 text-xs font-bold hover:bg-amber-200 transition"
-                >
-                  <span>🔊</span>
-                  <span>再唸一次</span>
-                </button>
-                <button
-                  onClick={stopSpeaking}
-                  title="停止朗讀"
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border-2 border-[var(--color-ink)]/15 text-[var(--color-ink)]/70 text-xs font-bold hover:border-amber-300 transition"
-                >
-                  <span>⏸</span>
-                  <span>停止</span>
-                </button>
-              </div>
-            )}
-
-            <div className="border-t-2 border-dashed border-[var(--color-ink)]/15 pt-5">
-              <p className="text-sm font-bold text-[var(--color-ink)]/60 mb-3">💭 你會怎麼做？</p>
-              <div className="space-y-3">
-                {scene.choices.map((c, i) => {
-                  const isVoted = pendingVote && pendingVote.sceneId === sceneId && pendingVote.choiceIndex === i;
-                  return (
-                    <motion.button
-                      key={i}
-                      onClick={() => handleChoice(c, i)}
-                      disabled={!!showFollowUp}
-                      whileHover={{ x: 4 }}
-                      whileTap={{ scale: 0.98 }}
-                      className={`choice-option w-full text-left p-3.5 sm:p-4 rounded-2xl border-2 transition group relative min-h-[56px] ${
-                        isVoted
-                          ? "border-rose-500 bg-rose-50 ring-2 ring-rose-300/50"
-                          : "border-[var(--color-ink)]/15 hover:border-[var(--color-coral)] hover:bg-[var(--color-cream)] active:bg-[var(--color-cream)]"
-                      } disabled:opacity-50 disabled:cursor-not-allowed`}
+            {/* Dialogue area */}
+            <div className="scene-dialogue">
+              {scene.speaker && (
+                <div className="scene-speaker">
+                  <div className="avatar">
+                    {["小芸", "阿哲", "小傑", "雅雯", "宇航", "凱莉", "小宇", "婷婷"].includes(scene.speaker) ? (
+                      <NpcAvatar name={scene.speaker} size={56} />
+                    ) : (
+                      <span>{scene.speakerEmoji}</span>
+                    )}
+                  </div>
+                  <div className="name-block">
+                    <div className="name"><RubyText>{scene.speaker}</RubyText></div>
+                    <div className="role">CHARACTER · {scene.speaker === "你的內心" || scene.speaker === "你的肚子" || scene.speaker === "你" ? "INNER · 你的內心" : "NPC · 同學/老師"}</div>
+                  </div>
+                  {ttsEnabled && (
+                    <button
+                      onClick={speakCurrentScene}
+                      title="再唸一次"
+                      style={{
+                        background: "var(--paper-warm)",
+                        border: "2px solid var(--ink)",
+                        padding: "8px 14px",
+                        fontSize: 12,
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 6,
+                        flexShrink: 0,
+                      }}
                     >
-                      <div className="flex items-start gap-2 sm:gap-3">
-                        {c.emoji && (
-                          <span className="text-lg sm:text-2xl shrink-0 group-hover:scale-110 transition-transform leading-none mt-0.5">
-                            {c.emoji}
-                          </span>
-                        )}
-                        <span className="flex-1 font-medium text-sm sm:text-base leading-snug min-w-0 break-words">
-                          <RubyText>{c.text}</RubyText>
-                        </span>
-                        {isVoted && (
-                          <span className="px-2 py-0.5 rounded-full bg-rose-500 text-white text-xs font-black animate-pulse">
-                            ✓ 已投
-                          </span>
-                        )}
-                      </div>
-                    </motion.button>
-                  );
-                })}
+                      🔊 <span className="hidden sm:inline">聽老師說</span>
+                    </button>
+                  )}
+                </div>
+              )}
+
+              <div className="dialogue-text zhuyin-spaced">
+                {scene.text.map((p, i) => (
+                  <p key={i}>
+                    <RubyText>{p}</RubyText>
+                  </p>
+                ))}
               </div>
-              {isPinned && pendingVote && pendingVote.sceneId === sceneId && (
-                <p className="text-xs text-rose-700 mt-3 text-center font-bold">
-                  💡 你已投票，等老師結束討論後會自動往下走（可改投別的選項）
-                </p>
+
+              {/* TTS 停止按鈕 */}
+              {ttsEnabled && (
+                <div className="flex justify-end mt-2">
+                  <button
+                    onClick={stopSpeaking}
+                    title="停止朗讀"
+                    className="hud"
+                    style={{
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      color: "var(--muted)",
+                      padding: "4px 8px",
+                    }}
+                  >
+                    ⏸ 停止朗讀
+                  </button>
+                </div>
               )}
             </div>
-            </div>{/* /relative z-10 wrapper */}
           </motion.div>
         </AnimatePresence>
+        </div>
+
+        {/* Choices */}
+        <div className="choices-header">▸ YOUR CHOICE · 你會怎麼做？</div>
+        <div>
+          {scene.choices.map((c, i) => {
+            const isVoted = pendingVote && pendingVote.sceneId === sceneId && pendingVote.choiceIndex === i;
+            const key = String.fromCharCode(65 + i); // A, B, C, D
+            return (
+              <motion.button
+                key={i}
+                onClick={() => handleChoice(c, i)}
+                disabled={!!showFollowUp}
+                whileTap={{ scale: 0.98 }}
+                className="choice-scene"
+                style={
+                  isVoted
+                    ? { borderColor: "var(--rose)", background: "#fde3ea", boxShadow: "5px 5px 0 var(--rose)" }
+                    : undefined
+                }
+              >
+                <div className="emoji-box">
+                  {c.emoji && <span>{c.emoji}</span>}
+                </div>
+                <div className="choice-text">
+                  <RubyText>{c.text}</RubyText>
+                </div>
+                <div className="choice-meta">
+                  {isVoted ? (
+                    <span style={{
+                      padding: "4px 10px",
+                      borderRadius: "999px",
+                      background: "var(--rose)",
+                      color: "#fff",
+                      fontSize: 11,
+                      fontWeight: 900,
+                      fontFamily: "var(--font-mono)",
+                    }}>
+                      ✓ 已投
+                    </span>
+                  ) : (
+                    <>
+                      <span className="choice-key">{key}</span>
+                      <span className="choice-arr">→</span>
+                    </>
+                  )}
+                </div>
+              </motion.button>
+            );
+          })}
+        </div>
+
+        {isPinned && pendingVote && pendingVote.sceneId === sceneId && (
+          <p
+            style={{
+              fontSize: 12,
+              color: "var(--rose)",
+              marginTop: 12,
+              textAlign: "center",
+              fontWeight: 700,
+              fontFamily: "var(--font-mono)",
+              letterSpacing: 1,
+            }}
+          >
+            💡 你已投票，等老師結束討論後會自動往下走（可改投別的選項）
+          </p>
+        )}
+
+        {/* Floor info */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            padding: "14px 0",
+            marginTop: 20,
+            borderTop: "1.5px dashed var(--line-strong)",
+            fontFamily: "var(--font-mono)",
+            fontSize: 11,
+            letterSpacing: 2,
+            color: "var(--muted)",
+          }}
+        >
+          <span>▸ 沒有正確答案，跟著直覺走</span>
         </div>
       </div>
 
