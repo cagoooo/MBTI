@@ -227,11 +227,23 @@ export default function HomePage() {
           </p>
           <div className="mt-5 flex flex-col sm:flex-row gap-3 flex-wrap">
             <SoundLink
+              href="/teacher/dashboard"
+              sound="coin"
+              className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 text-white font-black hover:opacity-95 transition shadow-md relative"
+            >
+              <span className="text-xl">🎓</span>
+              <span>老師 dashboard（一頁看完）</span>
+              <span>→</span>
+              <span className="absolute -top-2 -right-2 bg-amber-400 text-amber-900 text-[10px] font-black px-2 py-0.5 rounded-full shadow border-2 border-white">
+                NEW
+              </span>
+            </SoundLink>
+            <SoundLink
               href="/teacher/new"
               sound="coin"
               className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-gradient-to-r from-violet-500 to-purple-500 text-white font-black hover:from-violet-600 hover:to-purple-600 transition shadow-md"
             >
-              <span className="text-xl">🎓</span>
+              <span className="text-xl">🏠</span>
               <span>建立班級房間（全班同步玩）</span>
               <span>→</span>
             </SoundLink>
