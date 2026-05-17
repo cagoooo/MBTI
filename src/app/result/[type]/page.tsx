@@ -13,6 +13,7 @@ import SoundLink from "@/components/SoundLink";
 import BgmController from "@/components/BgmController";
 import RubyText from "@/components/RubyText";
 import PretestCompare from "@/components/PretestCompare";
+import GeminiAnalysis from "@/components/GeminiAnalysis";
 
 export function generateStaticParams() {
   return ALL_TYPES.map((type) => ({ type }));
@@ -89,6 +90,9 @@ export default async function ResultPage({ params }: { params: Promise<{ type: s
 
         {/* 課前/課後對照 (有做課前快測才會顯示) */}
         <PretestCompare actual={upper} />
+
+        {/* AI 個人化分析 (設了 Gemini API key 才會顯示) */}
+        <GeminiAnalysis type={upper} nickname={info.nickname} />
 
         {/* 強度條 */}
         <section className="mt-6">
