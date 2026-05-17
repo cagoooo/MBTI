@@ -8,7 +8,7 @@ import { applyDelta, deriveType, initialScores } from "@/lib/scoring";
 import type { Branch, Choice, Scene, Scores } from "@/lib/types";
 import ProgressDots from "@/components/ProgressDots";
 import HomeToButton from "@/components/HomeToButton";
-import SoundToggle from "@/components/SoundToggle";
+import BgmController from "@/components/BgmController";
 import SoundButton from "@/components/SoundButton";
 import { playSound } from "@/lib/sound";
 
@@ -107,7 +107,7 @@ export default function GamePage() {
 
   return (
     <div className="flex-1 px-4 sm:px-6 py-6 sm:py-10">
-      <SoundToggle />
+      <BgmController track="game" />
       {/* Top bar */}
       <div className="max-w-3xl mx-auto flex items-center justify-between mb-6">
         <HomeToButton />

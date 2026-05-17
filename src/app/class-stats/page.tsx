@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import HomeToButton from "@/components/HomeToButton";
 import SoundButton from "@/components/SoundButton";
 import SoundLink from "@/components/SoundLink";
+import BgmController from "@/components/BgmController";
 import { computeStats, parseClassInput, type ClassEntry } from "@/lib/parse-class";
 import { ALL_TYPES, type MBTIType } from "@/lib/types";
 import { MBTI_GROUPS, getMBTIInfo } from "@/lib/mbti";
@@ -53,6 +54,7 @@ export default function ClassStatsPage() {
 
   return (
     <div className="px-4 sm:px-6 py-6 sm:py-10">
+      <BgmController track="home" />
       <div className="max-w-5xl mx-auto">
         <div className="mb-6 flex items-center justify-between flex-wrap gap-3">
           <HomeToButton />

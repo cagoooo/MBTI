@@ -1,20 +1,15 @@
 /**
  * 音效系統 — 用 Pixabay CC0 真實音效檔（HTML5 Audio）
  *
- * 音效類型（10 種）:
- *   click      - Marimba Bloop 1 主動作叮聲
- *   tap        - Marimba Bloop 2 輕量按鈕
- *   pop        - Bubble Pop Q 彈感
- *   pageTurn   - Page Turn 翻書聲
- *   reveal     - Cute Level Up 3 結果揭曉
- *   unlock     - Cute Level Up 2 徽章解鎖
- *   coin       - UI Digital Coin Collect 完成 / 確認
- *   whoosh     - Cartoony Whoosh 過場
- *   toggleOn   - Menu Select Button 開啟
- *   toggleOff  - UI Button Cancel/Back 關閉
+ * 短音效 SFX (10 種，pool 模式，連點不互相打斷):
+ *   click pageTurn reveal unlock tap pop whoosh coin toggleOn toggleOff
  *
- * 背景音樂:
- *   Pixabay CC0 "Kawaii Friends" by ckotty3
+ * 背景音樂 BGM (多 track，自動 cross-fade):
+ *   home   - Kawaii Friends by ckotty3 (4.7MB) - 首頁可愛 future bass
+ *   game   - Playful Kids Toys by fassounds (2.9MB) - 遊戲輕快兒童感
+ *   result - The Fun Starts Here by mmaudio (3.5MB) - 結果開心慶祝感
+ *
+ * 切頁時 BgmController 呼叫 playBgm(trackId) → 自動 cross-fade 過渡
  */
 
 export type SoundKind =
@@ -29,9 +24,10 @@ export type SoundKind =
   | "toggleOn"
   | "toggleOff";
 
+export type BgmTrackId = "home" | "game" | "result";
+
 /**
- * Next.js 15 App Router + static export + GitHub Pages 子路徑部署用 (依 skill nextjs-app-router-basepath-runtime)
- * 必須是 process.env.NEXT_PUBLIC_BASE_PATH，build time 由 Webpack inline 進 client bundle
+ * Next.js 15 App Router + static export + GitHub Pages 子路徑用 (依 skill nextjs-app-router-basepath-runtime)
  */
 const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || "";
 
@@ -48,7 +44,6 @@ const SFX_FILES: Record<SoundKind, string> = {
   toggleOff: "toggleOff.mp3",
 };
 
-/** 每個音效的基礎音量 (0~1)，避免大聲音效太擾人 */
 const SFX_VOLUMES: Record<SoundKind, number> = {
   click: 0.65,
   tap: 0.55,
@@ -62,15 +57,39 @@ const SFX_VOLUMES: Record<SoundKind, number> = {
   toggleOff: 0.55,
 };
 
+interface BgmTrack {
+  file: string;
+  volume: number;
+  credit: string;
+}
+
+const BGM_TRACKS: Record<BgmTrackId, BgmTrack> = {
+  home: {
+    file: "home-kawaii-friends.mp3",
+    volume: 0.3,
+    credit: "Kawaii Friends by ckotty3 (Pixabay CC0)",
+  },
+  game: {
+    file: "game-playful-kids.mp3",
+    volume: 0.25,
+    credit: "Playful - Kids Toys Vlog Music by fassounds (Pixabay CC0)",
+  },
+  result: {
+    file: "result-fun-starts-here.mp3",
+    volume: 0.28,
+    credit: "The Fun Starts Here by mmaudio (Pixabay CC0)",
+  },
+};
+
 const STORAGE_KEY_MUTE = "mbti-sound-muted";
 const STORAGE_KEY_BGM = "mbti-bgm-on";
 
-function bgmSrc(): string {
-  return `${BASE_PATH}/audio/bgm-kawaii-friends.mp3`;
-}
-
 function sfxSrc(kind: SoundKind): string {
   return `${BASE_PATH}/audio/sfx/${SFX_FILES[kind]}`;
+}
+
+function bgmSrc(id: BgmTrackId): string {
+  return `${BASE_PATH}/audio/bgm/${BGM_TRACKS[id].file}`;
 }
 
 // ─────────────────── 設定持久化 ───────────────────
@@ -88,22 +107,18 @@ export function setMuted(v: boolean) {
 export function isBgmOn(): boolean {
   if (typeof window === "undefined") return false;
   const v = localStorage.getItem(STORAGE_KEY_BGM);
-  return v === null ? true : v === "1"; // 預設開
+  return v === null ? true : v === "1";
 }
 
 export function setBgmOn(v: boolean) {
   if (typeof window === "undefined") return;
   localStorage.setItem(STORAGE_KEY_BGM, v ? "1" : "0");
-  if (v) startBgm();
-  else stopBgm();
+  if (v && currentBgmId) playBgm(currentBgmId); // re-fire
+  else if (!v) stopBgm();
 }
 
 // ─────────────────── 短音效 Pool ───────────────────
 
-/**
- * 每種音效保留 3 個 Audio instance 形成 pool，連點時不會互相打斷。
- * 找到 idle 的就 reuse，全部 busy 才 reset 第一個。
- */
 const sfxPool: Partial<Record<SoundKind, HTMLAudioElement[]>> = {};
 const POOL_SIZE = 3;
 
@@ -114,29 +129,23 @@ function getSfxAudio(kind: SoundKind): HTMLAudioElement | null {
     pool = [];
     sfxPool[kind] = pool;
   }
-  // 找 idle instance
   for (const a of pool) {
     if (a.paused || a.ended) {
       a.currentTime = 0;
       return a;
     }
   }
-  // 未滿則新建
   if (pool.length < POOL_SIZE) {
     const a = new Audio(sfxSrc(kind));
     a.preload = "auto";
     pool.push(a);
     return a;
   }
-  // pool 滿，搶第一個
   const a = pool[0];
   a.currentTime = 0;
   return a;
 }
 
-/**
- * 預載入所有音效（在 unlock 時呼叫，提早讓瀏覽器 cache mp3）
- */
 function preloadAll() {
   if (typeof window === "undefined") return;
   for (const kind of Object.keys(SFX_FILES) as SoundKind[]) {
@@ -148,80 +157,120 @@ function preloadAll() {
   }
 }
 
-/** 觸發任何音效前要先呼叫（autoplay policy unlock，會在使用者第一次互動時自動呼叫） */
 export function unlock() {
   if (typeof window === "undefined") return;
   preloadAll();
 }
 
-/** 播放短音效 */
 export function playSound(kind: SoundKind) {
   if (typeof window === "undefined") return;
   if (isMuted()) return;
   const a = getSfxAudio(kind);
   if (!a) return;
   a.volume = SFX_VOLUMES[kind] ?? 0.6;
-  a.play().catch(() => {
-    // autoplay 被擋 / 載入失敗 — 靜靜忽略
-  });
+  a.play().catch(() => {});
 }
 
-// ─────────────────── 背景音樂 ───────────────────
+// ─────────────────── 多 Track BGM ───────────────────
 
-let bgmAudio: HTMLAudioElement | null = null;
-let bgmStarted = false;
+let currentBgmId: BgmTrackId | null = null;
+let currentBgmAudio: HTMLAudioElement | null = null;
 
-/** 背景音樂：播放 Pixabay CC0 「Kawaii Friends」(by ckotty3) */
-export function startBgm() {
-  if (typeof window === "undefined") return;
-  if (!isBgmOn() || isMuted()) return;
-  if (bgmStarted) return;
-  bgmStarted = true;
-
-  if (!bgmAudio) {
-    bgmAudio = new Audio(bgmSrc());
-    bgmAudio.loop = true;
-    bgmAudio.preload = "auto";
-    bgmAudio.volume = 0;
-  }
-
-  const TARGET = 0.3;
-  bgmAudio.volume = 0;
-  bgmAudio
-    .play()
-    .then(() => {
-      if (!bgmAudio) return;
-      const steps = 20;
-      let i = 0;
-      const iv = setInterval(() => {
-        if (!bgmAudio || !bgmStarted) {
-          clearInterval(iv);
-          return;
-        }
-        i++;
-        bgmAudio.volume = Math.min(TARGET, (i / steps) * TARGET);
-        if (i >= steps) clearInterval(iv);
-      }, 100);
-    })
-    .catch(() => {
-      // autoplay 被擋 — 靜靜失敗
-      bgmStarted = false;
-    });
+function fadeIn(audio: HTMLAudioElement, target: number, durationMs = 1600) {
+  const steps = 20;
+  const stepMs = durationMs / steps;
+  let i = 0;
+  audio.volume = 0;
+  const iv = setInterval(() => {
+    // 若 audio 已被其他 track 取代，停止這個 fade
+    if (audio !== currentBgmAudio) {
+      clearInterval(iv);
+      return;
+    }
+    i++;
+    audio.volume = Math.min(target, (i / steps) * target);
+    if (i >= steps) clearInterval(iv);
+  }, stepMs);
 }
 
-export function stopBgm() {
-  if (!bgmStarted || !bgmAudio) return;
-  bgmStarted = false;
-  const audio = bgmAudio;
+function fadeOut(audio: HTMLAudioElement, onDone: () => void, durationMs = 900) {
   const start = audio.volume;
   const steps = 15;
+  const stepMs = durationMs / steps;
   let i = 0;
   const iv = setInterval(() => {
     i++;
     audio.volume = Math.max(0, start * (1 - i / steps));
     if (i >= steps) {
       clearInterval(iv);
-      audio.pause();
+      onDone();
     }
-  }, 60);
+  }, stepMs);
+}
+
+/**
+ * 切換到指定 BGM track。若已是當前 track 就不動。
+ * 切換時自動 cross-fade（舊的淡出、新的淡入）。
+ */
+export function playBgm(trackId: BgmTrackId) {
+  if (typeof window === "undefined") return;
+  if (!isBgmOn() || isMuted()) {
+    // 即使不能播，記住目標 track（之後使用者開啟 BGM 時用）
+    currentBgmId = trackId;
+    return;
+  }
+  // 已是同一 track 且在播 → no-op
+  if (currentBgmId === trackId && currentBgmAudio && !currentBgmAudio.paused) {
+    return;
+  }
+
+  const oldAudio = currentBgmAudio;
+  currentBgmId = trackId;
+
+  const track = BGM_TRACKS[trackId];
+  const newAudio = new Audio(bgmSrc(trackId));
+  newAudio.loop = true;
+  newAudio.preload = "auto";
+  newAudio.volume = 0;
+  currentBgmAudio = newAudio;
+
+  newAudio
+    .play()
+    .then(() => {
+      fadeIn(newAudio, track.volume, 1600);
+    })
+    .catch(() => {
+      // autoplay blocked — 復原狀態
+      if (currentBgmAudio === newAudio) {
+        currentBgmAudio = oldAudio;
+      }
+    });
+
+  // 淡出舊 track
+  if (oldAudio && oldAudio !== newAudio) {
+    fadeOut(oldAudio, () => {
+      try { oldAudio.pause(); } catch {}
+    }, 900);
+  }
+}
+
+/** 完全停止 BGM */
+export function stopBgm() {
+  if (!currentBgmAudio) return;
+  const audio = currentBgmAudio;
+  currentBgmAudio = null;
+  // currentBgmId 不清空 — 之後重開 BGM 還可以回到同一 track
+  fadeOut(audio, () => {
+    try { audio.pause(); } catch {}
+  }, 800);
+}
+
+/** 向後相容：呼叫者沒指定 track 時預設 home */
+export function startBgm() {
+  playBgm(currentBgmId ?? "home");
+}
+
+/** 取得當前 track 的作者署名（給 footer / about 用） */
+export function getBgmCredit(trackId: BgmTrackId): string {
+  return BGM_TRACKS[trackId].credit;
 }

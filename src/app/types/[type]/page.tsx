@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { ALL_TYPES, type MBTIType } from "@/lib/types";
 import { getMBTIInfo } from "@/lib/mbti";
 import HomeToButton from "@/components/HomeToButton";
+import BgmController from "@/components/BgmController";
 
 export function generateStaticParams() {
   return ALL_TYPES.map((type) => ({ type }));
@@ -29,6 +30,7 @@ export default async function TypeDetailPage({ params }: { params: Promise<{ typ
 
   return (
     <div className="px-4 sm:px-6 py-6 sm:py-10">
+      <BgmController track="home" />
       <div className="max-w-4xl mx-auto">
         <div className="mb-6 flex items-center justify-between flex-wrap gap-3">
           <HomeToButton />

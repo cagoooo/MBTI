@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import HomeToButton from "@/components/HomeToButton";
 import SoundButton from "@/components/SoundButton";
 import SoundLink from "@/components/SoundLink";
+import BgmController from "@/components/BgmController";
 import { ALL_TYPES, type MBTIType } from "@/lib/types";
 import { getMBTIInfo, MBTI_GROUPS } from "@/lib/mbti";
 import { computeMatch, findClassMatches } from "@/lib/match";
@@ -45,6 +46,7 @@ export default function MatchPage() {
 
   return (
     <div className="px-4 sm:px-6 py-6 sm:py-10">
+      <BgmController track="home" />
       <div className="max-w-5xl mx-auto">
         <div className="mb-6">
           <HomeToButton />

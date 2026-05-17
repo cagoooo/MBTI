@@ -2,6 +2,7 @@ import Link from "next/link";
 import SoundLink from "@/components/SoundLink";
 import { MBTI_GROUPS, getMBTIInfo } from "@/lib/mbti";
 import HomeToButton from "@/components/HomeToButton";
+import BgmController from "@/components/BgmController";
 
 export const metadata = {
   title: "16 型 MBTI 介紹 ｜ MBTI 校園奇遇記",
@@ -11,6 +12,7 @@ export const metadata = {
 export default function TypesIndexPage() {
   return (
     <div className="px-4 sm:px-6 py-6 sm:py-10">
+      <BgmController track="home" />
       <div className="max-w-5xl mx-auto">
         <div className="mb-6">
           <HomeToButton />

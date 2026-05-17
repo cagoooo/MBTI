@@ -1,14 +1,26 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { isBgmOn, isMuted, playSound, setBgmOn, setMuted, startBgm, stopBgm, unlock } from "@/lib/sound";
+import {
+  isBgmOn,
+  isMuted,
+  playBgm,
+  playSound,
+  setBgmOn,
+  setMuted,
+  stopBgm,
+  unlock,
+} from "@/lib/sound";
 
-interface Props {
-  /** 是否在這個頁面啟動 BGM */
-  withBgm?: boolean;
-}
-
-export default function SoundToggle({ withBgm = false }: Props) {
+/**
+ * 浮動音效控制按鈕（靜音 / BGM 開關）。
+ *
+ * 全站只需一個 instance（建議放在 layout.tsx）。
+ * 各頁面用 <BgmController track="..."/> 指定要播哪首 BGM。
+ *
+ * 第一次使用者互動時自動 unlock + 呼叫 playBgm() 觸發當前 track（用於繞過 autoplay policy）。
+ */
+export default function SoundToggle() {
   const [muted, setMutedState] = useState(false);
   const [bgm, setBgmState] = useState(true);
   const [mounted, setMounted] = useState(false);
@@ -18,10 +30,15 @@ export default function SoundToggle({ withBgm = false }: Props) {
     setMutedState(isMuted());
     setBgmState(isBgmOn());
 
-    // 在使用者首次互動時 unlock + 啟動 BGM
+    // 第一次互動：unlock SFX + 觸發當前 track 的 BGM
     const onFirstInteract = () => {
       unlock();
-      if (withBgm && isBgmOn() && !isMuted()) startBgm();
+      if (isBgmOn() && !isMuted()) {
+        // BgmController 在 page mount 時就呼叫了 playBgm，但因 autoplay 被擋
+        // 這裡再觸發一次（同 trackId 會 no-op，但若 autoplay 失敗則會重啟）
+        // 預設 home，BgmController 會立刻覆蓋成正確的 track
+        playBgm("home");
+      }
       window.removeEventListener("pointerdown", onFirstInteract);
       window.removeEventListener("keydown", onFirstInteract);
     };
@@ -32,26 +49,19 @@ export default function SoundToggle({ withBgm = false }: Props) {
       window.removeEventListener("pointerdown", onFirstInteract);
       window.removeEventListener("keydown", onFirstInteract);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [withBgm]);
+  }, []);
 
-  // 離開頁面 / 卸載時停掉 BGM (避免在 result/types 等頁面繼續響)
-  useEffect(() => {
-    if (!withBgm) return;
-    return () => {
-      stopBgm();
-    };
-  }, [withBgm]);
+  // 注意：故意不在 unmount 時 stopBgm — 浮動按鈕應該全站存在
+  // 若使用者關閉頁面 / 跳到外部，瀏覽器會自動處理
 
   function toggleMute() {
     const next = !muted;
-    // 先播音效（避免被自己 mute 掉）
     if (!next) playSound("toggleOn");
     else playSound("toggleOff");
     setMutedState(next);
     setMuted(next);
     if (next) stopBgm();
-    else if (withBgm && isBgmOn()) startBgm();
+    else if (isBgmOn()) playBgm("home"); // 解除靜音後重啟（BgmController 會切到正確 track）
   }
 
   function toggleBgm() {
@@ -60,7 +70,7 @@ export default function SoundToggle({ withBgm = false }: Props) {
     setBgmState(next);
     setBgmOn(next);
     if (!next) stopBgm();
-    else if (!muted && withBgm) startBgm();
+    else if (!muted) playBgm("home"); // 開啟 BGM 後重啟（BgmController 會切到正確 track）
   }
 
   if (!mounted) return null;
@@ -75,17 +85,15 @@ export default function SoundToggle({ withBgm = false }: Props) {
       >
         {muted ? "🔇" : "🔊"}
       </button>
-      {withBgm && (
-        <button
-          onClick={toggleBgm}
-          title={bgm ? "關閉背景音樂" : "開啟背景音樂"}
-          aria-label={bgm ? "關閉背景音樂" : "開啟背景音樂"}
-          disabled={muted}
-          className="w-11 h-11 rounded-full bg-white/90 backdrop-blur border-2 border-[var(--color-ink)]/15 shadow-md flex items-center justify-center text-lg hover:scale-110 transition disabled:opacity-40"
-        >
-          {bgm ? "🎵" : "🎶"}
-        </button>
-      )}
+      <button
+        onClick={toggleBgm}
+        title={bgm ? "關閉背景音樂" : "開啟背景音樂"}
+        aria-label={bgm ? "關閉背景音樂" : "開啟背景音樂"}
+        disabled={muted}
+        className="w-11 h-11 rounded-full bg-white/90 backdrop-blur border-2 border-[var(--color-ink)]/15 shadow-md flex items-center justify-center text-lg hover:scale-110 transition disabled:opacity-40"
+      >
+        {bgm ? "🎵" : "🎶"}
+      </button>
     </div>
   );
 }

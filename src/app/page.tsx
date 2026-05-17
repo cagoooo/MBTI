@@ -2,12 +2,12 @@ import Link from "next/link";
 import SoundLink from "@/components/SoundLink";
 import { MBTI_GROUPS } from "@/lib/mbti";
 import CampusIntro from "@/components/CampusIntro";
-import BgMusicMount from "@/components/BgMusicMount";
+import BgmController from "@/components/BgmController";
 
 export default function HomePage() {
   return (
     <div className="flex flex-col">
-      <BgMusicMount />
+      <BgmController track="home" />
       {/* Hero */}
       <section className="relative px-6 pt-12 pb-16 sm:pt-20 sm:pb-24 overflow-hidden">
         <div className="absolute inset-0 -z-10">

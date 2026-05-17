@@ -10,6 +10,7 @@ import PrintButton from "@/components/PrintButton";
 import ResultBadgeMount from "@/components/ResultBadgeMount";
 import ResultRevealMount from "@/components/ResultRevealMount";
 import SoundLink from "@/components/SoundLink";
+import BgmController from "@/components/BgmController";
 
 export function generateStaticParams() {
   return ALL_TYPES.map((type) => ({ type }));
@@ -37,6 +38,7 @@ export default async function ResultPage({ params }: { params: Promise<{ type: s
 
   return (
     <div className="px-4 sm:px-6 py-6 sm:py-10">
+      <BgmController track="result" />
       {/* 列印專用：隱藏在螢幕，print 時才顯示 */}
       <PrintSheet info={info} />
 
