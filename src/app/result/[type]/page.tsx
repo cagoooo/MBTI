@@ -11,6 +11,7 @@ import ResultBadgeMount from "@/components/ResultBadgeMount";
 import ResultRevealMount from "@/components/ResultRevealMount";
 import SoundLink from "@/components/SoundLink";
 import BgmController from "@/components/BgmController";
+import RubyText from "@/components/RubyText";
 
 export function generateStaticParams() {
   return ALL_TYPES.map((type) => ({ type }));
@@ -63,24 +64,24 @@ export default async function ResultPage({ params }: { params: Promise<{ type: s
             {info.type}
           </h1>
           <h2 className="text-2xl sm:text-3xl font-black text-white drop-shadow mb-4">
-            {info.nickname}
+            <RubyText>{info.nickname}</RubyText>
           </h2>
           <p className="text-lg sm:text-xl text-white/95 max-w-xl mx-auto leading-relaxed font-medium drop-shadow">
-            {info.oneLiner}
+            <RubyText>{info.oneLiner}</RubyText>
           </p>
         </section>
 
         {/* 在校園裡的你 */}
         <section className="mt-6 bg-white rounded-3xl p-6 sm:p-8 border-2 border-[var(--color-ink)]/10 shadow-sm">
           <h3 className="text-2xl font-black mb-3 flex items-center gap-2">
-            <span>🏫</span> 在校園裡的你
+            <span>🏫</span> <RubyText>在校園裡的你</RubyText>
           </h3>
           <p className="text-lg italic text-[var(--color-ink)]/80 mb-4">
-            「{info.campusRole}」
+            「<RubyText>{info.campusRole}</RubyText>」
           </p>
           <div className="space-y-3 text-[var(--color-ink)]/90 leading-relaxed">
             {info.description.map((p, i) => (
-              <p key={i}>{p}</p>
+              <p key={i}><RubyText>{p}</RubyText></p>
             ))}
           </div>
         </section>

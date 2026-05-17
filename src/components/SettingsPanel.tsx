@@ -8,8 +8,10 @@ import {
   applyFontScale,
   getFontScale,
   getTtsRate,
+  isZhuyinOn,
   setFontScale,
   setTtsRate,
+  setZhuyinOn,
   type FontScale,
 } from "@/lib/settings";
 import { isTtsAvailable, isTtsOn, speak } from "@/lib/tts";
@@ -33,6 +35,7 @@ export default function SettingsPanel() {
   const [open, setOpen] = useState(false);
   const [fontScale, setFontScaleState] = useState<FontScale>("md");
   const [ttsRate, setTtsRateState] = useState<number>(1.0);
+  const [zhuyin, setZhuyinState] = useState(false);
   const [installEvent, setInstallEvent] = useState<BeforeInstallPromptEvent | null>(null);
   const [installed, setInstalled] = useState(false);
 
@@ -43,6 +46,7 @@ export default function SettingsPanel() {
     setFontScaleState(fs);
     applyFontScale(fs);
     setTtsRateState(getTtsRate());
+    setZhuyinState(isZhuyinOn());
 
     // 偵測是否已安裝為 PWA
     if (typeof window !== "undefined") {
@@ -74,6 +78,13 @@ export default function SettingsPanel() {
     playSound("pop");
     setFontScale(v);
     setFontScaleState(v);
+  }
+
+  function toggleZhuyin() {
+    const next = !zhuyin;
+    playSound(next ? "toggleOn" : "toggleOff");
+    setZhuyinState(next);
+    setZhuyinOn(next);
   }
 
   function onRateChange(v: number) {
@@ -165,6 +176,29 @@ export default function SettingsPanel() {
                   </button>
                 ))}
               </div>
+            </section>
+
+            {/* 注音 (給低年級) */}
+            <section className="mb-5">
+              <label className="block text-sm font-bold mb-2">📝 注音標示（低年級友善）</label>
+              <button
+                onClick={toggleZhuyin}
+                className={`w-full py-3 rounded-2xl font-bold transition flex items-center justify-center gap-2 ${
+                  zhuyin
+                    ? "bg-amber-100 border-2 border-amber-400 text-amber-900 ring-2 ring-amber-300/40"
+                    : "bg-[var(--color-cream)] border-2 border-transparent hover:bg-amber-50"
+                }`}
+              >
+                <span className="text-xl">{zhuyin ? "🔠" : "🔡"}</span>
+                <span>{zhuyin ? "注音已開（一二年級友善）" : "點此開啟注音"}</span>
+              </button>
+              {zhuyin && (
+                <p className="text-xs text-amber-700 mt-2 leading-relaxed">
+                  ✨ 全站中文字會自動加上注音。例如：
+                  <ruby className="mx-1">校<rt>ㄒㄧㄠˋ</rt></ruby>
+                  <ruby className="mr-1">園<rt>ㄩㄢˊ</rt></ruby>
+                </p>
+              )}
             </section>
 
             {/* TTS 朗讀速度 */}

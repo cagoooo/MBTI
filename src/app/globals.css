@@ -30,6 +30,30 @@ html {
   font-size: calc(16px * var(--font-scale, 1));
 }
 
+/* 注音（ruby/rt）— 給低年級友善 */
+ruby.ruby-char {
+  ruby-position: over;
+  ruby-align: center;
+  /* 不影響佈局，注音字在上方覆蓋於行間 */
+}
+rt.ruby-rt {
+  font-size: 0.45em;
+  font-weight: 500;
+  font-family: "Bopomofo", "PingFang TC", "Microsoft JhengHei", sans-serif;
+  color: rgba(45, 48, 71, 0.7);
+  letter-spacing: -0.5px;
+  line-height: 1;
+  /* iOS 微調 */
+  -webkit-text-fill-color: rgba(45, 48, 71, 0.7);
+}
+/* 啟用注音時加大行高，避免注音碰到上一行的字 */
+body:has(ruby.ruby-char) p,
+body:has(ruby.ruby-char) li,
+body:has(ruby.ruby-char) span:not(.no-ruby-spacing),
+body:has(ruby.ruby-char) button {
+  line-height: 2.0;
+}
+
 * {
   -webkit-tap-highlight-color: transparent;
 }

@@ -19,6 +19,7 @@ import {
   type RoomSnapshot,
 } from "@/lib/classroom-rtdb";
 import { isFirebaseAvailable } from "@/lib/firebase";
+import RubyText from "@/components/RubyText";
 
 /**
  * 場景所屬支線 → BGM track 對應
@@ -375,19 +376,23 @@ function GameInner() {
             </div>
 
             <p className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[var(--color-coral)] mb-1">
-              📍 {scene.location}
+              📍 <RubyText>{scene.location}</RubyText>
             </p>
 
             {scene.speaker && (
               <div className="flex items-center gap-2 mb-4">
                 <span className="text-3xl">{scene.speakerEmoji}</span>
-                <span className="font-bold text-[var(--color-ink)]/80">{scene.speaker}</span>
+                <span className="font-bold text-[var(--color-ink)]/80">
+                  <RubyText>{scene.speaker}</RubyText>
+                </span>
               </div>
             )}
 
             <div className="space-y-3 mb-3 text-lg leading-relaxed text-[var(--color-ink)]">
               {scene.text.map((p, i) => (
-                <p key={i}>{p}</p>
+                <p key={i}>
+                  <RubyText>{p}</RubyText>
+                </p>
               ))}
             </div>
 
@@ -437,7 +442,9 @@ function GameInner() {
                             {c.emoji}
                           </span>
                         )}
-                        <span className="flex-1 font-medium leading-snug">{c.text}</span>
+                        <span className="flex-1 font-medium leading-snug">
+                          <RubyText>{c.text}</RubyText>
+                        </span>
                         {isVoted && (
                           <span className="px-2 py-0.5 rounded-full bg-rose-500 text-white text-xs font-black animate-pulse">
                             ✓ 已投
@@ -479,7 +486,7 @@ function GameInner() {
             >
               <div className="text-5xl mb-3 text-center">✨</div>
               <p className="text-lg sm:text-xl text-center leading-relaxed text-[var(--color-ink)]">
-                {showFollowUp}
+                <RubyText>{showFollowUp}</RubyText>
               </p>
               <SoundButton
                 sound="whoosh"

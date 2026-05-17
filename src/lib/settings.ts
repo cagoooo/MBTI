@@ -70,3 +70,18 @@ export function setTtsRate(rate: number) {
 }
 
 export const TTS_RATE_BOUNDS = { min: TTS_RATE_MIN, max: TTS_RATE_MAX, default: TTS_RATE_DEFAULT };
+
+// ─────────────────── 注音 (給低年級) ───────────────────
+
+const ZHUYIN_KEY = "mbti-zhuyin-on";
+
+export function isZhuyinOn(): boolean {
+  if (typeof window === "undefined") return false;
+  return localStorage.getItem(ZHUYIN_KEY) === "1";
+}
+
+export function setZhuyinOn(v: boolean) {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(ZHUYIN_KEY, v ? "1" : "0");
+  window.dispatchEvent(new CustomEvent("mbti-settings-change", { detail: { zhuyin: v } }));
+}
