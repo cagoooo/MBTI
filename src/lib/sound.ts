@@ -24,7 +24,7 @@ export type SoundKind =
   | "toggleOn"
   | "toggleOff";
 
-export type BgmTrackId = "home" | "game" | "result";
+export type BgmTrackId = "home" | "game" | "result" | "sport" | "art" | "study" | "friend";
 
 /**
  * Next.js 15 App Router + static export + GitHub Pages 子路徑用 (依 skill nextjs-app-router-basepath-runtime)
@@ -78,6 +78,26 @@ const BGM_TRACKS: Record<BgmTrackId, BgmTrack> = {
     file: "result-fun-starts-here.mp3",
     volume: 0.28,
     credit: "The Fun Starts Here by mmaudio (Pixabay CC0)",
+  },
+  sport: {
+    file: "sport-warm-up.mp3",
+    volume: 0.25,
+    credit: "Sport Warm Up Music by slrathna (Pixabay CC0)",
+  },
+  art: {
+    file: "art-gentle-piano.mp3",
+    volume: 0.3,
+    credit: "Gentle - Peaceful Gentle Music by bombinsound (Pixabay CC0)",
+  },
+  study: {
+    file: "study-curious-mind.mp3",
+    volume: 0.28,
+    credit: "Children Music Loop - Curious Mind by sonican (Pixabay CC0)",
+  },
+  friend: {
+    file: "friend-warm-uke.mp3",
+    volume: 0.3,
+    credit: "Warm by the_mountain (Pixabay CC0)",
   },
 };
 

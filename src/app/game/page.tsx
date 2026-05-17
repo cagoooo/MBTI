@@ -10,8 +10,21 @@ import ProgressDots from "@/components/ProgressDots";
 import HomeToButton from "@/components/HomeToButton";
 import BgmController from "@/components/BgmController";
 import SoundButton from "@/components/SoundButton";
-import { playSound } from "@/lib/sound";
+import { playSound, type BgmTrackId } from "@/lib/sound";
 import { isTtsAvailable, isTtsOn, speakScene, stop as stopTts, speak as speakTts } from "@/lib/tts";
+
+/**
+ * 場景所屬支線 → BGM track 對應
+ * - main 主線 (開學週 scene_01~06 + 校慶結局 final_01~04) 用 game (Playful Kids 通用感)
+ * - 四條支線各自的專屬 BGM (校隊熱血/藝術夢幻/學術好奇/友誼溫暖)
+ */
+const BRANCH_TO_BGM: Record<Branch, BgmTrackId> = {
+  main: "game",
+  sport: "sport",
+  art: "art",
+  study: "study",
+  friend: "friend",
+};
 
 interface HistoryEntry {
   sceneId: string;
@@ -168,7 +181,8 @@ export default function GamePage() {
 
   return (
     <div className="flex-1 px-4 sm:px-6 py-6 sm:py-10">
-      <BgmController track="game" />
+      {/* 場景變動時自動切換 BGM track (依當前場景所屬支線) */}
+      <BgmController track={scene ? BRANCH_TO_BGM[scene.branch] : "game"} />
       {/* Top bar */}
       <div className="max-w-3xl mx-auto flex items-center justify-between mb-6">
         <HomeToButton />
