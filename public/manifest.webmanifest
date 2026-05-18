@@ -36,5 +36,35 @@
       "type": "image/svg+xml",
       "purpose": "any"
     }
+  ],
+  "shortcuts": [
+    {
+      "name": "開始冒險",
+      "short_name": "開始",
+      "description": "直接進入校園 RPG 故事",
+      "url": "./game/",
+      "icons": [{ "src": "./icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "16 型圖鑑",
+      "short_name": "圖鑑",
+      "description": "瀏覽所有 MBTI 類型",
+      "url": "./types/",
+      "icons": [{ "src": "./icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "SEL 逆境特別篇",
+      "short_name": "SEL",
+      "description": "情緒因應風格探索",
+      "url": "./sel/",
+      "icons": [{ "src": "./icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "老師 Dashboard",
+      "short_name": "老師",
+      "description": "老師個人控制台",
+      "url": "./teacher/dashboard/",
+      "icons": [{ "src": "./icon-192.png", "sizes": "192x192" }]
+    }
   ]
 }

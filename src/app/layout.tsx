@@ -4,6 +4,7 @@ import Footer from "@/components/Footer";
 import SoundToggle from "@/components/SoundToggle";
 import SwRegister from "@/components/SwRegister";
 import SettingsPanel from "@/components/SettingsPanel";
+import PwaInstallBanner from "@/components/PwaInstallBanner";
 import appConfig from "../../app.config";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || appConfig.productionUrl;
@@ -98,6 +99,7 @@ export default function RootLayout({
         <SoundToggle />
         <SettingsPanel />
         <SwRegister />
+        <PwaInstallBanner />
       </body>
     </html>
   );

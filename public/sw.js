@@ -14,7 +14,7 @@
  * 版本變動 → activate 時自動清掉所有 stale caches → 強迫拿新 chunks
  */
 
-const BUILD_VERSION = "20260518-0127-bb7708b";
+const BUILD_VERSION = "20260518-0430-29ba1f4";
 const CACHE_VERSION = `mbti-${BUILD_VERSION}`;
 const HTML_CACHE = `${CACHE_VERSION}-html`;
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
@@ -25,9 +25,20 @@ function shouldSkip(url) {
   return false;
 }
 
-self.addEventListener("install", () => {
+self.addEventListener("install", (event) => {
   // 不等舊 SW 退場，立刻接管
   self.skipWaiting();
+  // 預載 offline.html 確保斷網時隨時可用
+  event.waitUntil(
+    (async () => {
+      try {
+        const cache = await caches.open(HTML_CACHE);
+        await cache.add(new Request("./offline.html", { cache: "reload" }));
+      } catch (e) {
+        // 預載失敗不影響 install
+      }
+    })(),
+  );
 });
 
 self.addEventListener("activate", (event) => {
@@ -61,6 +72,12 @@ async function networkFirst(request, cacheName) {
   } catch (err) {
     const cached = await cache.match(request);
     if (cached) return cached;
+    // navigate request 沒快取也找不到 → 回 offline.html fallback
+    if (request.mode === "navigate") {
+      const offlineUrl = new URL("./offline.html", self.location.href).toString();
+      const offline = await cache.match(offlineUrl) || await cache.match("./offline.html");
+      if (offline) return offline;
+    }
     throw err;
   }
 }

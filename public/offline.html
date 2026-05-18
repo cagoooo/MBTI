@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>離線中 ｜ MBTI 校園奇遇記</title>
+<style>
+  :root {
+    --paper: #fef9f3;
+    --paper-warm: #faf3e7;
+    --ink: #2d3047;
+    --ink-soft: #4b4d63;
+    --muted: #8b8d99;
+    --coral: #ff8364;
+    --line-strong: #c8c2b5;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    min-height: 100dvh;
+    font-family: -apple-system, "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 24px;
+    text-align: center;
+  }
+  .card {
+    background: #fff;
+    border: 2.5px solid var(--ink);
+    box-shadow: 6px 6px 0 var(--ink);
+    padding: 32px 24px;
+    max-width: 440px;
+    width: 100%;
+    position: relative;
+  }
+  .tag {
+    position: absolute;
+    top: -14px; left: 18px;
+    background: var(--coral);
+    color: #fff;
+    padding: 4px 14px;
+    font-family: "JetBrains Mono", "Courier New", monospace;
+    font-weight: 800;
+    font-size: 11px;
+    letter-spacing: 4px;
+  }
+  .emoji {
+    font-size: 72px;
+    line-height: 1;
+    margin: 8px 0 16px;
+    display: inline-block;
+    animation: float 3s ease-in-out infinite;
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+  h1 {
+    font-family: "Noto Serif TC", serif;
+    font-weight: 900;
+    font-size: 28px;
+    margin: 0 0 12px;
+    line-height: 1.2;
+  }
+  .coral { color: var(--coral); }
+  p {
+    font-size: 15px;
+    line-height: 1.7;
+    color: var(--ink-soft);
+    margin: 0 0 12px;
+  }
+  .hud {
+    font-family: "JetBrains Mono", "Courier New", monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin: 20px 0 10px;
+  }
+  .actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 20px;
+  }
+  button, .btn {
+    width: 100%;
+    padding: 14px 18px;
+    border: 2.5px solid var(--ink);
+    background: var(--coral);
+    color: #fff;
+    font-weight: 800;
+    font-size: 16px;
+    cursor: pointer;
+    box-shadow: 4px 4px 0 var(--ink);
+    transition: transform 0.1s, box-shadow 0.1s;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 48px;
+    text-align: center;
+  }
+  button:hover, .btn:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--ink); }
+  button:active, .btn:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 var(--ink); }
+  .btn-secondary {
+    background: #fff;
+    color: var(--ink);
+  }
+  .tips {
+    margin-top: 24px;
+    padding: 14px;
+    background: var(--paper-warm);
+    border-left: 3px solid var(--coral);
+    text-align: left;
+    font-size: 13px;
+    color: var(--ink-soft);
+    line-height: 1.6;
+  }
+  .tips strong { color: var(--ink); }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="tag">◆ OFFLINE</div>
+    <div class="emoji">📡</div>
+    <h1>沒網路<span class="coral">也別擔心</span></h1>
+    <p>
+      你的網路看起來連不上, 但 <strong>校園奇遇記也在等你回來</strong>。
+    </p>
+    <div class="hud">◆ TIPS</div>
+    <div class="tips">
+      <p style="margin:0 0 6px"><strong>📱 學生</strong>: 主線故事 / 16 型圖鑑離線可玩 (之前打開過的話)</p>
+      <p style="margin:0"><strong>👩‍🏫 老師</strong>: 班級即時房間 / OAuth 登入需要網路</p>
+    </div>
+    <div class="actions">
+      <button onclick="location.reload()">
+        🔄 重新連線
+      </button>
+      <a href="./" class="btn btn-secondary">
+        🏠 回首頁試試
+      </a>
+    </div>
+  </div>
+  <script>
+    // 線上時自動回首頁
+    window.addEventListener('online', () => {
+      setTimeout(() => location.replace('./'), 500);
+    });
+  </script>
+</body>
+</html>
