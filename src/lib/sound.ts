@@ -12,7 +12,7 @@
  *   art     - Gentle Piano (3.2MB) - 藝術夢幻寧靜
  *   study   - Curious Mind (2.8MB) - 學術好奇探索
  *   friend  - Warm Ukulele (3.1MB) - 友誼溫暖
- *   service - 暫用 art-gentle-piano (公民關懷暫用藝術組柔和鋼琴, 未來可換)
+ *   service - Piano Warm by Music_For_Videos (2.6MB) - 公民關懷柔和鋼琴
  *
  * 切頁時 BgmController 呼叫 playBgm(trackId) → 自動 cross-fade 過渡
  */
@@ -105,11 +105,9 @@ const BGM_TRACKS: Record<BgmTrackId, BgmTrack> = {
     credit: "Warm by the_mountain (Pixabay CC0)",
   },
   service: {
-    // 服務組目前暫用藝術組的柔和鋼琴 — 跟「公民關懷」氣質契合
-    // 未來可換成專屬曲目 (建議搜「peaceful community」「heartwarming choral」)
-    file: "art-gentle-piano.mp3",
-    volume: 0.28,
-    credit: "Gentle - Peaceful Gentle Music by bombinsound (Pixabay CC0) — 服務組暫用",
+    file: "service-piano-warm.mp3",
+    volume: 0.3,
+    credit: "Piano Warm by Music_For_Videos (Pixabay CC0)",
   },
 };
 
