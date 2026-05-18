@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import SiteNav from "@/components/SiteNav";
 import SoundButton from "@/components/SoundButton";
+import QrScannerButton from "@/components/QrScannerButton";
 import { getRoomMeta, joinRoom } from "@/lib/classroom-rtdb";
 import { isFirebaseAvailable } from "@/lib/firebase";
 import { playSound } from "@/lib/sound";
@@ -91,11 +92,32 @@ function JoinPageInner() {
         <div className="bg-white rounded-3xl p-6 sm:p-8 border-2 border-[var(--color-ink)]/10 space-y-5">
           <div>
             <label className="block text-sm font-bold mb-2">房號</label>
+            {/* AG6: QR 掃描按鈕 (不支援的瀏覽器自動隱藏) */}
+            <div className="mb-2">
+              <QrScannerButton
+                label="📷 掃黑板上的 QR Code"
+                onDetect={(text) => {
+                  // QR 內容可能是「https://.../join/?room=ABC123」或純房號「ABC123」
+                  let code = text.toUpperCase();
+                  // 從 URL 中抽出 ?room= 參數
+                  const match = text.match(/[?&]room=([A-Z0-9]{4,8})/i);
+                  if (match) {
+                    code = match[1].toUpperCase();
+                  } else {
+                    // 純 6 位房號 (A-Z 0-9)
+                    const direct = text.trim().toUpperCase().match(/^[A-Z0-9]{4,8}$/);
+                    if (direct) code = direct[0];
+                  }
+                  setRoomCode(code.slice(0, 8));
+                  setError(null);
+                }}
+              />
+            </div>
             <input
               type="text"
               value={roomCode}
               onChange={(e) => setRoomCode(e.target.value.toUpperCase().slice(0, 8))}
-              placeholder="例：ABC123"
+              placeholder="例：ABC123 (或上面掃 QR)"
               className="w-full p-3 rounded-2xl border-2 border-[var(--color-ink)]/15 focus:border-[var(--color-coral)] focus:outline-none font-mono text-2xl tracking-widest text-center"
               disabled={busy}
               autoCapitalize="characters"
