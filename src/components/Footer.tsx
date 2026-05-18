@@ -25,11 +25,16 @@ export default function Footer() {
         <div>
           <div
             className="f-serif"
-            style={{ fontWeight: 900, fontSize: 32, lineHeight: 1, marginBottom: 8 }}
+            style={{
+              fontWeight: 900,
+              fontSize: "clamp(24px, 6vw, 32px)",
+              lineHeight: 1,
+              marginBottom: 8,
+            }}
           >
             校園<span style={{ color: "var(--coral)" }}>奇遇</span>記
           </div>
-          <div style={{ fontSize: 14, color: "var(--ink-soft)" }}>
+          <div style={{ fontSize: 14, color: "var(--ink-soft)", lineHeight: 1.6 }}>
             Made with <span style={{ color: "var(--coral)" }}>❤</span> by{" "}
             <a
               href={appConfig.teacherHomepageUrl}
@@ -45,7 +50,15 @@ export default function Footer() {
               {appConfig.teacherName}
             </a>
           </div>
-          <div style={{ fontSize: 13, color: "var(--muted)", marginTop: 6 }}>
+          <div
+            style={{
+              fontSize: 13,
+              color: "var(--muted)",
+              marginTop: 6,
+              lineHeight: 1.7,
+              wordBreak: "keep-all",
+            }}
+          >
             {appConfig.schoolFullName}資訊教育　·　{appConfig.siteName} © {year}
           </div>
         </div>

@@ -122,11 +122,11 @@ body::after {
   left: max(8px, calc(50% - 740px));
   top: 240px;
   width: 18px;
-  height: 100vh;
+  height: 100dvh;
   background:
     radial-gradient(circle at 50% 0px, #e3d9c5 6px, transparent 7px),
-    radial-gradient(circle at 50% 50vh, #e3d9c5 6px, transparent 7px),
-    radial-gradient(circle at 50% 100vh, #e3d9c5 6px, transparent 7px);
+    radial-gradient(circle at 50% 50dvh, #e3d9c5 6px, transparent 7px),
+    radial-gradient(circle at 50% 100dvh, #e3d9c5 6px, transparent 7px);
   pointer-events: none;
   z-index: 1;
   opacity: 0.7;
@@ -2143,5 +2143,288 @@ button, a {
 /* 螢幕上預設隱藏列印版 */
 .print-sheet {
   display: none;
+}
+
+/* ════════════════════════════════════════════════════════════
+   📱 v3.17.8 RWD 全面強化 (2026-05-18)
+   修法策略: mobile-first 補強, 不動 desktop 既有 layout
+   涵蓋 P0 致命破口 + P1 嚴重體驗 + 系統性 a11y / hover guards
+   ════════════════════════════════════════════════════════════ */
+
+/* ─── A. 觸控目標 utility (Apple HIG / Material 推薦最小 44×44) ─── */
+.tap-target {
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ─── B. iOS input zoom-in 全域防護 ───
+   iOS Safari 對 < 16px font-size 的 input/textarea/select
+   會在 focus 時自動 zoom-in 整頁,且不會 zoom out, 破壞輸入流程 */
+@media (max-width: 768px) {
+  input[type="text"],
+  input[type="password"],
+  input[type="email"],
+  input[type="number"],
+  input[type="tel"],
+  input[type="search"],
+  input[type="url"],
+  input[type="date"],
+  input[type="time"],
+  input:not([type]),
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}
+
+/* ─── C. Accessibility: 降低動畫給有前庭敏感的使用者 ─── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ─── D. Hover effects 只在真有 hover 的裝置觸發 ───
+   mobile touch device 不會有 hover,且 touch 後會卡在 hover state */
+@media (hover: none) {
+  .feature-card:hover,
+  .btn-3d:hover,
+  .tool-link:hover {
+    transform: none;
+    box-shadow: 8px 8px 0 var(--ink);
+  }
+}
+
+/* ─── E. Mobile breakpoint ≤ 640px: 補上 desktop-only grid 在手機切單欄/雙欄 ─── */
+@media (max-width: 640px) {
+  /* 統計卡片 — 4 欄 → 1 欄 (數字太大,2 欄會擠爆) */
+  .summary-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px;
+  }
+  .stat-card {
+    padding: 14px 16px !important;
+  }
+  .stat-card .num {
+    font-size: clamp(32px, 9vw, 48px) !important;
+  }
+
+  /* KPI 統計卡 — 4 欄 → 2 欄 + 字級 clamp */
+  .kpi-row {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px;
+  }
+  .kpi {
+    padding: 12px 14px !important;
+  }
+  .kpi .num {
+    font-size: clamp(28px, 8vw, 38px) !important;
+  }
+
+  /* 房號 — 6 位太大塞不下手機 */
+  .room-code-big {
+    font-size: clamp(40px, 12vw, 64px) !important;
+    letter-spacing: 3px !important;
+  }
+  .room-code-big > * {
+    min-width: clamp(34px, 11vw, 56px) !important;
+  }
+
+  /* 猜朋友 16 型選格 — 4 欄 → 2 欄, 字級加大 */
+  .type-pick-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px;
+  }
+
+  /* feature-card padding 從 32px → 20px, 標題字級縮 */
+  .feature-card {
+    padding: 20px 18px 18px !important;
+  }
+  .feature-card h3 {
+    font-size: clamp(28px, 7.5vw, 36px) !important;
+  }
+
+  /* 大頭像 140px 在手機佔 40% 寬,改用 vw */
+  .person-card .person-avatar {
+    width: clamp(96px, 28vw, 140px) !important;
+    height: clamp(96px, 28vw, 140px) !important;
+  }
+  .person-card .person-name {
+    font-size: clamp(28px, 7vw, 44px) !important;
+  }
+
+  /* 卡片內 padding 一律縮 */
+  .scene-dialogue {
+    padding: 18px 18px 16px !important;
+  }
+  .dialogue-text {
+    padding: 14px 16px !important;
+    font-size: 16px !important;
+    line-height: 1.7 !important;
+  }
+  .choice-scene {
+    padding: 16px !important;
+  }
+
+  /* TTS toolbar 在手機只留主按鈕全寬, 其他鈕縮成 icon-only */
+  .tts-toolbar {
+    flex-direction: column;
+    align-items: stretch !important;
+    gap: 6px !important;
+  }
+  .tts-btn-main {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+  .tts-btn-secondary {
+    padding: 8px 10px !important;
+    font-size: 12px !important;
+  }
+  .tts-status {
+    justify-content: center !important;
+  }
+
+  /* HUD 標籤字級在手機從 11px 升到 12px (重要 HUD) */
+  .hud {
+    font-size: 12px;
+    letter-spacing: 2.5px;
+  }
+
+  /* Container padding 對稱化, 不要左 100 右 80 偏右 */
+  .container-paper {
+    padding-left: max(16px, env(safe-area-inset-left, 16px)) !important;
+    padding-right: max(16px, env(safe-area-inset-right, 16px)) !important;
+  }
+
+  /* Stat-bar 在手機加高更好辨識 */
+  .stat-bar {
+    height: 12px !important;
+  }
+}
+
+/* ─── F. Tablet ≤ 900px: control-room / dashboard 在中間寬度也要 mobile-friendly ─── */
+@media (max-width: 900px) {
+  /* teacher/room: room-card-body QR 不再強制右側 200px */
+  .room-card-body {
+    grid-template-columns: 1fr !important;
+  }
+  /* student grid 4 欄 → 2 欄 */
+  .student-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+/* ─── G. ≤ 480px: 學生格再切 1 欄, 加大可點區域 ─── */
+@media (max-width: 480px) {
+  .student-grid {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+  .student .avatar {
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 18px !important;
+  }
+}
+
+/* ─── H. nav-design 手機緊湊化 (logo + hamburger 兩塊) ─── */
+@media (max-width: 640px) {
+  .nav-design {
+    padding: 12px 0 !important;
+    gap: 8px;
+  }
+  .nav-brand .logo-tag {
+    font-size: 9px;
+    letter-spacing: 2px;
+  }
+  .nav-brand .logo-name {
+    font-size: 17px;
+  }
+  .nav-cta {
+    padding: 10px 14px !important;
+    font-size: 13px !important;
+  }
+}
+
+/* ─── I. 浮動按鈕在小手機縮成 38px + 緊湊 + safe-area ─── */
+@media (max-width: 480px) {
+  .floating-bottom-right {
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 0.5rem);
+    right: calc(env(safe-area-inset-right, 0px) + 0.5rem);
+  }
+  .floating-bottom-right button {
+    width: 2.375rem !important;
+    height: 2.375rem !important;
+    font-size: 0.95rem !important;
+  }
+  .floating-bottom-right > div {
+    gap: 0.375rem !important;
+  }
+}
+
+/* ─── J. 100vh → 100dvh 全域 (iOS Safari 工具列覆蓋問題) ─── */
+.h-screen-safe { height: 100dvh; }
+.min-h-screen-safe { min-height: 100dvh; }
+.max-h-screen-safe { max-height: 100dvh; }
+
+/* ─── K. 16 型 grid (dashboard / class-stats) 在手機加大每格 ─── */
+@media (max-width: 640px) {
+  .grid.grid-cols-4.sm\:grid-cols-8 {
+    grid-template-columns: repeat(4, 1fr) !important;
+  }
+  /* 字級從 10px 升到 12px 才看得清 */
+  .grid.grid-cols-4.sm\:grid-cols-8 .text-\[10px\] {
+    font-size: 12px !important;
+  }
+}
+
+/* ─── L. SiteNav active 高亮在手機 drawer 內表現 ─── */
+.nav-design > div > a {
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* ─── M. slides 控制列在手機永遠顯示, desktop 才用 hover 漸顯 ─── */
+.slides-controls {
+  opacity: 1;
+  transition: opacity 0.2s;
+}
+@media (hover: hover) and (min-width: 768px) {
+  .slides-controls {
+    opacity: 0.4;
+  }
+  .slides-controls:hover {
+    opacity: 1;
+  }
+}
+
+/* ─── N. game-hud-bar layout: 手機 vertical, desktop 3-col grid ─── */
+.game-hud-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+@media (min-width: 768px) {
+  .game-hud-bar {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 32px;
+    align-items: center;
+  }
+}
+.game-hud-bar > div:last-child {
+  text-align: left;
+}
+@media (min-width: 768px) {
+  .game-hud-bar > div:last-child {
+    text-align: right;
+  }
 }
 

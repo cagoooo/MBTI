@@ -32,7 +32,7 @@ export default function SwUpdateBanner({ currentVersion, newVersion, onUpdate, o
               <div className="text-xs sm:text-sm opacity-90 mt-0.5">
                 點「立刻更新」載入最新內容（不會影響你的紀錄）
               </div>
-              <div className="text-[10px] opacity-70 mt-1 font-mono truncate">
+              <div className="text-xs opacity-70 mt-1 font-mono truncate">
                 {currentVersion} → {newVersion}
               </div>
             </div>
@@ -40,13 +40,15 @@ export default function SwUpdateBanner({ currentVersion, newVersion, onUpdate, o
           <div className="flex gap-2 mt-3">
             <button
               onClick={onUpdate}
-              className="flex-1 bg-white text-emerald-700 font-black px-4 py-2 rounded-xl hover:bg-emerald-50 transition shadow"
+              className="flex-1 bg-white text-emerald-700 font-black px-4 rounded-xl hover:bg-emerald-50 transition shadow"
+              style={{ minHeight: 44 }}
             >
               ✨ 立刻更新
             </button>
             <button
               onClick={onDismiss}
-              className="px-4 py-2 rounded-xl bg-white/20 text-white text-sm font-bold hover:bg-white/30 transition"
+              className="px-4 rounded-xl bg-white/20 text-white text-sm font-bold hover:bg-white/30 transition"
+              style={{ minHeight: 44 }}
             >
               等下再說
             </button>

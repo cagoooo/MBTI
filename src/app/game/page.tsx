@@ -369,19 +369,15 @@ function GameInner() {
 
       <SiteNav active="/game" ctaLabel="↻ 從頭" ctaHref="#" />
 
-      {/* HUD bar — 新設計 */}
+      {/* HUD bar — 新設計 (手機 vertical, desktop 3-col) */}
       <div
         className="game-hud-bar"
         style={{
           background: "#fff",
           border: "2px solid var(--ink)",
           boxShadow: "5px 5px 0 var(--ink)",
-          padding: "16px 24px",
+          padding: "16px 20px",
           margin: "28px 0 28px",
-          display: "grid",
-          gridTemplateColumns: "auto 1fr auto",
-          gap: 32,
-          alignItems: "center",
           position: "relative",
         }}
       >

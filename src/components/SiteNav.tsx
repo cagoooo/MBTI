@@ -1,6 +1,7 @@
 import Link from "next/link";
 import SoundLink from "@/components/SoundLink";
 import TeacherLoginButton from "@/components/TeacherLoginButton";
+import MobileMenuDrawer from "@/components/MobileMenuDrawer";
 
 interface Props {
   /** 高亮的 nav 項目 (對應 href) */
@@ -14,6 +15,8 @@ interface Props {
 /**
  * v3.17 新設計站內 nav — 紙感 + HUD 風格
  * Logo VOL · 01 + 5 連結 + 黑底 START CTA
+ *
+ * 手機: hamburger 按鈕 → MobileMenuDrawer (右側滑入,含全連結 + login + CTA)
  *
  * 用法：在每個頁面 main 容器最頂部放 <SiteNav />
  */
@@ -42,6 +45,7 @@ export default function SiteNav({ active = "/", ctaLabel = "▶ START", ctaHref 
           校園<span style={{ color: "var(--coral)" }}>奇遇</span>記
         </span>
       </Link>
+      {/* Desktop: 所有連結平鋪 */}
       <div className="nav-links hidden md:flex">
         {links.map((l) => (
           <Link
@@ -61,12 +65,9 @@ export default function SiteNav({ active = "/", ctaLabel = "▶ START", ctaHref 
           {ctaLabel}
         </SoundLink>
       </div>
-      {/* 手機收縮成只 logo + 登入 + CTA */}
-      <div className="flex md:hidden items-center gap-2">
-        <TeacherLoginButton variant="compact" />
-        <SoundLink href={ctaHref} sound="click" className="nav-cta">
-          {ctaLabel}
-        </SoundLink>
+      {/* Mobile: hamburger 開 drawer (drawer 內含所有連結 + login + CTA) */}
+      <div className="flex md:hidden items-center gap-1">
+        <MobileMenuDrawer active={active} links={links} ctaHref={ctaHref} ctaLabel={ctaLabel} />
       </div>
     </nav>
   );

@@ -78,7 +78,7 @@ export default async function ResultPage({ params }: { params: Promise<{ type: s
           ⚡ QUEST COMPLETE · 結局解鎖
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_480px] gap-12 lg:gap-16 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(280px,420px)] gap-8 lg:gap-16 items-start">
           {/* LEFT: big code + nick + dimensions */}
           <div>
             <div className="hud" style={{ color: group.ink, marginBottom: 14 }}>
@@ -99,7 +99,8 @@ export default async function ResultPage({ params }: { params: Promise<{ type: s
                 className="f-mono"
                 style={{
                   fontWeight: 900,
-                  fontSize: "clamp(70px, 14vw, 200px)",
+                  /* mobile cap 從 70px 降到 56px, 上限從 200px 降到 140px 避免 4 字爆寬 */
+                  fontSize: "clamp(56px, 13vw, 140px)",
                   letterSpacing: -2,
                   margin: 0,
                   color: group.ink,

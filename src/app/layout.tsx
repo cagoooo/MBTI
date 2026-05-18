@@ -66,7 +66,9 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
+  // 移除 maximumScale:1 — 違反 WCAG 2.5.5/1.4.4 a11y, 視障使用者無法放大網頁
+  // 加 viewportFit:'cover' — 讓 iOS 瀏海手機的 env(safe-area-inset-*) 正常計算
+  viewportFit: "cover",
   themeColor: "#ff8364",
 };
 

@@ -691,20 +691,20 @@ export default function SlidesPage() {
             }}
           />
         </div>
+        {/* 手機永遠 opacity:1 (沒 hover), desktop 預設 0.35 hover 升到 1 */}
         <div
-          className="flex justify-between items-center p-3 bg-gradient-to-t from-black/40 to-transparent"
-          style={{ opacity: 0.35, transition: "opacity 0.2s" }}
-          onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
-          onMouseLeave={(e) => (e.currentTarget.style.opacity = "0.35")}
+          className="slides-controls flex justify-between items-center p-3 bg-gradient-to-t from-black/40 to-transparent"
         >
           <button
             onClick={prev}
             disabled={current === 0}
-            className="px-5 py-2 rounded-full bg-white/30 hover:bg-white/50 font-bold disabled:opacity-30 disabled:cursor-not-allowed text-white"
+            className="px-5 py-3 rounded-full bg-white/30 hover:bg-white/50 font-bold disabled:opacity-30 disabled:cursor-not-allowed text-white tap-target"
+            style={{ minWidth: 44 }}
+            aria-label="上一張"
           >
-            ← 上一張
+            ← <span className="hidden sm:inline">上一張</span>
           </button>
-          <div className="flex gap-1.5">
+          <div className="flex gap-1.5 max-w-[60vw] overflow-x-auto scrollbar-hide">
             {SLIDES.map((_, i) => (
               <button
                 key={i}
@@ -712,7 +712,7 @@ export default function SlidesPage() {
                   playSound("tap");
                   setCurrent(i);
                 }}
-                className={`h-2 rounded-full transition-all ${
+                className={`h-2 rounded-full transition-all shrink-0 ${
                   i === current ? "w-8 bg-white" : "w-2 bg-white/40 hover:bg-white/70"
                 }`}
                 aria-label={`第 ${i + 1} 張`}
@@ -722,9 +722,11 @@ export default function SlidesPage() {
           <button
             onClick={next}
             disabled={current === SLIDES.length - 1}
-            className="px-5 py-2 rounded-full bg-white/30 hover:bg-white/50 font-bold disabled:opacity-30 disabled:cursor-not-allowed text-white"
+            className="px-5 py-3 rounded-full bg-white/30 hover:bg-white/50 font-bold disabled:opacity-30 disabled:cursor-not-allowed text-white tap-target"
+            style={{ minWidth: 44 }}
+            aria-label="下一張"
           >
-            下一張 →
+            <span className="hidden sm:inline">下一張</span> →
           </button>
         </div>
       </div>
