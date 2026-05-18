@@ -1,7 +1,7 @@
 # 🗺️ MBTI 校園奇遇記 開發路線圖
 
-> 更新日期：2026-05-17
-> 目前線上版本：**v3.16**（U1 學習歷程冊 + W1 AI 班級洞察 + X1 老師 dashboard + O2 SEL 班級同步）
+> 更新日期：2026-05-18
+> 目前線上版本：**v3.18.4**（v3.17 校園手帳設計系統 + Google OAuth 跨裝置同步 + v3.18 全網站 RWD 大改造）
 
 ---
 
@@ -348,6 +348,140 @@
 | 🌧️ `/sel` | Suspense + useSearchParams 接 ?room；班級模式 hook：上傳 progress + 結束上傳 finalStyle；hero 加「🎓 班級 SEL 模式」badge |
 | 📊 `/teacher/history` | session 卡顯示 🎒 MBTI / 🌧️ SEL badge；SEL session 顯示 4 風格分布 chips |
 | 🎯 完整流程閉環 | 老師建 SEL 房 → 學生加入 → 自動跑 SEL → 結束 snapshot → 老師看 AI 報告 |
+
+### ✅ v3.17 — 校園手帳設計系統大改造 + Google OAuth（2026-05-18）
+
+> 整週的兩大主軸：(A) 視覺重設計（紙感 + 電玩 HUD 雙風格）9 個 phase + 5 頁深化；(B) 老師資料雲端同步（Google OAuth + 跨裝置）+ 3 個 production bug 修補。
+
+#### 🎨 Phase 1-9 — 設計系統「校園手帳 + 電玩 HUD」雙風格重設計
+
+| 模組 | 細節 |
+|---|---|
+| 🎨 設計風格定調 | Foundation: 米色紙底 + 紅縱線格 + 三圓點裝飾；Headlines: Noto Serif TC 900；Handwritten: Ma Shan Zheng；HUD: JetBrains Mono 11px letter-spacing 4 |
+| 📐 design system class | `.container-paper` / `.nav-design` / `.feature-card` / `.bracket-frame` / `.tape` (washi) / `.polaroid` / `.pin` / `.btn-start` / `.btn-secondary` / `.section-header` / `.stat-bar` / `.hud` (~ 1100 行) |
+| 🏠 Phase 1-3 Foundation+Footer+Homepage | 全站底 `body::before` 紅縱線 + `body::after` 三圓點裝飾 / 新版 SiteNav (VOL · 01 logo + 5 連結 + 黑底 START CTA) / 首頁 hero serif 大字 + 手寫 kicker + HUD stats strip + QuestCard bracket-frame 三個編號卡 |
+| 📚 Phase 4 圖鑑 | /types 翻開圖鑑感 + group band (NT/NF/SJ/SP 四色) + type-mini grid 16 格；/types/[type] type-detail-frame 大封面 + 數據條 + 寬解析 sections |
+| 🎮 Phase 5 遊戲頁 | 加 SiteNav + RPG HUD bar (chapter dots + progress + restart) + .stage / .scene-dialogue / .choice-scene 場景包裝 |
+| 🌐 Phase 6-9 全站套用 | 所有頁面 (sel/guess/match/me/journey/teacher/dashboard 等) 一致套用 SiteNav + container-paper 紙感容器 |
+
+#### 🎨 Phase Subset — 細部頁面深化（5 頁）
+
+| 頁面 | 細節 |
+|---|---|
+| 🎮 game-scene 深化 | `.stage` (場景外框 + chapter sticker)；`.scene-dialogue` (主對話框 + npc-avatar 圓貼)；`.choice-scene` (選項 + ESC 風 prompt 數字 + emoji 翻牌)；`.continue-btn` (彈簧按鈕) |
+| 🆘 emergency-card 重設計 | 風格 emoji + 名稱 + 5 工具 + 3 聯絡人空格的「校園手帳信用卡」設計 |
+| 🎲 guess.html 深化 | `.phase-bar` (3 階段視覺化進度) + `.roster-box` (名單編輯區紙感卡) + `.person-card` (大頭像 + 名字)+ `.type-pick` (16 型 grid 含 emoji + code + nick) + `.score-display` (動態結果統計) |
+| 📊 class-stats.html 深化 | 校園手帳統計報告風 — section-header + group-band 四色 + 16 型分布 + 4 軸條 + 缺型討論卡 |
+| 🎓 teacher-room 深化 | `.room-card-head/body` (即時房間任務控制台) + 大房號顯示 + KPI 4 卡 + student-grid 即時狀態 + pin-scene-bar 投票分布 |
+| 🎬 slides.html 深化 | 10 張校園手帳投影片：今天課程 / MBTI 是什麼 / QR code 加入 / 班級結果引導 / 結尾回家作業；全螢幕 deck mode + 進度條 |
+
+#### 🗣️ v3.17.3 — TTS 暫停/繼續 + SiteNav 老師入口
+
+| 模組 | 細節 |
+|---|---|
+| ⏸️ TTS pause/resume | `lib/tts.ts` 加 `pause()` / `resume()` / `isPaused()` / `subscribeStatus()` (250ms polling 因為 Web Speech API 沒 onpause global event) |
+| 🎛️ TTS toolbar 元件 | 主按鈕 smart toggle (🔊 唸給我聽 ↔ ⏸ 暫停 ↔ ▶ 繼續播放) + 「從頭」/「停止」次要按鈕 + 即時狀態指示燈 |
+| 🔄 game/page + sel/page | 兩頁都掛上同一個 TTS toolbar，故事閱讀體驗一致 |
+| 👩‍🏫 SiteNav 加老師入口 | 新增「👩‍🏫 老師」連結 → `/teacher/dashboard`，isActive 邏輯涵蓋所有 `/teacher/*` 子頁 |
+
+#### 🔑 v3.17.4 — Google OAuth 跨裝置同步老師班級資料
+
+| 模組 | 細節 |
+|---|---|
+| 🔐 Firebase 升級 | `lib/firebase.ts` 新增 `signInWithGoogle()` / `signOut()` / `subscribeAuth()` / `getCurrentUser()` |
+| 🔄 anonymous → Google 無痛升級 | 用 `linkWithPopup` — **uid 保持不變**！之前匿名建的 classHistory / 房間擁有權自動繼承到 Google 帳號 |
+| 🔧 衝突處理 | 若 Google 已綁別 uid (`auth/credential-already-in-use`) → fall back 到 `signInWithPopup` 切換到 Google uid |
+| 🎨 TeacherLoginButton 新元件 | compact 變體 → SiteNav 右側（小頭像下拉 / 「🔑 老師登入」按鈕）；full 變體 → /teacher/dashboard 頂端（跨裝置同步說明卡） |
+| 🌐 Authorized Domains 自動化 | 用 Identity Toolkit API + gcloud 確認 cagoooo.github.io 已在 Firebase Auth authorized domains |
+| 📜 啟用步驟 | 使用者需手動到 Firebase Console 啟用 Google provider（Identity Toolkit API 需 OAuth client，只能 Console 點一鍵建立） |
+| 🎯 教學效益 | 老師教室 PC / 家裡筆電 / iPad 都能看自己班級歷史，不再被綁死在單一瀏覽器 |
+
+#### 🐛 v3.17.5 — React #418 hydration mismatch 修
+
+| 模組 | 細節 |
+|---|---|
+| 🐛 症狀 | 啟用 Google OAuth 後使用者 dashboard 看到動畫閃一下、console 噴 `Minified React error #418` |
+| 🔍 根因 | dashboard / history 兩頁面 render 階段直接呼叫 `isFirebaseAvailable()`，SSG (no window) = false → 渲染 ⚠️ Firebase 警告，client (有 window + env) = true → 不渲染 → server/client HTML 不一致 → hydration bail-out |
+| 🛠️ 修法 | 加 `mounted` state，warning gate 在 `mounted && !isFirebaseAvailable()`，讓 SSG / 首次 hydration 都不渲染警告 → 一致 → no mismatch |
+| 📜 新 skill | `nextjs-ssg-hydration-window-check` 固化進 `~/.claude/skills/` — 下次寫 client-only condition 自動觸發 |
+
+#### 🎨 v3.17.6 — .feature-card overflow:hidden 把標籤剪掉
+
+| 模組 | 細節 |
+|---|---|
+| 🐛 症狀 | 首頁 More 區塊兩張卡（SEL / 三部曲）頂端 `top: -16px` 突出的 `🌧️ SPECIAL · EPISODE` / `🎒 COURSE · PACK` 標籤被剪掉只露半截 |
+| 🔧 修法 | `.feature-card { overflow: visible }`（原本為了 hover transform 用 hidden），角落 emoji 在 padding 內側不需 overflow 限制 |
+
+#### 🔒 v3.17.7 — RTDB rules 跟 client schema drift 修
+
+| 模組 | 細節 |
+|---|---|
+| 🐛 症狀 | 老師啟用 OAuth 後到 /teacher/new 建立房間，console 噴 `permission_denied`，**所有老師建房 100% 失敗** |
+| 🔍 根因 | v3.16 加 SEL 房間模式時 `createRoom()` 寫 `mode: "mbti" \| "sel"` 到 `/rooms/{code}/meta`，但 `database.rules.json` 的 meta validator 沒列 mode 欄位，被 `$other: { ".validate": false }` 全拒，bug 從 v3.16 潛伏 2 個月直到 OAuth 上線老師回測才被發現 |
+| 🛠️ 修法 | rules 加 `"mode": { ".validate": "newData.isString() && (newData.val() === 'mbti' \|\| newData.val() === 'sel')" }` + `firebase deploy --only database` 上線 |
+| 📜 新 skill | `firebase-rules-client-schema-sync` 固化 — 下次寫 createX() 加欄位自動觸發提醒同步更新 rules + deploy |
+
+### ✅ v3.18 — 全網站 RWD 大改造（2026-05-18）
+
+> 使用者回報「手機端超級不友善」→ subagent 全網審查 61 項問題分 3 級，分 5 個版號連續修補上線。整輪含 Mobile Menu Drawer 新元件 + globals.css ~200 行系統性 mobile-first 補強 + 3 處 page-level layout 重排 + Chrome MCP iframe 模擬實機驗證。
+
+#### 📱 v3.18 — 主架構：MobileMenuDrawer + globals.css 系統性 mobile breakpoints
+
+| 模組 | 細節 |
+|---|---|
+| 🍔 MobileMenuDrawer 新元件 | Framer Motion 右側滑入 drawer + 背景遮罩 + ESC 關 + body scroll lock；6 主連結 + Teacher login + CTA 全包；safe-area-inset-top/bottom 處理 iOS 瀏海 |
+| 🎨 globals.css 系統性補 ≤640px breakpoints | `.summary-grid` 4→1 欄 / `.kpi-row` 4→2 欄 + clamp 字級 / `.room-code-big` clamp(40, 12vw, 64) / `.type-pick-grid` 4→2 欄 / `.feature-card` padding 32→20 / `.person-card` avatar 140px → clamp(96, 28vw, 140) / `.dialogue-text` padding 縮 / `.tts-toolbar` flex column stack / `.hud` 11px→12px / `.student-grid` 900px→2欄、480px→1欄 / `.container-paper` padding 對稱 + safe-area |
+| 📐 iOS input zoom-in 防護 | 全域 `input/select/textarea` 在 ≤768px 強制 16px font-size — 否則 iOS Safari focus 時自動 zoom 整頁且不會 zoom out |
+| 📏 100vh → 100dvh | `body::after` 三圓點 + 全域 utility classes 改用 dvh — 解 iOS Safari 工具列覆蓋 100vh 問題 |
+| 📱 viewport-fit cover | layout.tsx 加 `viewportFit: "cover"` — 才能讓 `env(safe-area-inset-*)` 正常計算 |
+| ♿ 移除 maximumScale:1 | 違反 WCAG 2.5.5 / 1.4.4，視障使用者無法放大網頁 |
+| ♿ prefers-reduced-motion | 全域 `@media (prefers-reduced-motion: reduce)` 把動畫降到 0.01ms — 前庭敏感 a11y |
+| 👆 .tap-target utility | `min-width: 44px; min-height: 44px` — Apple HIG / Material 推薦最小觸控目標 |
+| 🚫 @media (hover: none) 守護 | hover effects (transform / box-shadow) 不在 touch 裝置卡住 |
+| 🎯 page-level fixes | result/[type] hero `lg:grid-cols-[1fr_480px]` → `minmax(280px,420px)` / MBTI code clamp 上限 200→140px / slides 控制列 mobile 永遠顯示 / game-hud-bar flex column on mobile + grid 3-col ≥768px |
+
+#### 📱 v3.18.1 — nav md→lg breakpoint + 首頁 layout 修補
+
+| 模組 | 細節 |
+|---|---|
+| 🍔 Nav breakpoint 從 md (768px) 改 lg (1024px) | md 太低，平板直式 / 手機橫式都會塞 desktop nav 中文直書；lg 才是「桌面寬度足夠塞 6 連結」真實門檻 |
+| 🎯 首頁 CTAs 改 `.home-cta-row` class | mobile flex column 全寬 stack，≥640px flex row wrap |
+| 📐 HUD stats strip 改 `.home-stats-strip` class | mobile padding 22x18 (原 24x28) + gap 14px 避免 4 欄擠破 |
+| 🎨 QuestCard 大數字 96px → clamp(64, 16vw, 96) / 標題 30px → clamp(22, 6vw, 30) | |
+| 🔧 .bracket-frame mobile padding 32→20 + overflow:hidden + min-width:0 | 防 EXP bar 溢出 |
+
+#### 🐛 v3.18.2 — CSS specificity 雷 #1：.nav-links 覆蓋 Tailwind .hidden
+
+| 模組 | 細節 |
+|---|---|
+| 🐛 症狀 | v3.18.1 改了 SiteNav `hidden lg:flex` 但手機還是顯示 6 連結擠成中文直書 |
+| 🔍 根因 | globals.css 第 191 行 `.nav-links { display: flex }` 跟 Tailwind `.hidden { display: none }` 同 specificity (0,0,1)，globals.css 後讀贏 → desktop nav 永遠 flex 無視 .hidden |
+| 🛠️ 修法 | 把 `.nav-links` 的 display 拿掉，留 gap/align/font，display 完全交給 Tailwind 控制 |
+| 🔬 驗證方式 | Chrome MCP javascript_tool 在 iframe (390px) 動態 patch CSS 即時驗證 — desktop nav display:none ✓ |
+
+#### 🐛 v3.18.3 — CSS specificity 雷 #2：.phase-pills 同樣陷阱 + .phase-bar grid
+
+| 模組 | 細節 |
+|---|---|
+| 🐛 症狀 | /guess scrollWidth 465 > viewport 390 → 水平捲動，phase tracker 撐爆 |
+| 🔍 根因 | `.phase-pills { display: flex }` 同樣覆蓋 Tailwind .hidden + `.phase-bar { grid-template-columns: auto 1fr auto }` 3 欄硬塞 mobile |
+| 🛠️ 修法 | `.phase-pills` 拿掉 display + `.phase-bar` mobile 改 1fr 單欄、≥lg 才 3 欄 |
+| 📜 新 skill | `tailwind-hidden-vs-custom-display-conflict` 固化（一週踩 2 次同雷的教訓）— 內含 grep 全專案 + DevTools 驗證 snippet + 修法 3 選 1 對照 |
+
+#### 🎨 v3.18.4 — slides 頂部工具列也加入手機常願
+
+| 模組 | 細節 |
+|---|---|
+| 🐛 症狀 | /slides 頂部「離開投影 / 全螢幕」工具列 opacity:0.35 hover 才顯示，手機沒 hover 永遠看不到 + 按鈕被擠成中文直書 |
+| 🛠️ 修法 | 加 `.slides-topbar` class 跟 `.slides-controls` 同邏輯 — mobile 常願 opacity:1，`@media (hover:hover) and (min-width:768px)` 才漸顯 |
+
+#### 🧪 v3.18 整輪驗證工作流（重要副產物）
+
+| 工具 | 用途 |
+|---|---|
+| 🌐 Chrome MCP iframe simulator | 因為 `resize_window` 不可靠（OS 視窗最小寬限制），改用 iframe 注入 `<iframe src="..." width="390" height="720">` 真實 trigger mobile CSS media query |
+| 🔬 javascript_tool 跨 iframe inspect | `matchMedia('(max-width: 640px)').matches` + `getComputedStyle(el).display` 跨斷點驗證；可以即時 patch CSS 看是否能解 bug 才正式改原始碼 |
+| ✨ 4 頁同框驗證 | 一次注入 4 個 iframe (首頁 / dashboard / guess / teacher/new) 並排截圖，一眼看全網手機狀態 |
 
 ---
 
@@ -1997,6 +2131,373 @@
 | 🥈 | **AD1** a11y 完整稽核 | 1.5 天 | 採購文件硬需求 |
 | 🥉 | **Z4** 我的工具箱合集 | 1 天 | 個人化情緒手冊 |
 | 🥉 | **AC2** 4 條支線 BGM 升級 | 1 天 | 沉浸感快速提升 |
+
+---
+
+## 🆕 v3.18 後的下一波建議（2026-05-18 補充）
+
+> 經過 v3.17 校園手帳設計系統重設計 + Google OAuth 上線 + v3.18 全網 RWD 大改造後，**整個生態系幾乎沒有破洞**。
+> 下一波重點不再是「補功能」，而是「**深化 + 推廣 + 變現/可持續性 + 教育研究/影響力**」四方向。
+> 階段分類已用到 AC，這波從 **AE** 開始（保留 AD 給 ROADMAP 老項目重整）。
+
+---
+
+### 🎨 AE. **由 v3.17 校園手帳設計系統解鎖的「視覺進階」**
+
+> 紙感 + 電玩 HUD 雙風格已建立穩固 design system，可以再做更多視覺戲法 + 主題化。
+
+#### AE1. 🎨 換季主題包（4 季限定皮膚）
+- 📊 🌟 中 ｜ ⏱️ 2 天 ｜ 🎯 重玩動機 + 新鮮感
+- 春櫻粉 / 夏海藍 / 秋楓橙 / 冬雪灰 — 各自一套 CSS variables
+- SettingsPanel 加「季節主題」切換或自動依日期 (3-5/6-8/9-11/12-2)
+- 紙感底色、coral 點綴色、washi tape 色全部跟著換
+- 結合節氣彩蛋：清明節飄落花瓣動畫、聖誕節飄雪
+
+#### AE2. 🌗 深色模式（Dark Mode 紙感版）
+- 📊 🌟 中 ｜ ⏱️ 1.5 天 ｜ 🎯 晚上玩眼睛不累 + 老師備課情境
+- 紙底改深棕色 + 文字米白 + coral 略偏暗紅
+- 維持紙感與 HUD 風格不變
+- 預設跟 `prefers-color-scheme`，SettingsPanel 可手動切
+- localStorage 持久化
+
+#### AE3. ✨ Polaroid 風學生大頭照 + 換裝系統
+- 📊 🌟 中 ｜ ⏱️ 3 天 ｜ 🎯 學生個人化 + 重玩動機
+- `/me` 頁加「我的角色卡」polaroid 框：MBTI 嘴/頭髮/眼鏡/服裝可選
+- 解鎖機制：跑校隊解鎖運動服、跑藝術解鎖畫家服、SEL 連結型解鎖暖色系
+- SVG 圖層合成（已有 8 個 NPC SVG 基底可重用）
+- 純前端 localStorage 紀錄，零後端
+
+#### AE4. 🎬 RPG 場景轉換特效升級
+- 📊 🌟 中 ｜ ⏱️ 1 天 ｜ 🎯 沉浸感 +30%
+- 進新章節（Ch 2/4/6）加 1.5 秒「章節提示卡」彈出
+- Ch 2 開學週結束 + 書本翻動 / Ch 4 校慶倒數 + 紙花飄 / Ch 6 校慶當天 + 太陽升起
+- 對話框打字機效果可選（SettingsPanel 開關）
+
+#### AE5. 🖼️ Open Graph 動態卡升級
+- 📊 🌟 中 ｜ ⏱️ 1.5 天 ｜ 🎯 LINE 分享預覽變成「Polaroid 風學生卡」
+- 結果頁分享 LINE/FB → 顯示動態生成的 polaroid 卡（含學生 MBTI + 結果暱稱 + 圖案）
+- @vercel/og 跑 CI Linux 環境（避 Windows local bug）
+- 16 種型各有專屬模板
+
+---
+
+### 🌐 AF. **由 v3.17.4 Google OAuth 解鎖的「跨裝置帳號生態」**
+
+> 老師 Google 帳號已串好，可以做帳號分層 + 多老師協作 + 學生帳號（謹慎評估）。
+
+#### AF1. 🏫 老師端「跨班級總覽」
+- 📊 🔥 高 ｜ ⏱️ 2 天 ｜ 🎯 一個老師教多個班的剛需
+- dashboard 改成支援多班：3-5 班 / 3-6 班 / 5-2 班 並列卡
+- 每班獨立顯示 MBTI 分布 + SEL 風格 + 最近活動
+- 切換班級不重新登入，session metadata 加 `className` 欄位
+- AI 班級洞察自動跨班比較「為什麼 3-5 班 ENFP 比 3-6 班多 30%」
+
+#### AF2. 👥 同校老師協作 / 學年共筆
+- 📊 🔥 高 ｜ ⏱️ 3 天 ｜ 🎯 學校教研社群形成
+- Firebase RTDB 加 `schools/{domain}/teachers/{uid}` collection
+- 同 Google email domain (smes.tyc.edu.tw) 的老師自動同校
+- 共筆某個班級的「個性備註」/「適合分組」/「需注意觀察的學生」
+- 學年導師交接：5 年級導師 → 6 年級導師接班時，前老師留的備註自動可見
+
+#### AF3. 🎓 老師專業檔案匯出（教評會神器）
+- 📊 🔥 高 ｜ ⏱️ 1.5 天 ｜ 🎯 教師甄選 / 進修檔案
+- dashboard 加「📥 匯出教師專業檔案 PDF」
+- 含「我用了 X 次活動，輔導 Y 位學生，跨 Z 個班級」+ 時間軸 + 學生回饋摘要 + 學校 logo
+- 適合放教評會、教師專業發展檔案、學年初家長會 ice-breaker
+
+#### AF4. 🎒 學生帳號（高年級才開放，純可選）
+- 📊 🌟 中 ｜ ⏱️ 3 天 ｜ 🎯 跨裝置存個人成長 + 隱私嚴格保護
+- 高年級學生可選擇用學校 Google 登入（家長同意後）
+- `/me` 學習歷程冊自動雲端同步
+- 跟老師帳號的關係：學生加入「3-5 班」房間時自動標 className 連結
+- **隱私嚴格**：學生資料只老師可看，且不顯示真實姓名（用 displayName 別名）
+- **預設關閉**：學校 admin 主動 opt-in 才開放，避免 COPPA 風險
+
+#### AF5. 📊 教育局 / 縣市區域看板（dream）
+- 📊 🌙 低 ｜ ⏱️ 5 天 ｜ 🎯 教育影響力
+- 教育局 admin 帳號可看「桃園市 5 所國小、X 班、Y 名學生」匿名統計
+- 各校 SEL 風格分布跟區域平均比較
+- 可寫成研究論文資料
+
+---
+
+### 📱 AG. **由 v3.18 RWD 大改造解鎖的「手機原生體驗 + PWA 完整化」**
+
+> 手機 RWD 修好了，但仍是「網頁感」，下一步是「App 感」。
+
+#### AG1. 📱 PWA 完整化（manifest + install banner + offline）
+- 📊 🔥 高 ｜ ⏱️ 1 天 ｜ 🎯 學生加到桌面、離線可玩 MBTI（不含 OAuth/Firebase 功能）
+- ✅ 已有：Service Worker（network-first HTML / cache-first assets）+ 版本通知
+- 🚧 待補：
+  - `manifest.webmanifest` 加 `display: "standalone"` + `theme_color` + `background_color` + `start_url`
+  - install prompt 主動觸發 banner（`beforeinstallprompt` 事件已偵測但沒 UI）
+  - splash screen 設計（用 design system 紙感）
+  - offline fallback 頁面（沒網路時顯示「校園奇遇記也在等你回來」可愛卡）
+
+#### AG2. 🍔 SiteNav 進階：sticky + 自動收起
+- 📊 🌟 中 ｜ ⏱️ 0.5 天 ｜ 🎯 長頁面瀏覽體驗
+- 滑下時 nav 自動上滑收起、滑上時又出現（IG / FB 都這樣）
+- sticky top:0 + 透明度 + backdrop blur
+- 手機長 dashboard / history 頁面瀏覽超舒服
+
+#### AG3. 📤 Web Share API 全站化
+- 📊 🌟 中 ｜ ⏱️ 0.5 天 ｜ 🎯 LINE 分享一鍵到位
+- 結果頁、SEL 結果、Journey 完成都加「📤 分享」按鈕
+- 用 `navigator.share()` 觸發 OS 原生 share sheet
+- fallback 到複製連結 / Email
+- 比 LINE / FB share button 更原生
+
+#### AG4. 🎯 Pull-to-refresh 老師 dashboard
+- 📊 🌟 中 ｜ ⏱️ 0.5 天 ｜ 🎯 老師滑手機看班級資料的 native gesture
+- dashboard / history 加 pull-to-refresh
+- 用純 CSS + touch event 做（不裝套件）
+- 強化「跟一般 app 一樣」的觸感
+
+#### AG5. 🔔 推播通知（PWA 進階）
+- 📊 🌙 低 ｜ ⏱️ 2 天 ｜ 🎯 老師活動提醒 / 學生打卡提醒
+- Firebase Cloud Messaging
+- 老師：「上次活動 7 天前了，要不要再跑一次？」
+- 學生（自願 opt-in）：「今天有試試你的情緒工具嗎？」（配 SEL 7 天打卡）
+- 隱私謹慎：學生通知預設關閉、需家長同意
+
+#### AG6. 📷 手機相機掃 QR code 加入房間
+- 📊 🌟 中 ｜ ⏱️ 1 天 ｜ 🎯 課堂上學生掃黑板 QR 即加入
+- /join 頁加「📷 掃 QR」按鈕
+- 用 `BarcodeDetector` API（Chrome / Safari 支援）
+- fallback 到手動輸入房號
+- 比學生輸入 6 位房號快 10 倍
+
+---
+
+### 🤖 AH. **由今天 3 個新 skill 沉澱解鎖的「研發品質提升」**
+
+> 今天固化 3 個 skill 把過往踩雷沉澱下來，連帶解鎖了「自動化檢測」工作流。
+
+#### AH1. 🧪 pre-commit hook 跑 skill-aware lint
+- 📊 🔥 高 ｜ ⏱️ 1 天 ｜ 🎯 杜絕同類型 bug 再犯
+- husky + lint-staged 跑：
+  - `nextjs-ssg-hydration-window-check`：grep render 內呼叫 `isFirebaseAvailable()` / `typeof window` 等
+  - `firebase-rules-client-schema-sync`：diff TS interface vs database.rules.json 是否同步
+  - `tailwind-hidden-vs-custom-display-conflict`：grep `className="xxx hidden lg:flex"` 對比 globals.css 是否寫死 display
+- 任一條 warning 就阻擋 commit + 顯示對應 skill 連結
+
+#### AH2. 🧪 Playwright E2E 測試（11 條關鍵流程）
+- 📊 🔥 高 ｜ ⏱️ 2 天 ｜ 🎯 部署不再靠人眼驗
+- 流程：4 條 MBTI 支線 + SEL + 猜朋友 + 三部曲 + 班級同步 + OAuth 登入 + 房間建立 + 投影模式
+- **加 mobile viewport 測試**（用今天學到的 Chrome MCP iframe 模擬法）
+- CI 跑過才 deploy
+
+#### AH3. 🌐 全網 Chrome MCP iframe 自動截圖 visual regression
+- 📊 🌟 中 ｜ ⏱️ 1.5 天 ｜ 🎯 視覺改動不知不覺壞掉
+- CI 用 puppeteer / playwright 開 16 頁 × 3 viewport (390/768/1280) = 48 張截圖
+- 跟前次比對，diff > 5% pixel 就標 warning
+- 抓 design system 改動意外破壞別頁的 case
+
+#### AH4. ⚡ Lighthouse CI（每次 push 自動跑分）
+- 📊 🌟 中 ｜ ⏱️ 0.5 天 ｜ 🎯 不讓 framer-motion / Firebase 默默拖慢
+- 加 `@lhci/cli` 進 GitHub Actions
+- 設下限：Performance ≥ 90 / Accessibility ≥ 95 / SEO ≥ 90 / Best Practices ≥ 95
+- 不達標 PR fail
+- 每月趨勢圖回看「哪個版本拖慢了」
+
+#### AH5. 📦 Bundle size 監測 + budget
+- 📊 🌟 中 ｜ ⏱️ 0.3 天 ｜ 🎯 防 First Load JS 默默爆炸
+- 加 `@next/bundle-analyzer`
+- 設上限：First Load JS ≤ 200KB（目前 106KB OK，但 framer-motion 是大頭佔 50KB）
+- 評估把對話氣泡的 framer-motion 換成 CSS transition，省 30KB
+
+#### AH6. 🐛 全站錯誤回報 Sentry / 自建
+- 📊 🌟 中 ｜ ⏱️ 0.5 天 ｜ 🎯 不漏接 production bug
+- `window.onerror` + `unhandledrejection` → 送 Firebase RTDB `errors/` collection
+- dashboard 加「最近 7 天錯誤」面板，老師用 = debug 救星
+- 跟 v3.17.5 React #418 那次一樣的問題，早 7 天就能抓到
+
+---
+
+### 🎓 AI. **教育研究 / 學術價值 / 影響力**
+
+> 跑了大量班級活動累積資料，可以變成研究 + 推廣材料。
+
+#### AI1. 📚 「使用心得個案研究」白皮書
+- 📊 🌟 中 ｜ ⏱️ 3 天 ｜ 🎯 教育月刊 / 期刊發表
+- 你自己作為作者 + 使用者，寫一份「用 Claude Code + Next.js 半年從零到全國推廣的 MBTI 校園 RPG 開發紀實」
+- 含：(1) 教學動機 (2) 設計取捨 (3) 學生反饋 (4) 系統架構 (5) 持續迭代心得
+- 投稿教育月刊 / 國民教育電子報 / 桃園市教師期刊
+
+#### AI2. 🧪 班級實驗：「MBTI 介入前後人際關係改變」研究
+- 📊 🌟 中 ｜ ⏱️ 1 學期觀察 ｜ 🎯 寫成論文
+- 跟教育大學 / 心理系合作（雲科大 / 政大 / 高師大有相關所）
+- 實驗組：跑完三部曲的班 / 對照組：沒跑的班
+- 期末用 Sociogram（社會計量法）測人際網絡變化
+- 數據可發表 SSCI 期刊
+
+#### AI3. 🎓 線上 2 小時教師研習工作坊（已在 V5 提過，再強化）
+- 📊 🌟 中 ｜ ⏱️ 籌備 1 週 + 1 場 2 小時 ｜ 🎯 教師社群形成
+- 主題：「MBTI 校園奇遇記實戰：從零到全班參與的 60 分鐘」
+- 場次目標：每月 1 場，每場 50 位老師
+- 結業頒「校園 MBTI 引導師」電子證書（自製徽章 PDF）
+- 結業老師標記在 V1 全國地圖
+- 配合教育部「終身學習時數」可申請認證
+
+#### AI4. 🏫 進入「教學資源平台」上架
+- 📊 🌙 低 ｜ ⏱️ 申請流程 1-2 個月 ｜ 🎯 國家級曝光
+- 教育部教學資源網
+- 親子天下教師選讀
+- 均一教育平台
+- 國教院教師研習中心
+- 申請流程繁瑣但一旦上架 = 全國老師都看得到
+
+#### AI5. 🤝 跟 SEL / 輔導學會合作
+- 📊 🌙 低 ｜ ⏱️ 籌備 1 個月 ｜ 🎯 領域內背書
+- 寄信給台灣 SEL 學會 / 國教輔導團
+- 提案：「免費提供完整 SEL 班級活動套件，請幫忙評估教育價值」
+- 取得學會背書 → 進入研習推薦清單
+
+---
+
+### 🌱 AJ. **內容繼續擴充（劇情 / 角色 / 故事 pack）**
+
+> 已有架構支援，可以慢慢補內容。
+
+#### AJ1. 📚 暑假特別篇支線（沿用很久的 backlog #6 / F1）
+- 📊 🌟 中 ｜ ⏱️ 2 天（用 Gemini AI 助手 H3/W3 加速）｜ 🎯 學期切換新鮮感
+- 8 個暑假場景：游泳隊集訓、家族旅行、營隊、暑期作業趕工、外婆家、夏令營、新轉學生（暑期結尾）...
+- 解鎖條件：玩過至少 2 條支線
+- 可作為 v3 → v4 主線銜接
+
+#### AJ2. 🌧️ SEL 進階版（霸凌 / 重大失落 / 家庭變故）
+- 📊 🔥 高 ｜ ⏱️ 3 天 ｜ 🎯 輔導老師深度需求
+- 現有 6 情境是日常逆境，可加 3 個進階情境給高年級
+- 主題：「重要的人離開」「面對家庭變動」「目睹同學被霸凌」
+- 需要更謹慎的安全話術 + 「找大人聊」明確 CTA
+- 老師後台可設定「是否開啟進階情境」（預設關，需 admin 開）
+
+#### AJ3. 🎯 國中初探 story pack（搭配 AA2 故事 pack 可插拔）
+- 📊 🌟 中 ｜ ⏱️ 5 天 ｜ 🎯 銜接國中、擴大年齡層
+- 同樣 6 章結構，場景改成國中教室 / 跨年級社團 / 學測壓力 / 異性朋友
+- MBTI 軸計分一致，但情境深度提升
+- 給國中輔導課老師用
+- 內部測試 1-2 所國中後上線
+
+#### AJ4. 👨‍👩‍👧‍👦 家長版 MBTI（成人版改編）
+- 📊 🌟 中 ｜ ⏱️ 5 天 ｜ 🎯 親師活動 / 家庭日
+- 重新包裝成成人版（職場、家庭、社交、伴侶）
+- 學生帶回家 QR Code，全家一起玩
+- AI 自動生成「親子討論題目」（你是 ENFP 媽媽，孩子是 INTJ，可以這樣談...）
+
+---
+
+### ♿ AK. **A11y 完整稽核（不能再拖了）**
+
+> 從 v3.13 開始就在 backlog，從沒做完整稽核。今天 RWD 已加 prefers-reduced-motion + tap-target + ARIA dialog 等基礎，缺最後一哩。
+
+#### AK1. ♿ axe-core 完整稽核 + 修補
+- 📊 🔥 高 ｜ ⏱️ 1.5 天 ｜ 🎯 學校採購硬需求 + WCAG 2.1 AA 認證
+- 跑 axe-core 全頁掃描
+- 補：所有按鈕 aria-label / 對話氣泡 role="dialog" / 鍵盤 nav (Tab/Enter/Esc/方向鍵) / 顏色對比 ≥ 4.5:1
+- screen reader 試讀（NVDA Windows / VoiceOver Mac）
+- 取得 WCAG 2.1 AA 自評認證
+
+#### AK2. ⌨️ 完整鍵盤導航 + 快捷鍵
+- 📊 🌟 中 ｜ ⏱️ 1 天 ｜ 🎯 行動不便 + 老師快速操作
+- 場景選項 1/2/3/4 鍵快選
+- /teacher/dashboard 快捷鍵：G 跳遊戲 / H 跳歷史 / D 新房間
+- Tab order + focus ring 強化
+
+#### AK3. 🎨 高對比模式 / 色盲友善
+- 📊 🌟 中 ｜ ⏱️ 1 天 ｜ 🎯 視障 / 色弱
+- 預設色票 + 高對比色票 + 色盲友善色票（Deuteranopia 主）
+- 結合 `prefers-contrast` / `prefers-color-scheme`
+- SettingsPanel 切換器
+- 配合 AE2 dark mode 一起做
+
+---
+
+## 🥇 阿凱老師建議下一波最優先（v3.18 後 1 週 - 1 個月內）
+
+> 不再「拼數量」，重質量；每項都有「清楚理由 + 已建好基礎」。
+
+### 🥇 立刻做（一週內、零後端風險、ROI 爆表）
+
+| 優先 | 項目 | 工時 | 為什麼這麼急 |
+|---|---|---|---|
+| 🥇 | **AG1** PWA 完整化（manifest+install+offline） | 1 天 | v3.4 已有 SW，只差 manifest 就能裝桌面，學生超興奮 |
+| 🥇 | **AH1** pre-commit hook 跑 skill-aware lint | 1 天 | 今天 3 個 skill 都靠這個自動觸發才不會再踩雷 |
+| 🥇 | **AF1** 老師端跨班級總覽 | 2 天 | 一個老師教多個班是剛需，OAuth 已串好，加 className 欄位 |
+| 🥇 | **AG6** QR code 掃描加入房間 | 1 天 | 課堂上學生掃黑板房號 QR 比手動輸入快 10 倍 |
+| 🥇 | **AK1** A11y axe-core 完整稽核 | 1.5 天 | 從 v3.13 拖到現在不能再拖了，學校採購硬需求 |
+
+### 🥈 一個月內（教學現場與推廣價值高）
+
+| 優先 | 項目 | 工時 | 為什麼值得 |
+|---|---|---|---|
+| 🥈 | **AF3** 老師專業檔案匯出 PDF | 1.5 天 | 教評會神器，老師超有感 |
+| 🥈 | **AF2** 同校老師協作 / 學年共筆 | 3 天 | 教研社群形成，跨學年導師交接無痕 |
+| 🥈 | **AH2** Playwright E2E 測試 | 2 天 | 部署不再靠人眼驗，含 mobile viewport |
+| 🥈 | **AE2** 深色模式（紙感版） | 1.5 天 | 老師備課情境 + 學生晚上玩眼睛友善 |
+| 🥈 | **AH4** Lighthouse CI 跑分 + 設下限 | 0.5 天 | 不讓 framer-motion / Firebase 默默拖慢 |
+| 🥈 | **AC2 / 第十波** 4 條支線 BGM + 環境音 | 1 天 | 沉浸感快速 +30% |
+
+### 🥉 一學期內（內容深化 + 影響力擴大）
+
+| 優先 | 項目 | 工時 | 為什麼重要 |
+|---|---|---|---|
+| 🥉 | **AA1** fork 我的學校公開展示 | 1.5 天 | 推廣 ROI 爆表，配合 G1 一鍵 fork |
+| 🥉 | **AA2** 故事 pack 可插拔架構 | 3 天 | 大規模客製化基礎，準備接 AJ3 國中版 |
+| 🥉 | **AJ1** 暑假特別篇支線 | 2 天 | 用 Gemini AI 助手加速，暑假前推出 |
+| 🥉 | **AI1** 使用心得個案研究白皮書 | 3 天 | 投稿教育月刊，全國老師看到你的作品 |
+| 🥉 | **AE1** 換季主題包（4 季） | 2 天 | 重玩動機 + 節氣彩蛋 |
+| 🥉 | **AE3** Polaroid 大頭照 + 換裝系統 | 3 天 | 學生個人化超有感 |
+
+### 🌌 一年內 / 長期願景（夢想清單）
+
+| 項目 | 工時 | 為什麼夢想 |
+|---|---|---|
+| **AI3** 線上教師研習工作坊（月 1 場） | 籌備 1 週/場 | 形成教師社群、領域影響力 |
+| **AI4** 進入教學資源平台上架 | 申請 1-2 月 | 國家級曝光 |
+| **AF5** 教育局 / 縣市區域看板 | 5 天 | 給縣市教育處看，準備寫教學成果報告 |
+| **AI2** 班級實驗 + 學術論文 | 1 學期 | 跟教育大學合作，SSCI 期刊發表 |
+| **AJ3 + K4** 國中 story pack + 多語 | 5+5 天 | 擴大年齡 + 國際推廣 |
+| **AF4** 學生帳號（高年級 opt-in） | 3 天 + 法務評估 | COPPA / 個資法評估後再做 |
+
+---
+
+## 🎯 給阿凱老師的「下一個月行動建議」
+
+如果一週只有 1-2 個下午做 side project，建議這樣排：
+
+### 🗓️ 第 1 週：完成 PWA + 自動化檢測（防未來踩雷）
+- 🥇 AG1 PWA 完整化（1 天）→ 學生加桌面、離線可玩
+- 🥇 AH1 pre-commit hook（1 天）→ 杜絕同類型 bug 再犯
+
+### 🗓️ 第 2 週：老師端深化（最大教學現場 ROI）
+- 🥇 AF1 跨班級總覽（2 天）→ 教多個班的老師剛需
+- 🥇 AG6 QR code 掃描（1 天）→ 課堂上即時加入
+
+### 🗓️ 第 3 週：a11y + 視覺
+- 🥇 AK1 axe-core 稽核（1.5 天）→ 採購文件硬需求
+- 🥈 AE2 深色模式（1.5 天）→ 晚上備課眼睛友善
+
+### 🗓️ 第 4 週：推廣準備
+- 🥉 AI1 使用心得白皮書草稿（2 天）→ 投稿準備
+- 🥉 AA1 fork 公開展示頁（1.5 天）→ 推廣 ROI 爆表
+
+**完成 1 個月後**：你會有「跨班級總覽 + 老師專業檔案 + PWA 安裝 + 高 a11y 分 + 推廣文章草稿」整套，可以開始辦研習工作坊了！
+
+---
+
+## 📊 三大關鍵指標追蹤建議
+
+如果你想衡量這個專案的「教育影響力」，建議追蹤：
+
+| 指標 | 怎麼測 | 目標 |
+|---|---|---|
+| **使用學校數** | AA1 fork 展示頁 + 主動回報表單 | 6 個月內 ≥ 20 校 |
+| **每月活躍老師數** | OAuth 帳號 7 天內登入過 dashboard | 1 年內 ≥ 100 位 |
+| **學生完成三部曲數** | localStorage 跨次累積 | 1 學期 ≥ 1000 次 |
+| **Lighthouse 平均分** | AH4 CI 監測 | 維持 ≥ 95 (Acc/SEO/BP) |
+| **GitHub stars** | repo 自帶 | 1 年內 ≥ 50 (老師為主，數量不是重點) |
+| **教育月刊 / 期刊發表** | AI1 寫作 + 投稿 | 1 年內至少 1 篇 |
 
 ---
 
