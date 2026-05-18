@@ -189,7 +189,8 @@ html {
   font-size: 22px; letter-spacing: -0.5px;
 }
 .nav-links {
-  display: flex; gap: 28px; align-items: center;
+  /* display 由 Tailwind 'hidden lg:flex' 控制 — 別在這裡寫死否則會覆蓋 Tailwind 的 .hidden */
+  gap: 28px; align-items: center;
   font-size: 14px; font-weight: 700;
 }
 .nav-links a {
