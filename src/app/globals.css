@@ -1850,7 +1850,8 @@ html {
   box-shadow: 8px 8px 0 var(--ink);
   padding: 32px 32px 28px;
   position: relative;
-  overflow: hidden;
+  /* overflow: visible — 讓頂端 top:-16 的「SPECIAL · EPISODE」/ 「COURSE · PACK」標籤完整露出 */
+  overflow: visible;
   transition: transform 0.15s, box-shadow 0.15s;
 }
 .feature-card:hover {
