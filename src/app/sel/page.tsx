@@ -32,7 +32,7 @@ import { isFirebaseAvailable } from "@/lib/firebase";
 /**
  * SEL 逆境特別篇 — Social-Emotional Learning
  *
- * 流程：6 個情境 → 計算 4 軸因應分數 → 主導風格結果頁
+ * 流程：9 個情境 → 計算 4 軸因應分數 → 主導風格結果頁
  * 單頁 (state machine)，不切路由方便老師輔導課直接用
  */
 
@@ -298,7 +298,7 @@ function SelPageInner() {
               <span>開始 (約 8 分鐘)</span>
             </button>
             <p className="text-center text-xs text-violet-700/60 mt-3 relative">
-              6 個情境 · 沒有對錯答案 · 跟著直覺選
+              9 個情境 · 沒有對錯答案 · 跟著直覺選
             </p>
           </motion.section>
         )}
