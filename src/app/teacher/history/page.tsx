@@ -29,8 +29,11 @@ export default function TeacherHistoryPage() {
   const [items, setItems] = useState<HistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<string | null>(null);
+  // 避免 SSG (no window → Firebase 不可用) vs client hydration mismatch
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     if (typeof window === "undefined") return;
     if (!isFirebaseAvailable()) {
       setLoading(false);
@@ -107,7 +110,7 @@ export default function TeacherHistoryPage() {
           記錄你每次跑過的活動，看看班級 MBTI 分布隨時間的變化
         </p>
 
-        {!isFirebaseAvailable() && (
+        {mounted && !isFirebaseAvailable() && (
           <div className="bg-amber-50 border-2 border-amber-300 rounded-3xl p-6 text-center">
             <p className="text-amber-900 font-bold">
               ⚠️ Firebase 還沒設定好，歷史功能無法使用
@@ -118,11 +121,11 @@ export default function TeacherHistoryPage() {
           </div>
         )}
 
-        {loading && isFirebaseAvailable() && (
+        {loading && mounted && isFirebaseAvailable() && (
           <div className="text-center py-12 text-[var(--color-ink)]/50">載入中...</div>
         )}
 
-        {!loading && items.length === 0 && isFirebaseAvailable() && (
+        {!loading && items.length === 0 && mounted && isFirebaseAvailable() && (
           <div className="bg-white rounded-3xl p-8 border-2 border-dashed border-[var(--color-ink)]/15 text-center">
             <div className="text-6xl mb-3">📭</div>
             <p className="text-lg font-bold mb-2">還沒有任何歷史紀錄</p>

@@ -36,8 +36,11 @@ export default function TeacherDashboardPage() {
   const [teacherUid, setTeacherUid] = useState<string | null>(null);
   const [items, setItems] = useState<HistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
+  // 避免 SSG (no window → Firebase 不可用) vs client (有 window → Firebase 可用) 的 hydration mismatch
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     if (typeof window === "undefined") return;
     if (!isFirebaseAvailable()) {
       setLoading(false);
@@ -138,7 +141,7 @@ export default function TeacherDashboardPage() {
           </div>
         </motion.section>
 
-        {!isFirebaseAvailable() && (
+        {mounted && !isFirebaseAvailable() && (
           <div className="mt-6 bg-amber-50 border-2 border-amber-300 rounded-2xl p-5">
             <p className="text-sm text-amber-900 font-bold">⚠️ Firebase 還沒設好，班級資料部分無法顯示</p>
             <p className="text-xs text-amber-800/80 mt-1">
