@@ -1,7 +1,7 @@
 # 🗺️ MBTI 校園奇遇記 開發路線圖
 
 > 更新日期：2026-05-18
-> 目前線上版本：**v3.18.4**（v3.17 校園手帳設計系統 + Google OAuth 跨裝置同步 + v3.18 全網站 RWD 大改造）
+> 目前線上版本：**v3.19**（PWA 完整化 + Pre-commit skill-aware lint + 老師跨班總覽 + QR 掃描加入）
 
 ---
 
@@ -482,6 +482,56 @@
 | 🌐 Chrome MCP iframe simulator | 因為 `resize_window` 不可靠（OS 視窗最小寬限制），改用 iframe 注入 `<iframe src="..." width="390" height="720">` 真實 trigger mobile CSS media query |
 | 🔬 javascript_tool 跨 iframe inspect | `matchMedia('(max-width: 640px)').matches` + `getComputedStyle(el).display` 跨斷點驗證；可以即時 patch CSS 看是否能解 bug 才正式改原始碼 |
 | ✨ 4 頁同框驗證 | 一次注入 4 個 iframe (首頁 / dashboard / guess / teacher/new) 並排截圖，一眼看全網手機狀態 |
+
+### ✅ v3.19 — 第 1-2 週優化批次：PWA + Skill-lint + 跨班總覽 + QR 掃描（2026-05-18）
+
+> 依「下一波最優先」第 1-2 週排程一次到位 4 個項目。重點：**防未來踩雷 (PWA / pre-commit lint)** + **教學現場最大 ROI (跨班總覽 / QR 掃描)**。
+
+#### 📱 AG1 — PWA 完整化（install banner + offline + shortcuts）
+
+| 模組 | 細節 |
+|---|---|
+| 🎁 PwaInstallBanner 主動邀請 | 第 2 次造訪後 + 上次拒絕 ≥ 7 天 + `beforeinstallprompt` 可用 → 底部 toast 彈出；「立刻安裝」/「之後再說 (7 天不再問)」；已安裝 (display-mode: standalone) 不顯示；跟 SettingsPanel 內被動 install button 並存 |
+| 🚧 offline.html fallback page | 紙感 + coral 配色 (跟 design system 一致)；「📡 沒網路也別擔心」+ 學生/老師雙路徑提示；重新連線 / 回首頁兩顆 44px 按鈕；`online` event 自動 reload |
+| 🔧 SW 預載 offline.html | install 階段 `cache.add("./offline.html")` 確保斷網時隨時可用；`networkFirst` 失敗 + 找不到快取 + `request.mode === "navigate"` → 回 offline.html |
+| 🏠 manifest shortcuts | Android 桌面長按 app icon 出現的快捷選單 4 個：開始冒險 / 16 型圖鑑 / SEL / 老師 Dashboard；學生直接跳遊戲不用打開首頁找 |
+| 🎯 教學效益 | 學生主畫面一鍵打開 = native app 感、離線可玩主線 (OAuth/Firebase 功能除外)、老師 demo 不靠網路 |
+
+#### 🤖 AH1 — pre-commit skill-aware lint（3 個固化 skill 自動觸發）
+
+| 模組 | 細節 |
+|---|---|
+| 🔍 scripts/skill-lint.mjs | 350 行 0 dependency 純 Node.js 寫，跑 < 200ms |
+| ✅ Check 1: hydration safety | grep JSX render 內呼叫 `isFirebaseAvailable()` / `typeof window` / `localStorage` 等；上下文判斷不在 useEffect / function 內 → 報 error |
+| ✅ Check 2: rules schema sync | 偵測改了 classroom-rtdb.ts / firebase.ts 寫入邏輯但沒同時 stage database.rules.json → 報 warning |
+| ✅ Check 3: Tailwind hidden conflict | parse globals.css 找寫死 `display:flex/grid/block` 的 `.className`，grep tsx 找 `className="xxx hidden lg:flex"` 混用 → 互比報 error |
+| 🔌 .githooks/pre-commit | shell script call `npm run skill-lint`；`package.json` 加 `prepare` script 自動 `git config core.hooksPath .githooks`（0 額外 install） |
+| ⚡ 兩種 mode | staged (預設, 快): `npm run skill-lint`；all (CI 用): `npm run skill-lint:all` 掃全 82 tsx + rules |
+| 🧪 已驗證 | 故意 regress `.nav-links { display: flex }` → Check 3 精準抓到 `src/components/SiteNav.tsx:49 ... overrides Tailwind .hidden`；AF1 commit 真的 trigger pre-commit 並 pass 3 個 check |
+| 🚪 跳過機制 | `git commit --no-verify` (緊急用) |
+
+#### 🏫 AF1 — 老師端跨班級總覽（一個老師多班）
+
+| 模組 | 細節 |
+|---|---|
+| 📦 Schema 改動 | `RoomMeta + CreateRoomOptions + SessionSnapshot` 加 `className?: string` (選填，舊房間沒此欄位視為「未分類」) |
+| 🔒 database.rules.json | 同步加 `className validator (string && length 1-30)` + `firebase deploy --only database`（依 skill `firebase-rules-client-schema-sync` 紀律） |
+| 🏠 /teacher/new | 新增「班級」input 在老師名字底下 (選填) + 最近用過班級 chip 列 (localStorage LRU 上限 8) + 老師名字也順手記憶 |
+| 🎓 /teacher/dashboard | 新增「◆ CLASS · FILTER」section 在 hero 下方；班級 chip 列含計數 (🌐 全部 / 班級 A (5) / 班級 B (3)...)；點 chip → 統計卡 / 最近活動 / 4 軸 / 16 型分布全部 reactive 過濾；「未分類」chip 處理舊資料 |
+| 📅 /teacher/history | session 卡加 className badge (coral 邊框) 跟 SEL/MBTI mode badge 並列；老師看歷史一眼知道是哪班 |
+| 🎯 教學效益 | 一個老師教 3-5 班 / 5-1 班 / 6-2 班 — 每班獨立統計、跨班比較、AI 班級洞察可指定班級；OAuth uid 不變，過去資料自動可分類 |
+
+#### 📷 AG6 — QR Code 掃描加入房間
+
+| 模組 | 細節 |
+|---|---|
+| 🛠️ QrScannerButton 新元件 | 用 native `BarcodeDetector` API (Chrome 88+ / Edge 88+ / Android Safari 17+)，**0 npm dependency** (省 jsQR 80KB / zxing 200KB)；不支援的瀏覽器自動隱藏按鈕（避免假希望） |
+| 🎥 全螢幕相機 modal | 後鏡頭 (facingMode: environment) 優先 + 取景框 + 4 角 coral 裝飾 + 動畫掃描線；safe-area-inset 處理 iOS 瀏海 |
+| 🔍 智能解析 QR 內容 | URL 形式 (`https://.../?room=ABC123`) → 抽出 room param；純房號 (`ABC123`) → 直接用 |
+| 🔋 偵測頻率 | 250ms (覆蓋率 + 效能平衡)；偵測到 → coin 音效 + 自動關 modal + 填房號 |
+| 🚫 權限失敗處理 | getUserMedia 失敗 → 顯示「沒相機權限，可改用手動輸入」；關 modal 自動 stop tracks + clear interval (沒洩漏) |
+| 🏠 /join 整合 | 房號 input 上方加 QR 掃描 button (大顆 coral 邊框)；填完自動清 error message |
+| 🎯 教學效益 | 課堂上學生掃黑板房號 QR 比手動輸入 6 位數快 10 倍；低年級不會打字也能加入；無 BarcodeDetector 的桌面瀏覽器仍可手動輸入無縫 fallback |
 
 ---
 
@@ -2421,10 +2471,10 @@
 
 | 優先 | 項目 | 工時 | 為什麼這麼急 |
 |---|---|---|---|
-| 🥇 | **AG1** PWA 完整化（manifest+install+offline） | 1 天 | v3.4 已有 SW，只差 manifest 就能裝桌面，學生超興奮 |
-| 🥇 | **AH1** pre-commit hook 跑 skill-aware lint | 1 天 | 今天 3 個 skill 都靠這個自動觸發才不會再踩雷 |
-| 🥇 | **AF1** 老師端跨班級總覽 | 2 天 | 一個老師教多個班是剛需，OAuth 已串好，加 className 欄位 |
-| 🥇 | **AG6** QR code 掃描加入房間 | 1 天 | 課堂上學生掃黑板房號 QR 比手動輸入快 10 倍 |
+| 🥇 ✅ | **AG1** PWA 完整化（manifest+install+offline） | 1 天 | ✅ v3.19 完成（install banner + offline.html + shortcuts） |
+| 🥇 ✅ | **AH1** pre-commit hook 跑 skill-aware lint | 1 天 | ✅ v3.19 完成（3 個 check + 故意 regress 驗證通過） |
+| 🥇 ✅ | **AF1** 老師端跨班級總覽 | 2 天 | ✅ v3.19 完成（className 欄位 + dashboard chip + history badge） |
+| 🥇 ✅ | **AG6** QR code 掃描加入房間 | 1 天 | ✅ v3.19 完成（BarcodeDetector API + 0 npm dep + fallback） |
 | 🥇 | **AK1** A11y axe-core 完整稽核 | 1.5 天 | 從 v3.13 拖到現在不能再拖了，學校採購硬需求 |
 
 ### 🥈 一個月內（教學現場與推廣價值高）
