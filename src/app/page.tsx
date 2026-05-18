@@ -174,17 +174,8 @@ export default function HomePage() {
           與隱藏校園角色 ✨
         </p>
 
-        {/* CTAs row */}
-        <div
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: 18,
-            alignItems: "center",
-            marginTop: 36,
-            position: "relative",
-          }}
-        >
+        {/* CTAs row — mobile 1 欄全寬, ≥sm 自動 wrap */}
+        <div className="home-cta-row">
           <SoundLink href="/game" sound="click" className="btn-start">
             <span style={{ fontSize: 26 }}>🎒</span>
             <span>開始冒險</span>
@@ -203,9 +194,9 @@ export default function HomePage() {
 
         {/* ─── HUD stats strip ─── */}
         <div
+          className="home-stats-strip"
           style={{
             marginTop: 80,
-            padding: "24px 28px",
             background: "#fff",
             border: "2.5px solid var(--ink)",
             boxShadow: "6px 6px 0 var(--ink)",
@@ -743,19 +734,19 @@ function QuestCard({
       style={{ background: "#fff", border: "1px solid var(--line)", padding: "32px 28px" }}
     >
       <span className="bl"></span><span className="br"></span>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18, flexWrap: "wrap", gap: 6 }}>
         <span className="hud hud-coral">QUEST · {idx}</span>
         <span className="hud">{idx === "01" ? "READ()" : idx === "02" ? "CHOOSE()" : "REVEAL()"}</span>
       </div>
       <div
         className="f-serif"
-        style={{ fontSize: 96, fontWeight: 900, lineHeight: 0.9, color: `var(${colorVar})`, marginBottom: 8 }}
+        style={{ fontSize: "clamp(64px, 16vw, 96px)", fontWeight: 900, lineHeight: 0.9, color: `var(${colorVar})`, marginBottom: 8 }}
       >
         {idx}
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 12 }}>
         <span style={{ fontSize: 42 }}>{emoji}</span>
-        <h3 style={{ fontSize: 30, fontWeight: 900, margin: 0 }}>{title}</h3>
+        <h3 style={{ fontSize: "clamp(22px, 6vw, 30px)", fontWeight: 900, margin: 0 }}>{title}</h3>
       </div>
       <p style={{ fontSize: 15, color: "var(--ink-soft)", lineHeight: 1.75, margin: "0 0 16px" }}>{desc}</p>
       <div className="stat-row">

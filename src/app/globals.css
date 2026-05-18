@@ -2405,6 +2405,67 @@ button, a {
   }
 }
 
+/* ─── N1. 首頁 CTAs — mobile 全寬單欄, ≥sm 自動 wrap ─── */
+.home-cta-row {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  align-items: stretch;
+  margin-top: 28px;
+  position: relative;
+}
+.home-cta-row > a {
+  width: 100%;
+  justify-content: center;
+}
+@media (min-width: 640px) {
+  .home-cta-row {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 18px;
+    margin-top: 36px;
+  }
+  .home-cta-row > a {
+    width: auto;
+    justify-content: flex-start;
+  }
+}
+
+/* ─── N2. 首頁 HUD stats strip — padding 緊湊 / grid 自適應 ─── */
+.home-stats-strip {
+  padding: 22px 18px 18px;
+}
+@media (min-width: 640px) {
+  .home-stats-strip {
+    padding: 24px 28px;
+  }
+}
+/* StatCell value 在 mobile 縮一點避免 4 欄擠破卡 */
+@media (max-width: 640px) {
+  .home-stats-strip .grid {
+    gap: 14px !important;
+  }
+}
+
+/* ─── N3. EXP / stat bar 不能超出卡片 + quest card mobile padding 縮 ─── */
+.stat-row {
+  width: 100%;
+  min-width: 0;
+}
+.stat-bar {
+  min-width: 0;
+}
+.bracket-frame {
+  min-width: 0;
+  overflow: hidden;
+}
+@media (max-width: 640px) {
+  .bracket-frame {
+    padding: 20px 16px !important;
+  }
+}
+
 /* ─── N. game-hud-bar layout: 手機 vertical, desktop 3-col grid ─── */
 .game-hud-bar {
   display: flex;

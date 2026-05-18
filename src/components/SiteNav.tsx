@@ -45,8 +45,8 @@ export default function SiteNav({ active = "/", ctaLabel = "▶ START", ctaHref 
           校園<span style={{ color: "var(--coral)" }}>奇遇</span>記
         </span>
       </Link>
-      {/* Desktop: 所有連結平鋪 */}
-      <div className="nav-links hidden md:flex">
+      {/* Desktop ≥ lg(1024px): 所有連結平鋪 — md 太低,平板會擠到變直書 */}
+      <div className="nav-links hidden lg:flex">
         {links.map((l) => (
           <Link
             key={l.href}
@@ -65,8 +65,8 @@ export default function SiteNav({ active = "/", ctaLabel = "▶ START", ctaHref 
           {ctaLabel}
         </SoundLink>
       </div>
-      {/* Mobile: hamburger 開 drawer (drawer 內含所有連結 + login + CTA) */}
-      <div className="flex md:hidden items-center gap-1">
+      {/* < lg: hamburger 開 drawer (drawer 內含所有連結 + login + CTA) */}
+      <div className="flex lg:hidden items-center gap-1">
         <MobileMenuDrawer active={active} links={links} ctaHref={ctaHref} ctaLabel={ctaLabel} />
       </div>
     </nav>

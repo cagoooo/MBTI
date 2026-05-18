@@ -53,14 +53,14 @@ export default function MobileMenuDrawer({ active, links, ctaHref, ctaLabel }: P
 
   return (
     <>
-      {/* Hamburger button — 只在 mobile 顯示 */}
+      {/* Hamburger button — < lg 顯示 (含平板直式) */}
       <button
         type="button"
         onClick={() => {
           playSound("tap");
           setOpen(true);
         }}
-        className="md:hidden tap-target"
+        className="lg:hidden tap-target"
         aria-label="開啟主選單"
         style={{
           display: "inline-flex",
