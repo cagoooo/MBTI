@@ -28,6 +28,7 @@ const BRANCH_GRAD: Record<Branch | "main", string> = {
   art: "linear-gradient(135deg, var(--tape-rose), var(--rose))",
   study: "linear-gradient(135deg, var(--tape-sky), var(--sky))",
   friend: "linear-gradient(135deg, var(--tape-mint), var(--mint))",
+  service: "linear-gradient(135deg, var(--tape-sunny), var(--sunny))",
   main: "linear-gradient(135deg, var(--paper-2), var(--muted))",
 };
 
@@ -36,6 +37,7 @@ const BRANCH_NAME: Record<Branch | "main", string> = {
   art: "🎨 藝術",
   study: "📚 學術",
   friend: "🤝 友誼",
+  service: "🌍 服務",
   main: "📖 主線",
 };
 
@@ -44,6 +46,7 @@ const BRANCH_COLOR: Record<Branch | "main", string> = {
   art: "var(--rose)",
   study: "var(--sky)",
   friend: "var(--mint)",
+  service: "var(--sunny)",
   main: "var(--ink)",
 };
 

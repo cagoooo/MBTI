@@ -38,6 +38,7 @@ const BRANCH_TO_BGM: Record<Branch, BgmTrackId> = {
   art: "art",
   study: "study",
   friend: "friend",
+  service: "friend", // 服務組沿用友誼組的溫暖 BGM
 };
 
 interface HistoryEntry {
@@ -407,6 +408,7 @@ function GameInner() {
             {branch === "art" && "🎨 藝術組 · 創作與表達"}
             {branch === "study" && "📚 學術組 · 好奇與發現"}
             {branch === "friend" && "🤝 友誼組 · 陪伴與成長"}
+            {branch === "service" && "🌍 服務組 · 關心校園外的世界"}
           </div>
         </div>
         {/* Chapter dots — desktop only */}

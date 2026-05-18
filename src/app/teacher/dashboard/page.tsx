@@ -417,6 +417,30 @@ export default function TeacherDashboardPage() {
               desc="列印給學生帶回家"
               gradient="from-lime-400 to-green-500"
             />
+            <ToolCard
+              href="/digital"
+              emoji="📱"
+              title="數位素養特別篇"
+              desc="AI/假訊息/短影音 6 情境"
+              gradient="from-cyan-500 to-blue-600"
+              badge="2026 NEW"
+            />
+            <ToolCard
+              href="/family"
+              emoji="🏡"
+              title="家庭篇 Story Pack"
+              desc="家庭情緒探索 (含 flag 機制)"
+              gradient="from-rose-400 to-pink-500"
+              badge="輔導課"
+            />
+            <ToolCard
+              href="/cards"
+              emoji="🎴"
+              title="NPC 角色小卡"
+              desc="12 個校園朋友收藏"
+              gradient="from-yellow-400 to-orange-500"
+              badge="收藏"
+            />
           </div>
         </section>
 

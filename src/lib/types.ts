@@ -36,7 +36,7 @@ export interface ScoreDelta {
 }
 
 // 支線標籤
-export type Branch = "main" | "sport" | "art" | "study" | "friend";
+export type Branch = "main" | "sport" | "art" | "study" | "friend" | "service";
 
 export interface Choice {
   /** 顯示文字 */
