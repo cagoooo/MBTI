@@ -1,7 +1,7 @@
 # 🗺️ MBTI 校園奇遇記 開發路線圖
 
 > 更新日期：2026-05-18
-> 目前線上版本：**v3.22**（§次講長 6 週完整教案 — 5 Pack 串成跨課程套餐 + 108 課綱 / SDG / CASEL 三方對應）
+> 目前線上版本：**v3.22.2**（補 service_07 校慶攤位場景 + service 專屬 BGM track + /digital + /family 完整 TTS 整合）
 
 ---
 
@@ -710,6 +710,30 @@ SDG 4 優質教育 / SDG 10 減少不平等 / SDG 13 氣候行動 / SDG 16 和�
 
 **CASEL 5 大能力**:
 🔍 自我察覺 / 🧘 自我管理 / 👥 社會察覺 / 🤝 人際關係 / 🎯 負責任決策
+
+### ✅ v3.22.1 — /digital + /family TTS 整合修補（2026-05-18）
+
+> Subagent 串接驗證發現 v3.21 的 2 個新 Pack **完全沒 TTS**, 比 SEL/MBTI 體驗倒退。對照 sel/page.tsx 模式全補。
+
+| 修補 | 細節 |
+|---|---|
+| `/digital` 5 useEffect + toolbar | intro/scene/followUp/result 全部 auto-speak + smart toggle button + 從頭/停止/狀態 dot |
+| `/family` 5 useEffect 含緊急電話朗讀 | **consent 階段安全提醒讓識字弱學生也聽到** + result 觸發 flag 時把 5 條緊急電話 split 念清楚 (113 / 1995 / 1980 / 0800-200-885 / 110) |
+| `/cards` visibilitychange refresh | 玩家從其他 tab 完成 SEL/guess 回 cards 自動 refresh 解鎖, 不用 reload |
+
+### ✅ v3.22.2 — 服務組支線收尾（2026-05-18）
+
+> Agent P3 建議補完服務組 (原本只有 6 場景 vs friend 9 / sport-art-study 7), 並給服務組專屬 BGM 識別。
+
+| 模組 | 細節 |
+|---|---|
+| **service_07 新場景** | 「校慶當天·服務隊攤位」 — 4 個介紹方式選項覆蓋 4 個專案 (校貓/減塑/長者卡片/邀請寫卡), 4 種 MBTI 風格出口 |
+| **next 鏈調整** | service_06 → service_07 → final_01 (原本 service_06 → final_01) |
+| **service 專屬 BGM track** | sound.ts 加 `service` track, 暫用 art-gentle-piano (柔和鋼琴跟「公民關懷」氣質契合) |
+| **game/page.tsx BRANCH_TO_BGM** | service: "service" 取代原本 "friend" (有獨立 track id, 未來換真實 BGM 時改 sound.ts file 欄位即可) |
+| **未來換成專屬曲建議** | 搜「peaceful community」「heartwarming choral」「gentle service」, 用 skill `pixabay-audio-asset-pipeline` 抓 |
+
+服務組支線最終 7 個場景 (service_01~07), 跟 friend (9) / sport-art-study (7) 排排站, 內容平衡。
 
 ---
 

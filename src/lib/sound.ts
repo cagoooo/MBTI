@@ -4,10 +4,15 @@
  * 短音效 SFX (10 種，pool 模式，連點不互相打斷):
  *   click pageTurn reveal unlock tap pop whoosh coin toggleOn toggleOff
  *
- * 背景音樂 BGM (多 track，自動 cross-fade):
- *   home   - Kawaii Friends by ckotty3 (4.7MB) - 首頁可愛 future bass
- *   game   - Playful Kids Toys by fassounds (2.9MB) - 遊戲輕快兒童感
- *   result - The Fun Starts Here by mmaudio (3.5MB) - 結果開心慶祝感
+ * 背景音樂 BGM (8 track，自動 cross-fade):
+ *   home    - Kawaii Friends (4.7MB) - 首頁可愛 future bass
+ *   game    - Playful Kids Toys (2.9MB) - 遊戲輕快兒童感
+ *   result  - The Fun Starts Here (3.5MB) - 結果開心慶祝感
+ *   sport   - Sport Warm Up (2.5MB) - 校隊熱血上揚
+ *   art     - Gentle Piano (3.2MB) - 藝術夢幻寧靜
+ *   study   - Curious Mind (2.8MB) - 學術好奇探索
+ *   friend  - Warm Ukulele (3.1MB) - 友誼溫暖
+ *   service - 暫用 art-gentle-piano (公民關懷暫用藝術組柔和鋼琴, 未來可換)
  *
  * 切頁時 BgmController 呼叫 playBgm(trackId) → 自動 cross-fade 過渡
  */
@@ -24,7 +29,7 @@ export type SoundKind =
   | "toggleOn"
   | "toggleOff";
 
-export type BgmTrackId = "home" | "game" | "result" | "sport" | "art" | "study" | "friend";
+export type BgmTrackId = "home" | "game" | "result" | "sport" | "art" | "study" | "friend" | "service";
 
 /**
  * Next.js 15 App Router + static export + GitHub Pages 子路徑用 (依 skill nextjs-app-router-basepath-runtime)
@@ -98,6 +103,13 @@ const BGM_TRACKS: Record<BgmTrackId, BgmTrack> = {
     file: "friend-warm-uke.mp3",
     volume: 0.3,
     credit: "Warm by the_mountain (Pixabay CC0)",
+  },
+  service: {
+    // 服務組目前暫用藝術組的柔和鋼琴 — 跟「公民關懷」氣質契合
+    // 未來可換成專屬曲目 (建議搜「peaceful community」「heartwarming choral」)
+    file: "art-gentle-piano.mp3",
+    volume: 0.28,
+    credit: "Gentle - Peaceful Gentle Music by bombinsound (Pixabay CC0) — 服務組暫用",
   },
 };
 

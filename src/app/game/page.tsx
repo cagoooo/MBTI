@@ -38,7 +38,7 @@ const BRANCH_TO_BGM: Record<Branch, BgmTrackId> = {
   art: "art",
   study: "study",
   friend: "friend",
-  service: "friend", // 服務組沿用友誼組的溫暖 BGM
+  service: "service",
 };
 
 interface HistoryEntry {
