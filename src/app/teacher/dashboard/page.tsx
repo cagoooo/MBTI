@@ -352,6 +352,43 @@ export default function TeacherDashboardPage() {
           </section>
         )}
 
+        {/* 跨課程套餐 — 6 週完整教案 */}
+        <section className="mt-6">
+          <Link
+            href="/teacher/curriculum"
+            onClick={() => playSound("tap")}
+            className="block relative bg-gradient-to-br from-coral-400 via-amber-400 to-yellow-400 rounded-3xl p-6 text-white shadow-xl border-4 border-white/60 hover:scale-[1.01] transition overflow-hidden"
+            style={{
+              background:
+                "linear-gradient(135deg, #ff8364, #f59e0b, #fbbf24)",
+            }}
+          >
+            <span className="absolute -top-3 right-4 bg-white text-coral-700 text-[10px] font-black px-3 py-1 rounded-full shadow border-2 border-coral-300" style={{ color: "var(--coral)" }}>
+              🆕 跨課程套餐
+            </span>
+            <div className="flex items-start gap-4">
+              <div className="text-5xl shrink-0">👩‍🏫</div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-bold uppercase tracking-[0.3em] text-white/90 mb-1 drop-shadow">
+                  TEACHER · CURRICULUM
+                </p>
+                <h2 className="text-2xl sm:text-3xl font-black mb-2 drop-shadow">
+                  §次講長 6 週完整教案
+                </h2>
+                <p className="text-sm leading-relaxed">
+                  把 5 個 Story Pack 串成跨課程套餐 · 108 課綱 + SDG + CASEL 三方對應 · 一鍵備課 + 列印 PDF
+                </p>
+                <div className="flex flex-wrap gap-1.5 mt-3 text-xs">
+                  <span className="px-2 py-0.5 rounded-full bg-white/30 font-bold">📘 108 課綱 7 項</span>
+                  <span className="px-2 py-0.5 rounded-full bg-white/30 font-bold">🌐 SDG 5 項</span>
+                  <span className="px-2 py-0.5 rounded-full bg-white/30 font-bold">💝 CASEL 5 能力</span>
+                </div>
+              </div>
+              <div className="hidden sm:block text-3xl font-black drop-shadow">→</div>
+            </div>
+          </Link>
+        </section>
+
         {/* 所有老師工具入口 */}
         <section className="mt-6">
           <h2 className="text-xl font-black mb-3 flex items-center gap-2">
