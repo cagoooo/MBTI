@@ -1,10 +1,20 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import SiteNav from "@/components/SiteNav";
 import BgmController from "@/components/BgmController";
 import { playSound } from "@/lib/sound";
+import {
+  isTtsAvailable,
+  isTtsOn,
+  speak as speakTts,
+  speakScene,
+  stop as stopTts,
+  pause as pauseTts,
+  resume as resumeTts,
+  subscribeStatus as subscribeTtsStatus,
+} from "@/lib/tts";
 import {
   FAMILY_SCENARIOS,
   FAMILY_STYLES,
@@ -24,12 +34,146 @@ export default function FamilyPage() {
   const [scores, setScores] = useState<FamilyScores>(initialFamilyScores);
   const [pickedChoices, setPickedChoices] = useState<FamilyChoice[]>([]);
   const [showFollowUp, setShowFollowUp] = useState<string | null>(null);
+  const [ttsEnabled, setTtsEnabled] = useState(false);
+  const [ttsStatus, setTtsStatus] = useState<{ speaking: boolean; paused: boolean }>({
+    speaking: false,
+    paused: false,
+  });
 
   const scene = FAMILY_SCENARIOS[sceneIdx];
   const totalScenes = FAMILY_SCENARIOS.length;
   const finalStyle = useMemo(() => calcFamilyStyle(scores), [scores]);
   const styleInfo = FAMILY_STYLES[finalStyle];
   const flagScore = useMemo(() => calcFlagScore(pickedChoices), [pickedChoices]);
+
+  // TTS 偵測 + 跨 tab 同步
+  useEffect(() => {
+    setTtsEnabled(isTtsAvailable() && isTtsOn());
+    const refresh = () => setTtsEnabled(isTtsAvailable() && isTtsOn());
+    window.addEventListener("storage", refresh);
+    const iv = window.setInterval(refresh, 1500);
+    return () => {
+      window.removeEventListener("storage", refresh);
+      window.clearInterval(iv);
+    };
+  }, []);
+
+  // 訂閱 TTS 狀態
+  useEffect(() => {
+    if (!ttsEnabled) {
+      setTtsStatus({ speaking: false, paused: false });
+      return;
+    }
+    return subscribeTtsStatus(setTtsStatus);
+  }, [ttsEnabled]);
+
+  // consent 階段重要的安全提醒 — 自動朗讀讓識字弱學生也聽到
+  useEffect(() => {
+    if (phase !== "consent" || !ttsEnabled) return;
+    const t = setTimeout(() => {
+      speakScene({
+        text: [
+          "在開始之前。",
+          "這個 Story Pack 會聊一些家裡的事，像是爸媽吵架、被責罵、家人生病、搬家等。",
+          "有些情境可能會讓你想起最近發生的事。如果你覺得不舒服，可以隨時停止。",
+          "你的選擇不會被傳給老師或家長，完全私密。",
+        ],
+      });
+    }, 600);
+    return () => {
+      clearTimeout(t);
+      stopTts();
+    };
+  }, [phase, ttsEnabled]);
+
+  // intro 階段
+  useEffect(() => {
+    if (phase !== "intro" || !ttsEnabled) return;
+    const t = setTimeout(() => {
+      speakScene({
+        text: [
+          "你怎麼接住自己？",
+          "每個家都不一樣，每個你也不一樣。",
+          "四種家庭因應風格 — 表達者、思考者、安撫者、連結者。沒有對錯。",
+        ],
+      });
+    }, 500);
+    return () => {
+      clearTimeout(t);
+      stopTts();
+    };
+  }, [phase, ttsEnabled]);
+
+  // scene 進場朗讀
+  useEffect(() => {
+    if (phase !== "scene" || !scene || showFollowUp || !ttsEnabled) return;
+    const t = setTimeout(() => {
+      speakScene({ location: scene.title, text: scene.text });
+    }, 350);
+    return () => {
+      clearTimeout(t);
+      stopTts();
+    };
+  }, [scene?.id, showFollowUp, ttsEnabled, phase]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // followUp 朗讀
+  useEffect(() => {
+    if (!showFollowUp || !ttsEnabled) return;
+    speakTts(showFollowUp, { rate: 1.0, pitch: 1.05 });
+    return () => {
+      stopTts();
+    };
+  }, [showFollowUp, ttsEnabled]);
+
+  // result 朗讀風格 + 緊急資源 (如果 flag score >= 3)
+  useEffect(() => {
+    if (phase !== "result" || !ttsEnabled) return;
+    const t = setTimeout(() => {
+      const intro = [
+        `你的家庭因應風格是 ${styleInfo.name}`,
+        styleInfo.oneLiner,
+        styleInfo.description,
+      ];
+      const lines = [...intro];
+      // 若觸發 flag,把緊急資源唸給學生聽 (這是 family pack 最關鍵的 TTS 用途)
+      if (flagScore >= 3) {
+        lines.push(
+          "你似乎遇到比較重的事。家裡的重擔不是你一個人的責任，找一個信任的大人聊聊很重要。",
+        );
+        for (const r of EMERGENCY_RESOURCES) {
+          lines.push(`${r.name}，電話 ${r.number.split("").join(" ")}，遇到${r.who}時可以打。`);
+        }
+      }
+      speakScene({ text: lines });
+    }, 500);
+    return () => {
+      clearTimeout(t);
+      stopTts();
+    };
+  }, [phase, ttsEnabled, styleInfo, flagScore]);
+
+  function speakCurrentScene() {
+    if (!scene) return;
+    playSound("tap");
+    speakScene({ location: scene.title, text: scene.text });
+  }
+
+  function toggleSpeaking() {
+    if (ttsStatus.paused) {
+      playSound("tap");
+      resumeTts();
+    } else if (ttsStatus.speaking) {
+      playSound("toggleOff");
+      pauseTts();
+    } else {
+      speakCurrentScene();
+    }
+  }
+
+  function stopSpeaking() {
+    playSound("toggleOff");
+    stopTts();
+  }
 
   function handleEnter() {
     playSound("tap");
@@ -244,6 +388,38 @@ export default function FamilyPage() {
             <div className="hud" style={{ marginBottom: 12 }}>
               ◆ SCENE {sceneIdx + 1} / {totalScenes}
             </div>
+
+            {/* TTS toolbar */}
+            {ttsEnabled && (
+              <div className="tts-toolbar" style={{ marginBottom: 12 }}>
+                <button onClick={toggleSpeaking} className="tts-btn-main" type="button">
+                  <span className="tts-btn-icon">
+                    {ttsStatus.paused ? "▶" : ttsStatus.speaking ? "⏸" : "🔊"}
+                  </span>
+                  <span className="tts-btn-label">
+                    {ttsStatus.paused ? "繼續播放" : ttsStatus.speaking ? "暫停" : "唸給我聽"}
+                  </span>
+                </button>
+                <button onClick={speakCurrentScene} className="tts-btn-secondary" type="button">
+                  <span>↻</span>
+                  <span>從頭</span>
+                </button>
+                <button onClick={stopSpeaking} className="tts-btn-secondary" type="button">
+                  <span>✕</span>
+                  <span>停止</span>
+                </button>
+                <div className="tts-status">
+                  <span
+                    className={`tts-dot ${
+                      ttsStatus.paused ? "paused" : ttsStatus.speaking ? "live" : ""
+                    }`}
+                  ></span>
+                  <span>
+                    {ttsStatus.paused ? "PAUSED" : ttsStatus.speaking ? "▸ NOW READING" : "READY"}
+                  </span>
+                </div>
+              </div>
+            )}
 
             <div
               style={{

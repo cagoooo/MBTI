@@ -23,22 +23,26 @@ export default function CardsPage() {
   // mount 時讀解鎖狀態 + 第一次造訪自動解鎖所有「basic」面向
   useEffect(() => {
     setMounted(true);
-    const map: Record<string, Record<CardFace, boolean>> = {};
-    for (const card of NPC_CARDS) {
-      // 進入 /cards 自動解鎖 basic
-      setCardFaceUnlocked(card.id, "basic");
-      map[card.id] = getCardUnlocked(card.id);
+    refresh();
+    // visibilitychange — 從其他 tab 玩完 SEL/guess 回來自動更新解鎖狀態
+    function onVisibility() {
+      if (document.visibilityState === "visible") refresh();
     }
-    setUnlockedMap(map);
-    // 自動依其他 sessionStorage 解鎖
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
+  }, []);
+
+  function refresh() {
+    for (const card of NPC_CARDS) {
+      setCardFaceUnlocked(card.id, "basic");
+    }
     autoUnlockFromHistory();
-    // 重新讀
     const refreshed: Record<string, Record<CardFace, boolean>> = {};
     for (const card of NPC_CARDS) {
       refreshed[card.id] = getCardUnlocked(card.id);
     }
     setUnlockedMap(refreshed);
-  }, []);
+  }
 
   function autoUnlockFromHistory() {
     if (typeof window === "undefined") return;

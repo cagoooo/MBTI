@@ -1,10 +1,20 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import SiteNav from "@/components/SiteNav";
 import BgmController from "@/components/BgmController";
 import { playSound } from "@/lib/sound";
+import {
+  isTtsAvailable,
+  isTtsOn,
+  speak as speakTts,
+  speakScene,
+  stop as stopTts,
+  pause as pauseTts,
+  resume as resumeTts,
+  subscribeStatus as subscribeTtsStatus,
+} from "@/lib/tts";
 import {
   DIGITAL_SCENARIOS,
   DIGITAL_STYLES,
@@ -20,12 +30,115 @@ export default function DigitalPage() {
   const [sceneIdx, setSceneIdx] = useState(0);
   const [scores, setScores] = useState<DigitalScores>(initialDigitalScores);
   const [showFollowUp, setShowFollowUp] = useState<string | null>(null);
+  const [ttsEnabled, setTtsEnabled] = useState(false);
+  const [ttsStatus, setTtsStatus] = useState<{ speaking: boolean; paused: boolean }>({
+    speaking: false,
+    paused: false,
+  });
 
   const scene = DIGITAL_SCENARIOS[sceneIdx];
   const totalScenes = DIGITAL_SCENARIOS.length;
 
   const finalStyle = useMemo(() => calcDigitalStyle(scores), [scores]);
   const styleInfo = DIGITAL_STYLES[finalStyle];
+
+  // TTS 偵測 + 跨 tab 同步
+  useEffect(() => {
+    setTtsEnabled(isTtsAvailable() && isTtsOn());
+    const refresh = () => setTtsEnabled(isTtsAvailable() && isTtsOn());
+    window.addEventListener("storage", refresh);
+    const iv = window.setInterval(refresh, 1500);
+    return () => {
+      window.removeEventListener("storage", refresh);
+      window.clearInterval(iv);
+    };
+  }, []);
+
+  // 訂閱 TTS 狀態 (用於按鈕 toggle)
+  useEffect(() => {
+    if (!ttsEnabled) {
+      setTtsStatus({ speaking: false, paused: false });
+      return;
+    }
+    return subscribeTtsStatus(setTtsStatus);
+  }, [ttsEnabled]);
+
+  // intro 進場自動朗讀
+  useEffect(() => {
+    if (phase !== "intro" || !ttsEnabled) return;
+    const t = setTimeout(() => {
+      speakScene({
+        text: [
+          "你是哪種數位公民？",
+          "2026 年的國小生每天都面對 AI、假訊息、短影音、線上交友 — 這些都是新的議題。",
+          "六個情境，沒有對錯，跟著直覺選，看見自己的數位風格。",
+        ],
+      });
+    }, 500);
+    return () => {
+      clearTimeout(t);
+      stopTts();
+    };
+  }, [phase, ttsEnabled]);
+
+  // scene 進場自動朗讀
+  useEffect(() => {
+    if (phase !== "scene" || !scene || showFollowUp || !ttsEnabled) return;
+    const t = setTimeout(() => {
+      speakScene({ location: scene.title, text: scene.text });
+    }, 350);
+    return () => {
+      clearTimeout(t);
+      stopTts();
+    };
+  }, [scene?.id, showFollowUp, ttsEnabled, phase]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // followUp 朗讀
+  useEffect(() => {
+    if (!showFollowUp || !ttsEnabled) return;
+    speakTts(showFollowUp, { rate: 1.0, pitch: 1.05 });
+    return () => {
+      stopTts();
+    };
+  }, [showFollowUp, ttsEnabled]);
+
+  // result 進場朗讀風格名 + oneLiner + description
+  useEffect(() => {
+    if (phase !== "result" || !ttsEnabled) return;
+    const t = setTimeout(() => {
+      speakScene({
+        location: `你的數位風格是 ${styleInfo.name}`,
+        text: [styleInfo.oneLiner, styleInfo.description],
+      });
+    }, 400);
+    return () => {
+      clearTimeout(t);
+      stopTts();
+    };
+  }, [phase, ttsEnabled, styleInfo]);
+
+  function speakCurrentScene() {
+    if (!scene) return;
+    playSound("tap");
+    speakScene({ location: scene.title, text: scene.text });
+  }
+
+  function toggleSpeaking() {
+    if (ttsStatus.paused) {
+      playSound("tap");
+      resumeTts();
+    } else if (ttsStatus.speaking) {
+      playSound("toggleOff");
+      pauseTts();
+    } else {
+      speakCurrentScene();
+    }
+  }
+
+  function stopSpeaking() {
+    playSound("toggleOff");
+    stopTts();
+  }
 
   function handleStart() {
     playSound("coin");
@@ -170,6 +283,38 @@ export default function DigitalPage() {
             <div className="hud" style={{ marginBottom: 12 }}>
               ◆ SCENE {sceneIdx + 1} / {totalScenes}
             </div>
+
+            {/* TTS toolbar (僅當使用者開啟 TTS 時顯示) */}
+            {ttsEnabled && (
+              <div className="tts-toolbar" style={{ marginBottom: 12 }}>
+                <button onClick={toggleSpeaking} className="tts-btn-main" type="button">
+                  <span className="tts-btn-icon">
+                    {ttsStatus.paused ? "▶" : ttsStatus.speaking ? "⏸" : "🔊"}
+                  </span>
+                  <span className="tts-btn-label">
+                    {ttsStatus.paused ? "繼續播放" : ttsStatus.speaking ? "暫停" : "唸給我聽"}
+                  </span>
+                </button>
+                <button onClick={speakCurrentScene} className="tts-btn-secondary" type="button">
+                  <span>↻</span>
+                  <span>從頭</span>
+                </button>
+                <button onClick={stopSpeaking} className="tts-btn-secondary" type="button">
+                  <span>✕</span>
+                  <span>停止</span>
+                </button>
+                <div className="tts-status">
+                  <span
+                    className={`tts-dot ${
+                      ttsStatus.paused ? "paused" : ttsStatus.speaking ? "live" : ""
+                    }`}
+                  ></span>
+                  <span>
+                    {ttsStatus.paused ? "PAUSED" : ttsStatus.speaking ? "▸ NOW READING" : "READY"}
+                  </span>
+                </div>
+              </div>
+            )}
 
             <div
               style={{
