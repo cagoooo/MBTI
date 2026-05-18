@@ -801,8 +801,18 @@ html {
   box-shadow: 6px 6px 0 var(--ink);
   padding: 18px 24px;
   margin-bottom: 32px;
-  display: grid; grid-template-columns: auto 1fr auto; gap: 24px; align-items: center;
+  display: grid;
+  /* mobile: 2 欄 (tab + current phase), desktop: 3 欄含 pills */
+  grid-template-columns: 1fr;
+  gap: 16px;
+  align-items: center;
   position: relative;
+}
+@media (min-width: 1024px) {
+  .phase-bar {
+    grid-template-columns: auto 1fr auto;
+    gap: 24px;
+  }
 }
 .phase-bar .tab {
   position: absolute; top: -14px; left: 18px;
@@ -812,7 +822,8 @@ html {
   font-weight: 800; font-size: 11px; letter-spacing: 4px;
 }
 .phase-pills {
-  display: flex; gap: 8px; align-items: center;
+  /* display 由 Tailwind 'hidden lg:flex' 控制 — 別寫死 display: flex 否則覆蓋 .hidden (同 nav-links 雷) */
+  gap: 8px; align-items: center;
   font-family: var(--font-mono);
   font-size: 12px; letter-spacing: 2px;
 }
