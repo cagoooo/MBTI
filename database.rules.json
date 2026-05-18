@@ -15,6 +15,7 @@
           "isActive": { ".validate": "newData.isBoolean()" },
           "scenarioVersion": { ".validate": "newData.isString()" },
           "mode": { ".validate": "newData.isString() && (newData.val() === 'mbti' || newData.val() === 'sel')" },
+          "className": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 30" },
           "$other": { ".validate": false }
         },
 

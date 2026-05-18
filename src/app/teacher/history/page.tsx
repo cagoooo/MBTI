@@ -189,6 +189,12 @@ export default function TeacherHistoryPage() {
                         🎒 MBTI
                       </span>
                     )}
+                    {/* AF1: 班級名 badge */}
+                    {it.snapshot.className?.trim() && (
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-coral/10 border border-coral/40 text-[var(--color-coral)] font-bold" style={{ background: "rgba(255,131,100,0.1)", borderColor: "rgba(255,131,100,0.4)" }}>
+                        🏫 {it.snapshot.className}
+                      </span>
+                    )}
                     <span>{it.snapshot.sessionLabel ?? "活動"}</span>
                   </div>
                   <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--color-ink)]/60">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import SiteNav from "@/components/SiteNav";
 import SoundButton from "@/components/SoundButton";
@@ -9,13 +9,29 @@ import { isFirebaseAvailable } from "@/lib/firebase";
 import appConfig from "../../../../app.config";
 import { playSound } from "@/lib/sound";
 
+const RECENT_CLASSES_KEY = "mbti-recent-classes";
+const RECENT_TEACHER_NAME_KEY = "mbti-recent-teacher-name";
+
 export default function NewRoomPage() {
   const router = useRouter();
   const [teacherName, setTeacherName] = useState("");
   const [password, setPassword] = useState("");
   const [mode, setMode] = useState<RoomMode>("mbti");
+  const [className, setClassName] = useState("");
+  const [recentClasses, setRecentClasses] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // mount 時 prefill 上次用過的老師名 + 載入最近班級
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const lastName = localStorage.getItem(RECENT_TEACHER_NAME_KEY);
+    if (lastName) setTeacherName(lastName);
+    try {
+      const arr = JSON.parse(localStorage.getItem(RECENT_CLASSES_KEY) || "[]");
+      if (Array.isArray(arr)) setRecentClasses(arr.slice(0, 8));
+    } catch {}
+  }, []);
 
   async function handleCreate() {
     setError(null);
@@ -34,11 +50,22 @@ export default function NewRoomPage() {
     setBusy(true);
     playSound("coin");
     try {
-      const r = await createRoom({ teacherName: teacherName.trim(), password, mode });
+      const r = await createRoom({
+        teacherName: teacherName.trim(),
+        password,
+        mode,
+        className: className.trim() || undefined,
+      });
       if (!r) {
         setError("建立房間失敗，請稍後再試");
         setBusy(false);
         return;
+      }
+      // 記憶老師名 + 最近班級 (LRU 上限 8)
+      localStorage.setItem(RECENT_TEACHER_NAME_KEY, teacherName.trim());
+      if (className.trim()) {
+        const next = [className.trim(), ...recentClasses.filter((c) => c !== className.trim())].slice(0, 8);
+        localStorage.setItem(RECENT_CLASSES_KEY, JSON.stringify(next));
       }
       // 把密碼存 sessionStorage 給 dashboard 用（重新整理會被 prompt 補輸入）
       sessionStorage.setItem(`mbti-teacher-${r.roomCode}`, password);
@@ -84,6 +111,42 @@ export default function NewRoomPage() {
             />
             <p className="text-xs text-[var(--color-ink)]/50 mt-1">給學生在 dashboard 看的名字</p>
           </div>
+
+          {/* AF1: 班級名稱 (跨班總覽用) */}
+          <div>
+            <label className="block text-sm font-bold mb-2">
+              班級 <span className="text-xs font-normal text-[var(--color-ink)]/40">(選填)</span>
+            </label>
+            <input
+              type="text"
+              value={className}
+              onChange={(e) => setClassName(e.target.value)}
+              maxLength={30}
+              placeholder="例：3-5 班、五年甲班、六2"
+              className="w-full p-3 rounded-2xl border-2 border-[var(--color-ink)]/15 focus:border-[var(--color-coral)] focus:outline-none"
+              disabled={busy}
+            />
+            {recentClasses.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                <span className="text-xs text-[var(--color-ink)]/50 self-center mr-1">最近用過:</span>
+                {recentClasses.map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setClassName(c)}
+                    disabled={busy}
+                    className="text-xs px-2.5 py-1 rounded-full border border-[var(--color-ink)]/20 bg-white hover:bg-amber-50 hover:border-amber-400 transition"
+                  >
+                    {c}
+                  </button>
+                ))}
+              </div>
+            )}
+            <p className="text-xs text-[var(--color-ink)]/50 mt-1">
+              填了之後 dashboard 可以「按班級分組」「跨班比較」。一個老師教多個班的剛需。
+            </p>
+          </div>
+
           <div>
             <label className="block text-sm font-bold mb-2">房間密碼</label>
             <input

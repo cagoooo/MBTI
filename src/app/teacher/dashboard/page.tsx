@@ -36,6 +36,8 @@ export default function TeacherDashboardPage() {
   const [teacherUid, setTeacherUid] = useState<string | null>(null);
   const [items, setItems] = useState<HistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
+  // AF1: 跨班級總覽 — 選中的 className filter (null = 全部班級)
+  const [activeClassName, setActiveClassName] = useState<string | null>(null);
   // 避免 SSG (no window → Firebase 不可用) vs client (有 window → Firebase 可用) 的 hydration mismatch
   const [mounted, setMounted] = useState(false);
 
@@ -64,18 +66,36 @@ export default function TeacherDashboardPage() {
     return () => unsub();
   }, [teacherUid]);
 
-  // 統計
+  // AF1: 抽出所有出現過的班級名 (依次數排序)
+  const classNames = useMemo(() => {
+    const counter: Record<string, number> = {};
+    for (const it of items) {
+      const cn = it.snapshot.className?.trim();
+      if (cn) counter[cn] = (counter[cn] ?? 0) + 1;
+    }
+    return Object.entries(counter)
+      .sort((a, b) => b[1] - a[1])
+      .map(([name, count]) => ({ name, count }));
+  }, [items]);
+
+  // AF1: 依 active className filter 過濾 items
+  const filteredItems = useMemo(() => {
+    if (!activeClassName) return items;
+    return items.filter((it) => (it.snapshot.className?.trim() ?? "") === activeClassName);
+  }, [items, activeClassName]);
+
+  // 統計 (依 filteredItems)
   const stats = useMemo(() => {
-    const totalSessions = items.length;
-    const totalCompletedStudents = items.reduce((sum, it) => sum + it.snapshot.completedCount, 0);
-    const totalStudents = items.reduce((sum, it) => sum + it.snapshot.totalCount, 0);
+    const totalSessions = filteredItems.length;
+    const totalCompletedStudents = filteredItems.reduce((sum, it) => sum + it.snapshot.completedCount, 0);
+    const totalStudents = filteredItems.reduce((sum, it) => sum + it.snapshot.totalCount, 0);
     // 30 天內 sessions
     const monthAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
-    const recentSessions = items.filter((it) => it.snapshot.endedAt > monthAgo).length;
+    const recentSessions = filteredItems.filter((it) => it.snapshot.endedAt > monthAgo).length;
     // 整合所有 type 分布
     const aggregatedTypes: Record<string, number> = {};
     const aggregatedAxes = { E: 0, I: 0, S: 0, N: 0, T: 0, F: 0, J: 0, P: 0 };
-    for (const it of items) {
+    for (const it of filteredItems) {
       for (const [t, c] of Object.entries(it.snapshot.typeDistribution)) {
         aggregatedTypes[t] = (aggregatedTypes[t] ?? 0) + c;
       }
@@ -94,9 +114,9 @@ export default function TeacherDashboardPage() {
       aggregatedAxes,
       topTypes,
     };
-  }, [items]);
+  }, [filteredItems]);
 
-  const recent5 = items.slice(0, 5);
+  const recent5 = filteredItems.slice(0, 5);
 
   return (
     <div className="container-paper has-floating-ui" style={{paddingTop:0}}>
@@ -148,6 +168,74 @@ export default function TeacherDashboardPage() {
               GitHub repo Secrets 加上 NEXT_PUBLIC_FIREBASE_* env 並重新部署即可
             </p>
           </div>
+        )}
+
+        {/* AF1: 跨班級總覽 — 班級切換 chips */}
+        {classNames.length > 0 && (
+          <section className="mt-6 bg-white rounded-3xl p-4 sm:p-5 border-2 border-[var(--color-ink)]/10 shadow-sm">
+            <div className="flex items-center gap-2 mb-3 flex-wrap">
+              <span className="hud" style={{ color: "var(--coral)" }}>◆ CLASS · FILTER</span>
+              <span className="text-xs text-[var(--color-ink)]/60">
+                {activeClassName
+                  ? `目前顯示「${activeClassName}」的 ${filteredItems.length} 次活動`
+                  : `共 ${classNames.length} 個班級，顯示全部 ${items.length} 次活動`}
+              </span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => {
+                  playSound("tap");
+                  setActiveClassName(null);
+                }}
+                className={`text-sm px-3 py-1.5 rounded-full border-2 font-bold transition tap-target ${
+                  activeClassName === null
+                    ? "bg-[var(--color-ink)] text-[var(--color-paper)] border-[var(--color-ink)]"
+                    : "bg-white border-[var(--color-ink)]/20 hover:border-[var(--color-coral)]"
+                }`}
+                style={{ minHeight: 36 }}
+              >
+                🌐 全部 ({items.length})
+              </button>
+              {classNames.map(({ name, count }) => (
+                <button
+                  key={name}
+                  onClick={() => {
+                    playSound("tap");
+                    setActiveClassName(name);
+                  }}
+                  className={`text-sm px-3 py-1.5 rounded-full border-2 font-bold transition tap-target ${
+                    activeClassName === name
+                      ? "bg-[var(--color-coral)] text-white border-[var(--color-coral)]"
+                      : "bg-white border-[var(--color-ink)]/20 hover:border-[var(--color-coral)]"
+                  }`}
+                  style={{ minHeight: 36 }}
+                >
+                  {name} <span className="opacity-70">({count})</span>
+                </button>
+              ))}
+            </div>
+            {!activeClassName && classNames.length >= 2 && (
+              <p className="text-xs text-[var(--color-ink)]/50 mt-3">
+                💡 點任一班級可單獨檢視該班的統計與活動歷史
+              </p>
+            )}
+            {/* 未來歸類 — 沒填 className 的舊資料 */}
+            {items.some((it) => !it.snapshot.className?.trim()) && (
+              <button
+                onClick={() => {
+                  playSound("tap");
+                  setActiveClassName("");
+                }}
+                className={`text-xs px-3 py-1 rounded-full border-2 font-bold transition mt-2 ${
+                  activeClassName === ""
+                    ? "bg-[var(--color-ink)]/60 text-white border-[var(--color-ink)]/60"
+                    : "bg-white border-[var(--color-ink)]/20 text-[var(--color-ink)]/60 hover:border-[var(--color-ink)]/40"
+                }`}
+              >
+                📦 未分類 ({items.filter((it) => !it.snapshot.className?.trim()).length})
+              </button>
+            )}
+          </section>
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-6">

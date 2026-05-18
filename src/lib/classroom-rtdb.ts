@@ -63,6 +63,8 @@ export interface RoomMeta {
   scenarioVersion: string;
   /** 房間模式 (v3.16 加；舊房間沒此欄位視為 mbti 向後相容) */
   mode?: RoomMode;
+  /** 班級名稱 (v3.19 加；e.g. "3-5 班"、"五年甲班"，老師一個人多班用)；舊房間沒此欄位視為「未分類」 */
+  className?: string;
 }
 
 export interface CreateRoomOptions {
@@ -70,6 +72,7 @@ export interface CreateRoomOptions {
   password: string;
   scenarioVersion?: string;
   mode?: RoomMode;
+  className?: string;
 }
 
 /**
@@ -94,6 +97,7 @@ export async function createRoom(opts: CreateRoomOptions): Promise<{
     isActive: true,
     scenarioVersion: opts.scenarioVersion ?? "1.0",
     mode: opts.mode ?? "mbti",
+    ...(opts.className && opts.className.trim() && { className: opts.className.trim().slice(0, 30) }),
   };
 
   // 嘗試 5 次避免碰撞
@@ -187,6 +191,8 @@ export interface SessionSnapshot {
   mode?: RoomMode;
   /** 老師取名 (用來顯示「三年五班期初活動」之類的) */
   sessionLabel?: string;
+  /** 班級名稱 (v3.19 從 meta.className 帶過來,跨班級分組用) */
+  className?: string;
   /** 完成人數 (有 finalType 的) */
   completedCount: number;
   /** 總參與人數 (含中途離場) */
@@ -259,6 +265,7 @@ export async function saveSessionToHistory(roomCode: string, sessionLabel?: stri
     roomCode,
     mode,
     sessionLabel: sessionLabel ?? `${modeLabel} ${dateLabel}`,
+    ...(room.meta.className && { className: room.meta.className }),
     completedCount: completedStudents.length,
     totalCount: Object.keys(students).length,
     typeDistribution,
