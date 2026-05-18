@@ -657,12 +657,9 @@ export default function SlidesPage() {
         </motion.div>
       </AnimatePresence>
 
-      {/* 頂部工具列 */}
+      {/* 頂部工具列 — 手機常願, desktop 才 hover 漸顯 */}
       <div
-        className="absolute top-0 left-0 right-0 z-50 flex justify-between items-center p-3 bg-gradient-to-b from-black/40 to-transparent print:hidden"
-        style={{ opacity: 0.35, transition: "opacity 0.2s" }}
-        onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
-        onMouseLeave={(e) => (e.currentTarget.style.opacity = "0.35")}
+        className="slides-topbar absolute top-0 left-0 right-0 z-50 flex justify-between items-center p-3 bg-gradient-to-b from-black/40 to-transparent print:hidden"
       >
         <div className="flex items-center gap-2">
           <HomeToButton label="離開投影" />

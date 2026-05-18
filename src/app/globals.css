@@ -2404,15 +2404,18 @@ button, a {
 }
 
 /* ─── M. slides 控制列在手機永遠顯示, desktop 才用 hover 漸顯 ─── */
-.slides-controls {
+.slides-controls,
+.slides-topbar {
   opacity: 1;
   transition: opacity 0.2s;
 }
 @media (hover: hover) and (min-width: 768px) {
-  .slides-controls {
+  .slides-controls,
+  .slides-topbar {
     opacity: 0.4;
   }
-  .slides-controls:hover {
+  .slides-controls:hover,
+  .slides-topbar:hover {
     opacity: 1;
   }
 }
