@@ -2130,6 +2130,8 @@ button, a {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
+  /* v3.17 紙感裝飾線在 print 也要 hide (否則會印一條橘線在 PrintSheet 上) */
+  body::before, body::after { display: none !important; }
   /* 隱藏所有 .print-hide 或常見導覽元素 */
   .print-hide,
   nav,
