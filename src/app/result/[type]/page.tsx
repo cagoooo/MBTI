@@ -67,9 +67,11 @@ export default async function ResultPage({ params }: { params: Promise<{ type: s
   const no = TYPE_NO[upper];
 
   return (
-    <div className="container-paper screen-only" style={{ paddingTop: 0, paddingBottom: 0 }}>
-      <BgmController track="result" />
+    <>
+      {/* PrintSheet 必須在 screen-only wrapper 「外面」 — 否則 print 時父層 display:none 整個 subtree 都消失 */}
       <PrintSheet info={info} />
+      <div className="container-paper screen-only" style={{ paddingTop: 0, paddingBottom: 0 }}>
+      <BgmController track="result" />
       <SiteNav active="/result" ctaLabel="▶ 再玩一次" ctaHref="/game" />
 
       {/* REVEAL HERO */}
@@ -562,7 +564,8 @@ export default async function ResultPage({ params }: { params: Promise<{ type: s
       <p style={{ textAlign: "center", fontSize: 13, color: "var(--muted)", marginBottom: 32 }}>
         ⚠️ MBTI 為性格傾向參考，僅供自我探索，並非心理診斷工具。
       </p>
-    </div>
+      </div>
+    </>
   );
 }
 
