@@ -339,6 +339,29 @@ export async function saveSessionToHistory(roomCode: string, sessionLabel?: stri
   await set(ref(db, path), snapshot);
 }
 
+/**
+ * ⚠️ Firebase RTDB 不儲存空物件 / 空陣列 — typeDistribution: {} 或 students: []
+ * 寫進去後讀回來會變 undefined。所有消費端都直接 Object.entries / .E 取值，
+ * 一旦 undefined 就 throw「Cannot convert undefined or null to object」。
+ * 在資料層統一補回安全預設值，讓所有頁面拿到的 snapshot 永遠是完整結構。
+ */
+function normalizeSnapshot(s: SessionSnapshot): SessionSnapshot {
+  const ac = s.axisCount;
+  return {
+    ...s,
+    typeDistribution: s.typeDistribution ?? {},
+    axisCount: {
+      E: ac?.E ?? 0, I: ac?.I ?? 0, S: ac?.S ?? 0, N: ac?.N ?? 0,
+      T: ac?.T ?? 0, F: ac?.F ?? 0, J: ac?.J ?? 0, P: ac?.P ?? 0,
+    },
+    students: s.students ?? [],
+    ...(s.mode === "sel" && {
+      selStyleDistribution: s.selStyleDistribution ?? {},
+      selStudents: s.selStudents ?? [],
+    }),
+  };
+}
+
 /** 老師端：列出自己的歷史活動 (依時間倒序) */
 export async function listTeacherHistory(teacherUid: string): Promise<
   Array<{ sessionId: string; snapshot: SessionSnapshot }>
@@ -349,7 +372,7 @@ export async function listTeacherHistory(teacherUid: string): Promise<
   if (!snap.exists()) return [];
   const all = snap.val() as Record<string, SessionSnapshot>;
   return Object.entries(all)
-    .map(([sessionId, snapshot]) => ({ sessionId, snapshot }))
+    .map(([sessionId, snapshot]) => ({ sessionId, snapshot: normalizeSnapshot(snapshot) }))
     .sort((a, b) => b.snapshot.endedAt - a.snapshot.endedAt);
 }
 
@@ -363,7 +386,7 @@ export function subscribeTeacherHistory(
   return onValue(ref(db, `classHistory/${teacherUid}`), (snap) => {
     const all = (snap.val() as Record<string, SessionSnapshot> | null) ?? {};
     const items = Object.entries(all)
-      .map(([sessionId, snapshot]) => ({ sessionId, snapshot }))
+      .map(([sessionId, snapshot]) => ({ sessionId, snapshot: normalizeSnapshot(snapshot) }))
       .sort((a, b) => b.snapshot.endedAt - a.snapshot.endedAt);
     callback(items);
   });
