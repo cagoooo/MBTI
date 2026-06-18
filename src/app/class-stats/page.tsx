@@ -8,6 +8,7 @@ import SoundButton from "@/components/SoundButton";
 import SoundLink from "@/components/SoundLink";
 import BgmController from "@/components/BgmController";
 import { computeStats, parseClassInput, type ClassEntry } from "@/lib/parse-class";
+import { fetchRoomRoster } from "@/lib/classroom-rtdb";
 import { ALL_TYPES, type MBTIType } from "@/lib/types";
 import { getMBTIInfo } from "@/lib/mbti";
 import StatsExport from "@/components/StatsExport";
@@ -63,13 +64,30 @@ function ClassStatsPage() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (!fromRoom) return;
-    try {
-      const roster = sessionStorage.getItem(`mbti-class-roster-${fromRoom}`);
-      if (roster && raw === "") {
-        setRaw(roster);
-        setTimeout(() => setSubmitted(true), 200);
-      }
-    } catch {}
+    let cancelled = false;
+    const apply = (roster: string) => {
+      if (cancelled || !roster || raw !== "") return;
+      setRaw(roster);
+      setTimeout(() => {
+        if (!cancelled) setSubmitted(true);
+      }, 200);
+    };
+    void (async () => {
+      // 1) 先用 sessionStorage 快取（從房間後台帶過來的，最快、免再讀 RTDB）
+      try {
+        const cached = sessionStorage.getItem(`mbti-class-roster-${fromRoom}`);
+        if (cached) {
+          apply(cached);
+          return;
+        }
+      } catch {}
+      // 2) 沒快取（例如從 dashboard 一鍵跳來）→ 直接從 RTDB 抓該房已完成學生
+      const roster = await fetchRoomRoster(fromRoom);
+      apply(roster);
+    })();
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fromRoom]);
 

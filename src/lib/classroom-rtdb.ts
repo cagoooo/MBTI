@@ -447,6 +447,25 @@ export function subscribeTeacherRooms(
   };
 }
 
+/**
+ * 抓某房間「已完成測驗（有 finalType）」的學生，組成 class-stats 可解析的名單字串。
+ * 給班級統計頁從 ?from=房號 自動帶入用（任何入口皆可，不必先結束房間）。
+ * 回傳 e.g. "小明 ENFP\n小芸 INFJ"；沒人完成或房間不存在回 ""。
+ */
+export async function fetchRoomRoster(roomCode: string): Promise<string> {
+  const db = getDb();
+  if (!db) return "";
+  // 讀 rooms 需登入（rules: auth != null）
+  await ensureSignedIn();
+  const snap = await get(ref(db, `rooms/${roomCode}/students`));
+  if (!snap.exists()) return "";
+  const students = snap.val() as Record<string, StudentEntry>;
+  return Object.values(students)
+    .filter((s) => s.finalType)
+    .map((s) => `${s.name} ${s.finalType}`)
+    .join("\n");
+}
+
 // ─────────────────── 學生端 ───────────────────
 
 export async function ensureTeacherRoomIndexed(roomCode: string): Promise<void> {

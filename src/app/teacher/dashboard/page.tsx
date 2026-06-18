@@ -308,26 +308,45 @@ export default function TeacherDashboardPage() {
               <div className="space-y-2">
                 {recent5.map((room) => {
                   return (
-                    <Link
+                    <div
                       key={room.roomCode}
-                      href={`/teacher/room?code=${room.roomCode}`}
-                      className="flex items-center gap-3 p-3 rounded-2xl border-2 border-[var(--color-ink)]/10 hover:border-violet-300 hover:bg-[var(--color-cream)]/50 transition"
+                      className="flex items-center gap-2 sm:gap-3 p-3 rounded-2xl border-2 border-[var(--color-ink)]/10 hover:border-violet-300 hover:bg-[var(--color-cream)]/50 transition"
                     >
-                      <div className="w-12 h-12 rounded-xl bg-violet-100 border-2 border-violet-200 flex items-center justify-center text-2xl shrink-0">
-                        {room.meta.isActive ? "🟢" : "📦"}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-black text-sm truncate">
-                          {room.meta.className?.trim() || `房間 ${room.roomCode}`}
-                        </p>
-                        <p className="text-xs text-[var(--color-ink)]/60">
-                          {new Date(room.meta.createdAt).toLocaleDateString("zh-TW")} · {room.roomCode} · {room.completedCount}/{room.totalCount} 位完成
-                        </p>
-                      </div>
-                      <span className="text-xs px-3 py-1 rounded-full bg-white border-2 border-violet-300 text-violet-700 font-bold shrink-0">
+                      <Link
+                        href={`/teacher/room?code=${room.roomCode}`}
+                        onClick={() => playSound("tap")}
+                        className="flex items-center gap-3 flex-1 min-w-0"
+                      >
+                        <div className="w-12 h-12 rounded-xl bg-violet-100 border-2 border-violet-200 flex items-center justify-center text-2xl shrink-0">
+                          {room.meta.isActive ? "🟢" : "📦"}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-black text-sm truncate">
+                            {room.meta.className?.trim() || `房間 ${room.roomCode}`}
+                          </p>
+                          <p className="text-xs text-[var(--color-ink)]/60">
+                            {new Date(room.meta.createdAt).toLocaleDateString("zh-TW")} · {room.roomCode} · {room.completedCount}/{room.totalCount} 位完成
+                          </p>
+                        </div>
+                      </Link>
+                      {room.completedCount > 0 && (
+                        <Link
+                          href={`/class-stats?from=${room.roomCode}`}
+                          onClick={() => playSound("tap")}
+                          className="text-xs px-2.5 py-1 rounded-full bg-emerald-50 border-2 border-emerald-300 text-emerald-700 font-bold shrink-0 hover:bg-emerald-100"
+                          title={`帶入 ${room.completedCount} 位學生的 MBTI 看班級統計`}
+                        >
+                          📊 統計
+                        </Link>
+                      )}
+                      <Link
+                        href={`/teacher/room?code=${room.roomCode}`}
+                        onClick={() => playSound("tap")}
+                        className="text-xs px-3 py-1 rounded-full bg-white border-2 border-violet-300 text-violet-700 font-bold shrink-0 hidden sm:inline-block"
+                      >
                         {room.meta.isActive ? "進入後台" : "查看成果"}
-                      </span>
-                    </Link>
+                      </Link>
+                    </div>
                   );
                 })}
               </div>
