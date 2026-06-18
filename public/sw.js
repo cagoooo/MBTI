@@ -14,7 +14,7 @@
  * 版本變動 → activate 時自動清掉所有 stale caches → 強迫拿新 chunks
  */
 
-const BUILD_VERSION = "20260618-0329-194280c";
+const BUILD_VERSION = "20260618-0341-cadc594";
 const CACHE_VERSION = `mbti-${BUILD_VERSION}`;
 const HTML_CACHE = `${CACHE_VERSION}-html`;
 const STATIC_CACHE = `${CACHE_VERSION}-static`;

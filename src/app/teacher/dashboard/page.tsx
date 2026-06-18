@@ -7,8 +7,14 @@ import SiteNav from "@/components/SiteNav";
 import BgmController from "@/components/BgmController";
 import TeacherLoginButton from "@/components/TeacherLoginButton";
 import { ensureSignedIn, isFirebaseAvailable } from "@/lib/firebase";
-import { subscribeTeacherHistory, type SessionSnapshot } from "@/lib/classroom-rtdb";
-import { ALL_TYPES, type MBTIType } from "@/lib/types";
+import {
+  ensureTeacherRoomIndexed,
+  subscribeTeacherHistory,
+  subscribeTeacherRooms,
+  type SessionSnapshot,
+  type TeacherRoomSummary,
+} from "@/lib/classroom-rtdb";
+import { ALL_TYPES } from "@/lib/types";
 import { getMBTIInfo } from "@/lib/mbti";
 import { playSound } from "@/lib/sound";
 
@@ -35,6 +41,7 @@ interface HistoryItem {
 export default function TeacherDashboardPage() {
   const [teacherUid, setTeacherUid] = useState<string | null>(null);
   const [items, setItems] = useState<HistoryItem[]>([]);
+  const [roomRecords, setRoomRecords] = useState<TeacherRoomSummary[]>([]);
   const [loading, setLoading] = useState(true);
   // AF1: 跨班級總覽 — 選中的 className filter (null = 全部班級)
   const [activeClassName, setActiveClassName] = useState<string | null>(null);
@@ -59,39 +66,66 @@ export default function TeacherDashboardPage() {
 
   useEffect(() => {
     if (!teacherUid) return;
-    const unsub = subscribeTeacherHistory(teacherUid, (next) => {
+    if (typeof window !== "undefined") {
+      const roomCodes = Object.keys(sessionStorage)
+        .map((key) => key.match(/^mbti-teacher-([A-Z0-9]{4,8})$/)?.[1])
+        .filter((code): code is string => !!code);
+      void Promise.allSettled(roomCodes.map((code) => ensureTeacherRoomIndexed(code)));
+    }
+
+    setLoading(true);
+    let historyReady = false;
+    let roomsReady = false;
+    const markReady = () => {
+      if (historyReady && roomsReady) setLoading(false);
+    };
+    const unsubHistory = subscribeTeacherHistory(teacherUid, (next) => {
       setItems(next);
-      setLoading(false);
+      historyReady = true;
+      markReady();
     });
-    return () => unsub();
+    const unsubRooms = subscribeTeacherRooms(teacherUid, (next) => {
+      setRoomRecords(next);
+      roomsReady = true;
+      markReady();
+    });
+    return () => {
+      unsubHistory();
+      unsubRooms();
+    };
   }, [teacherUid]);
 
   // AF1: 抽出所有出現過的班級名 (依次數排序)
   const classNames = useMemo(() => {
     const counter: Record<string, number> = {};
-    for (const it of items) {
-      const cn = it.snapshot.className?.trim();
+    for (const room of roomRecords) {
+      const cn = room.meta.className?.trim();
       if (cn) counter[cn] = (counter[cn] ?? 0) + 1;
     }
     return Object.entries(counter)
       .sort((a, b) => b[1] - a[1])
       .map(([name, count]) => ({ name, count }));
-  }, [items]);
+  }, [roomRecords]);
 
   // AF1: 依 active className filter 過濾 items
   const filteredItems = useMemo(() => {
-    if (!activeClassName) return items;
+    if (activeClassName === null) return items;
     return items.filter((it) => (it.snapshot.className?.trim() ?? "") === activeClassName);
   }, [items, activeClassName]);
 
+  const filteredRooms = useMemo(() => {
+    if (activeClassName === null) return roomRecords;
+    return roomRecords.filter((room) => (room.meta.className?.trim() ?? "") === activeClassName);
+  }, [roomRecords, activeClassName]);
+
   // 統計 (依 filteredItems)
   const stats = useMemo(() => {
-    const totalSessions = filteredItems.length;
-    const totalCompletedStudents = filteredItems.reduce((sum, it) => sum + it.snapshot.completedCount, 0);
-    const totalStudents = filteredItems.reduce((sum, it) => sum + it.snapshot.totalCount, 0);
+    const totalSessions = filteredRooms.length;
+    const totalCompletedStudents = filteredRooms.reduce((sum, room) => sum + room.completedCount, 0);
+    const totalStudents = filteredRooms.reduce((sum, room) => sum + room.totalCount, 0);
     // 30 天內 sessions
     const monthAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
-    const recentSessions = filteredItems.filter((it) => it.snapshot.endedAt > monthAgo).length;
+    const recentSessions = filteredRooms.filter((room) => room.meta.createdAt > monthAgo).length;
     // 整合所有 type 分布
     const aggregatedTypes: Record<string, number> = {};
     const aggregatedAxes = { E: 0, I: 0, S: 0, N: 0, T: 0, F: 0, J: 0, P: 0 };
@@ -114,9 +148,9 @@ export default function TeacherDashboardPage() {
       aggregatedAxes,
       topTypes,
     };
-  }, [filteredItems]);
+  }, [filteredItems, filteredRooms]);
 
-  const recent5 = filteredItems.slice(0, 5);
+  const recent5 = filteredRooms.slice(0, 5);
 
   return (
     <div className="container-paper has-floating-ui" style={{paddingTop:0}}>
@@ -177,8 +211,8 @@ export default function TeacherDashboardPage() {
               <span className="hud" style={{ color: "var(--coral)" }}>◆ CLASS · FILTER</span>
               <span className="text-xs text-[var(--color-ink)]/60">
                 {activeClassName
-                  ? `目前顯示「${activeClassName}」的 ${filteredItems.length} 次活動`
-                  : `共 ${classNames.length} 個班級，顯示全部 ${items.length} 次活動`}
+                  ? `目前顯示「${activeClassName}」的 ${filteredRooms.length} 間房間`
+                  : `共 ${classNames.length} 個班級，顯示全部 ${roomRecords.length} 間房間`}
               </span>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -194,7 +228,7 @@ export default function TeacherDashboardPage() {
                 }`}
                 style={{ minHeight: 36 }}
               >
-                🌐 全部 ({items.length})
+                🌐 全部 ({roomRecords.length})
               </button>
               {classNames.map(({ name, count }) => (
                 <button
@@ -220,7 +254,7 @@ export default function TeacherDashboardPage() {
               </p>
             )}
             {/* 未來歸類 — 沒填 className 的舊資料 */}
-            {items.some((it) => !it.snapshot.className?.trim()) && (
+            {roomRecords.some((room) => !room.meta.className?.trim()) && (
               <button
                 onClick={() => {
                   playSound("tap");
@@ -232,7 +266,7 @@ export default function TeacherDashboardPage() {
                     : "bg-white border-[var(--color-ink)]/20 text-[var(--color-ink)]/60 hover:border-[var(--color-ink)]/40"
                 }`}
               >
-                📦 未分類 ({items.filter((it) => !it.snapshot.className?.trim()).length})
+                📦 未分類 ({roomRecords.filter((room) => !room.meta.className?.trim()).length})
               </button>
             )}
           </section>
@@ -243,7 +277,7 @@ export default function TeacherDashboardPage() {
           <section className="lg:col-span-2 bg-white rounded-3xl p-5 sm:p-6 border-2 border-[var(--color-ink)]/10 shadow-sm">
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-xl font-black flex items-center gap-2">
-                <span>📅</span> 最近 5 次活動
+                <span>🏫</span> 已建立房間
               </h2>
               <Link
                 href="/teacher/history"
@@ -260,7 +294,7 @@ export default function TeacherDashboardPage() {
             {!loading && recent5.length === 0 && (
               <div className="text-center py-8 text-[var(--color-ink)]/50 text-sm">
                 <div className="text-4xl mb-2">📭</div>
-                <p>還沒有任何活動</p>
+                <p>還沒有建立任何班級房間</p>
                 <Link
                   href="/teacher/new"
                   className="inline-block mt-3 px-4 py-2 rounded-full bg-violet-500 text-white text-xs font-bold hover:bg-violet-600"
@@ -272,29 +306,28 @@ export default function TeacherDashboardPage() {
 
             {!loading && recent5.length > 0 && (
               <div className="space-y-2">
-                {recent5.map((it) => {
-                  const topType = Object.entries(it.snapshot.typeDistribution).sort((a, b) => b[1] - a[1])[0];
+                {recent5.map((room) => {
                   return (
-                    <div
-                      key={it.sessionId}
+                    <Link
+                      key={room.roomCode}
+                      href={`/teacher/room?code=${room.roomCode}`}
                       className="flex items-center gap-3 p-3 rounded-2xl border-2 border-[var(--color-ink)]/10 hover:border-violet-300 hover:bg-[var(--color-cream)]/50 transition"
                     >
                       <div className="w-12 h-12 rounded-xl bg-violet-100 border-2 border-violet-200 flex items-center justify-center text-2xl shrink-0">
-                        {topType ? getMBTIInfo(topType[0] as MBTIType).emoji : "🎒"}
+                        {room.meta.isActive ? "🟢" : "📦"}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-black text-sm truncate">{it.snapshot.sessionLabel ?? "活動"}</p>
+                        <p className="font-black text-sm truncate">
+                          {room.meta.className?.trim() || `房間 ${room.roomCode}`}
+                        </p>
                         <p className="text-xs text-[var(--color-ink)]/60">
-                          {new Date(it.snapshot.endedAt).toLocaleDateString("zh-TW")} · {it.snapshot.completedCount} 人完成
+                          {new Date(room.meta.createdAt).toLocaleDateString("zh-TW")} · {room.roomCode} · {room.completedCount}/{room.totalCount} 位完成
                         </p>
                       </div>
-                      <Link
-                        href="/teacher/history"
-                        className="text-xs px-3 py-1 rounded-full bg-white border-2 border-violet-300 text-violet-700 font-bold hover:bg-violet-50 shrink-0"
-                      >
-                        ↗
-                      </Link>
-                    </div>
+                      <span className="text-xs px-3 py-1 rounded-full bg-white border-2 border-violet-300 text-violet-700 font-bold shrink-0">
+                        {room.meta.isActive ? "進入後台" : "查看成果"}
+                      </span>
+                    </Link>
                   );
                 })}
               </div>
