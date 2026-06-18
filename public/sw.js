@@ -14,7 +14,7 @@
  * 版本變動 → activate 時自動清掉所有 stale caches → 強迫拿新 chunks
  */
 
-const BUILD_VERSION = "20260618-0249-c9ab02e";
+const BUILD_VERSION = "20260618-0309-97d7bc8";
 const CACHE_VERSION = `mbti-${BUILD_VERSION}`;
 const HTML_CACHE = `${CACHE_VERSION}-html`;
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
@@ -80,7 +80,11 @@ async function networkFirst(request, cacheName) {
       const offline = await cache.match(offlineUrl) || await cache.match("./offline.html");
       if (offline) return offline;
     }
-    throw err;
+    return new Response("Network unavailable", {
+      status: 503,
+      statusText: "Service Unavailable",
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
+    });
   }
 }
 

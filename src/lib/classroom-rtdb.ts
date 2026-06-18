@@ -210,6 +210,13 @@ export interface SessionSnapshot {
   selStudents?: Array<{ name: string; selStyle: string }>;
 }
 
+export interface ActiveRoomSummary {
+  roomCode: string;
+  meta: RoomMeta;
+  totalCount: number;
+  completedCount: number;
+}
+
 /**
  * 結束會議時把這場活動 snapshot 寫入 classHistory
  * Path: classHistory/{teacherUid}/{sessionId}
@@ -317,6 +324,34 @@ export async function deleteSessionHistory(teacherUid: string, sessionId: string
   const db = getDb();
   if (!db) return;
   await remove(ref(db, `classHistory/${teacherUid}/${sessionId}`));
+}
+
+export function subscribeTeacherActiveRooms(
+  teacherUid: string,
+  callback: (items: ActiveRoomSummary[]) => void,
+): Unsubscribe {
+  const db = getDb();
+  if (!db) return () => {};
+  return onValue(ref(db, "rooms"), (snap) => {
+    const rooms = (snap.val() as Record<string, RoomSnapshot> | null) ?? {};
+    const items = Object.entries(rooms)
+      .filter(([, room]) => room.meta?.teacherUid === teacherUid && room.meta.isActive)
+      .map(([roomCode, room]) => {
+        const students = room.students ?? {};
+        const mode: RoomMode = room.meta?.mode ?? "mbti";
+        const completedCount = Object.values(students).filter((s) =>
+          mode === "sel" ? !!s.selStyle : !!s.finalType,
+        ).length;
+        return {
+          roomCode,
+          meta: room.meta!,
+          totalCount: Object.keys(students).length,
+          completedCount,
+        };
+      })
+      .sort((a, b) => b.meta.createdAt - a.meta.createdAt);
+    callback(items);
+  });
 }
 
 // ─────────────────── 學生端 ───────────────────
