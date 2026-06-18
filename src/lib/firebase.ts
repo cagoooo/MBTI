@@ -37,6 +37,7 @@ const config = {
 let app: FirebaseApp | null = null;
 let auth: Auth | null = null;
 let db: Database | null = null;
+let authReadyPromise: Promise<void> | null = null;
 
 function ensureInit(): { app: FirebaseApp; auth: Auth; db: Database } | null {
   if (typeof window === "undefined") return null;
@@ -69,9 +70,30 @@ export function getAuthInstance(): Auth | null {
  * 同一個瀏覽器穩定拿到同一個 uid (localStorage 持久化)。
  * 升級到 Google 帳號後 uid 不變 (用 linkWithPopup)，舊資料無痛保留。
  */
+function waitAuthReady(authInstance: Auth): Promise<void> {
+  if (authReadyPromise) return authReadyPromise;
+
+  if (authInstance.currentUser) {
+    authReadyPromise = Promise.resolve();
+    return authReadyPromise;
+  }
+
+  authReadyPromise = new Promise<void>((resolve) => {
+    const unsub = onAuthStateChanged(authInstance, () => {
+      unsub();
+      resolve();
+    });
+  });
+  return authReadyPromise;
+}
+
 export async function ensureSignedIn(): Promise<string | null> {
   const init = ensureInit();
   if (!init) return null;
+
+  // 等待 Auth 狀態初始化完成，避免舊有 session 被覆蓋
+  await waitAuthReady(init.auth);
+
   if (init.auth.currentUser) return init.auth.currentUser.uid;
   try {
     const cred = await signInAnonymously(init.auth);
