@@ -157,6 +157,22 @@ function TeacherDashboard() {
     }
   }
 
+  // 不必結束房間，隨時把「目前已完成測驗的學生」名單帶進班級統計
+  function handleViewStats() {
+    const completedRoster = doneStudents
+      .map((s) => `${s.name} ${s.finalType}`)
+      .join("\n");
+    if (!completedRoster) {
+      alert("還沒有學生完成測驗，等學生作答出 MBTI 結果後就會自動帶入囉 🙂");
+      return;
+    }
+    playSound("coin");
+    try {
+      sessionStorage.setItem(`mbti-class-roster-${roomCode}`, completedRoster);
+    } catch {}
+    window.location.href = `${BASE_PATH || ""}/class-stats?from=${roomCode}`;
+  }
+
   const pinnedSceneData = pinnedScene ? getScene(pinnedScene) : null;
   const voteCounts = useMemo(() => {
     if (!pinnedScene || !pinnedSceneData) return [] as Array<{ index: number; count: number; voters: string[] }>;
@@ -814,10 +830,10 @@ function TeacherDashboard() {
                   <span className="emoji">🖥️</span>
                   <span>大螢幕投影模式</span>
                 </a>
-                <a href={`${BASE_PATH}/class-stats`} className="act-btn">
+                <SoundButton sound="tap" onClick={handleViewStats} className="act-btn">
                   <span className="emoji">📊</span>
-                  <span>看完整班級統計</span>
-                </a>
+                  <span>看完整班級統計（{doneStudents.length} 人已完成）</span>
+                </SoundButton>
                 <a href={`${BASE_PATH}/guess`} className="act-btn">
                   <span className="emoji">🎲</span>
                   <span>進入猜朋友環節</span>
