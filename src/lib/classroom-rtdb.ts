@@ -210,7 +210,7 @@ export interface SessionSnapshot {
   selStudents?: Array<{ name: string; selStyle: string }>;
 }
 
-export interface ActiveRoomSummary {
+export interface TeacherRoomSummary {
   roomCode: string;
   meta: RoomMeta;
   totalCount: number;
@@ -326,16 +326,16 @@ export async function deleteSessionHistory(teacherUid: string, sessionId: string
   await remove(ref(db, `classHistory/${teacherUid}/${sessionId}`));
 }
 
-export function subscribeTeacherActiveRooms(
+export function subscribeTeacherRooms(
   teacherUid: string,
-  callback: (items: ActiveRoomSummary[]) => void,
+  callback: (items: TeacherRoomSummary[]) => void,
 ): Unsubscribe {
   const db = getDb();
   if (!db) return () => {};
   return onValue(ref(db, "rooms"), (snap) => {
     const rooms = (snap.val() as Record<string, RoomSnapshot> | null) ?? {};
     const items = Object.entries(rooms)
-      .filter(([, room]) => room.meta?.teacherUid === teacherUid && room.meta.isActive)
+      .filter(([, room]) => room.meta?.teacherUid === teacherUid)
       .map(([roomCode, room]) => {
         const students = room.students ?? {};
         const mode: RoomMode = room.meta?.mode ?? "mbti";

@@ -8,9 +8,9 @@ import SoundButton from "@/components/SoundButton";
 import { ensureSignedIn, isFirebaseAvailable, subscribeAuth } from "@/lib/firebase";
 import {
   deleteSessionHistory,
-  subscribeTeacherActiveRooms,
   subscribeTeacherHistory,
-  type ActiveRoomSummary,
+  subscribeTeacherRooms,
+  type TeacherRoomSummary,
   type SessionSnapshot,
 } from "@/lib/classroom-rtdb";
 import { getMBTIInfo } from "@/lib/mbti";
@@ -29,7 +29,7 @@ interface HistoryItem {
 export default function TeacherHistoryPage() {
   const [teacherUid, setTeacherUid] = useState<string | null>(null);
   const [items, setItems] = useState<HistoryItem[]>([]);
-  const [activeRooms, setActiveRooms] = useState<ActiveRoomSummary[]>([]);
+  const [roomRecords, setRoomRecords] = useState<TeacherRoomSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<string | null>(null);
   // 避免 SSG (no window → Firebase 不可用) vs client hydration mismatch
@@ -68,8 +68,8 @@ export default function TeacherHistoryPage() {
       historyReady = true;
       markReady();
     });
-    const unsubRooms = subscribeTeacherActiveRooms(teacherUid, (next) => {
-      setActiveRooms(next);
+    const unsubRooms = subscribeTeacherRooms(teacherUid, (next) => {
+      setRoomRecords(next);
       roomsReady = true;
       markReady();
     });
@@ -147,15 +147,15 @@ export default function TeacherHistoryPage() {
           <div className="text-center py-12 text-[var(--color-ink)]/50">載入中...</div>
         )}
 
-        {!loading && activeRooms.length > 0 && mounted && isFirebaseAvailable() && (
+        {!loading && roomRecords.length > 0 && mounted && isFirebaseAvailable() && (
           <section className="bg-amber-50 border-2 border-amber-300 rounded-3xl p-5 sm:p-6 mb-6">
             <div className="flex items-center justify-between gap-3 flex-wrap mb-3">
               <div>
                 <h2 className="text-xl font-black flex items-center gap-2">
-                  <span>🟢</span> 進行中的班級房間
+                  <span>🏫</span> 班級房間紀錄
                 </h2>
                 <p className="text-sm text-amber-900/70 mt-1">
-                  剛建立的房間會先在這裡；按下「結束活動」後，才會存進下方歷史紀錄。
+                  房間建立後就會留在這裡；進行中或已結束，都能回到後台查看學生互動資料與成果。
                 </p>
               </div>
               <Link
@@ -166,7 +166,7 @@ export default function TeacherHistoryPage() {
               </Link>
             </div>
             <div className="grid gap-3">
-              {activeRooms.map((room) => (
+              {roomRecords.map((room) => (
                 <Link
                   key={room.roomCode}
                   href={`/teacher/room?code=${room.roomCode}`}
@@ -182,7 +182,7 @@ export default function TeacherHistoryPage() {
                           </span>
                         )}
                         <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-100 border border-emerald-300 text-emerald-800 font-bold">
-                          LIVE
+                          {room.meta.isActive ? "ONLINE" : "ENDED"}
                         </span>
                       </div>
                       <p className="text-xs text-[var(--color-ink)]/60 mt-1">
@@ -190,7 +190,7 @@ export default function TeacherHistoryPage() {
                       </p>
                     </div>
                     <span className="text-xs px-3 py-1.5 rounded-full bg-amber-500 text-white font-black">
-                      回到控制頁
+                      查看後台成果
                     </span>
                   </div>
                 </Link>
@@ -199,7 +199,7 @@ export default function TeacherHistoryPage() {
           </section>
         )}
 
-        {!loading && items.length === 0 && activeRooms.length === 0 && mounted && isFirebaseAvailable() && (
+        {!loading && items.length === 0 && roomRecords.length === 0 && mounted && isFirebaseAvailable() && (
           <div className="bg-white rounded-3xl p-8 border-2 border-dashed border-[var(--color-ink)]/15 text-center">
             <div className="text-6xl mb-3">📭</div>
             <p className="text-lg font-bold mb-2">還沒有任何歷史紀錄</p>
