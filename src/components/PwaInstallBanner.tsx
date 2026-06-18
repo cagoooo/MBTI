@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
 interface BeforeInstallPromptEvent extends Event {
@@ -25,6 +25,7 @@ export default function PwaInstallBanner() {
   const [installEvent, setInstallEvent] = useState<BeforeInstallPromptEvent | null>(null);
   const [show, setShow] = useState(false);
   const [installed, setInstalled] = useState(false);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -52,11 +53,30 @@ export default function PwaInstallBanner() {
     if (visits < 2) return;
 
     function onBeforeInstall(e: Event) {
+      // 雙重檢查：如果最近已經拒絕過，直接 return
+      const lastDismissed = parseInt(localStorage.getItem(STORAGE_KEY) || "0", 10);
+      const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
+      if (lastDismissed && Date.now() - lastDismissed < sevenDaysMs) {
+        return;
+      }
+
       e.preventDefault();
       const evt = e as BeforeInstallPromptEvent;
       setInstallEvent(evt);
-      // 稍等 3 秒讓使用者先看到內容
-      setTimeout(() => setShow(true), 3000);
+      
+      // 清除舊的 timer
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+      
+      // 稍等 3 秒讓使用者先看到內容，並在 callback 內再次驗證拒絕狀態
+      timerRef.current = setTimeout(() => {
+        const lastDismissedNow = parseInt(localStorage.getItem(STORAGE_KEY) || "0", 10);
+        if (lastDismissedNow && Date.now() - lastDismissedNow < sevenDaysMs) {
+          return;
+        }
+        setShow(true);
+      }, 3000);
     }
 
     function onInstalled() {
@@ -68,12 +88,19 @@ export default function PwaInstallBanner() {
     window.addEventListener("beforeinstallprompt", onBeforeInstall);
     window.addEventListener("appinstalled", onInstalled);
     return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
       window.removeEventListener("beforeinstallprompt", onBeforeInstall);
       window.removeEventListener("appinstalled", onInstalled);
     };
   }, []);
 
   async function handleInstall() {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
     if (!installEvent) return;
     try {
       await installEvent.prompt();
@@ -92,6 +119,10 @@ export default function PwaInstallBanner() {
   }
 
   function handleDismiss() {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
     localStorage.setItem(STORAGE_KEY, String(Date.now()));
     setShow(false);
   }

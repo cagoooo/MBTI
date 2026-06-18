@@ -14,6 +14,7 @@ import {
   getAuth,
   signInAnonymously,
   signInWithPopup,
+  signInWithCredential,
   signOut as fbSignOut,
   linkWithPopup,
   GoogleAuthProvider,
@@ -125,9 +126,15 @@ export async function signInWithGoogle(): Promise<
       return { ok: true, uid: cred.user.uid, user: cred.user, upgraded: true };
     } catch (e) {
       const err = e as { code?: string; message?: string };
-      // 這個 Google 帳號已綁過別的 uid → fall back signInWithPopup
+      // 這個 Google 帳號已綁過別的 uid → 提取 credential 進行登入，避免重複彈窗
       if (err.code === "auth/credential-already-in-use" || err.code === "auth/email-already-in-use") {
         try {
+          const credential = GoogleAuthProvider.credentialFromError(e as any);
+          if (credential) {
+            const cred = await signInWithCredential(init.auth, credential);
+            return { ok: true, uid: cred.user.uid, user: cred.user, upgraded: false };
+          }
+          // 若無法提取 credential，才 fallback 到原本的 signInWithPopup
           const cred = await signInWithPopup(init.auth, provider);
           return { ok: true, uid: cred.user.uid, user: cred.user, upgraded: false };
         } catch (e2) {
