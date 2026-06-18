@@ -5,7 +5,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import SiteNav from "@/components/SiteNav";
 import SoundButton from "@/components/SoundButton";
-import { ensureSignedIn, isFirebaseAvailable } from "@/lib/firebase";
+import { ensureSignedIn, isFirebaseAvailable, subscribeAuth } from "@/lib/firebase";
 import {
   deleteSessionHistory,
   subscribeTeacherHistory,
@@ -39,13 +39,17 @@ export default function TeacherHistoryPage() {
       setLoading(false);
       return;
     }
-    void ensureSignedIn().then((uid) => {
-      if (!uid) {
-        setLoading(false);
-        return;
+    // 監聽登入狀態以更新 teacherUid，避免登入後仍使用匿名帳號導致歷史列表空白
+    const unsub = subscribeAuth((user) => {
+      if (user) {
+        setTeacherUid(user.uid);
+      } else {
+        void ensureSignedIn().then((uid) => {
+          if (uid) setTeacherUid(uid);
+        });
       }
-      setTeacherUid(uid);
     });
+    return () => unsub();
   }, []);
 
   useEffect(() => {

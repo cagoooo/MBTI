@@ -14,7 +14,7 @@
  * 版本變動 → activate 時自動清掉所有 stale caches → 強迫拿新 chunks
  */
 
-const BUILD_VERSION = "20260618-0238-1175e39";
+const BUILD_VERSION = "20260618-0243-99395e4";
 const CACHE_VERSION = `mbti-${BUILD_VERSION}`;
 const HTML_CACHE = `${CACHE_VERSION}-html`;
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
@@ -22,6 +22,8 @@ const AUDIO_CACHE = `${CACHE_VERSION}-audio`;
 
 function shouldSkip(url) {
   if (url.protocol !== "http:" && url.protocol !== "https:") return true;
+  // 排除非本站 Origin 的請求（例如 Firebase、Google APIs 等第三方請求）
+  if (url.origin !== self.location.origin) return true;
   return false;
 }
 
