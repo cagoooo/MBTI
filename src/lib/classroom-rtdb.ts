@@ -181,6 +181,14 @@ export async function endRoom(roomCode: string): Promise<void> {
   await syncTeacherRoomCounts(roomCode);
 }
 
+/** 老師重新開啟已結束的房間 (isActive=true)，學生又能加入 / 繼續玩 */
+export async function reopenRoom(roomCode: string): Promise<void> {
+  const db = getDb();
+  if (!db) return;
+  await update(ref(db, `rooms/${roomCode}/meta`), { isActive: true });
+  await syncTeacherRoomCounts(roomCode);
+}
+
 // ─────────────────── 班級活動歷史 (B1) ───────────────────
 
 export interface SessionSnapshot {

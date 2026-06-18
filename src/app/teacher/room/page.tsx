@@ -8,6 +8,7 @@ import SoundButton from "@/components/SoundButton";
 import {
   clearAllVotes,
   endRoom,
+  reopenRoom,
   pinScene,
   reauthorizeTeacher,
   subscribeRoom,
@@ -155,6 +156,12 @@ function TeacherDashboard() {
       } catch {}
       window.location.href = `${BASE_PATH || ""}/class-stats?from=${roomCode}`;
     }
+  }
+
+  async function handleReopenRoom() {
+    if (!confirm("重新開啟這個房間？學生又可以加入 / 繼續作答。")) return;
+    playSound("coin");
+    await reopenRoom(roomCode);
   }
 
   // 不必結束房間，隨時把「目前已完成測驗的學生」名單帶進班級統計
@@ -838,7 +845,12 @@ function TeacherDashboard() {
                   <span className="emoji">🎲</span>
                   <span>進入猜朋友環節</span>
                 </a>
-                {!isRoomEnded && (
+                {isRoomEnded ? (
+                  <SoundButton sound="coin" onClick={handleReopenRoom} className="act-btn">
+                    <span className="emoji">🔓</span>
+                    <span>重新開啟房間</span>
+                  </SoundButton>
+                ) : (
                   <SoundButton sound="whoosh" onClick={handleEndRoom} className="act-btn danger">
                     <span className="emoji">⏹</span>
                     <span>結束本次房間</span>
