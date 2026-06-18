@@ -48,6 +48,12 @@
           "broadcast": { ".validate": "newData.isString() && newData.val().length <= 200" }
         }
       }
+    },
+    "classHistory": {
+      "$teacherUid": {
+        ".read": "auth != null && auth.uid === $teacherUid",
+        ".write": "auth != null && auth.uid === $teacherUid"
+      }
     }
   }
 }
