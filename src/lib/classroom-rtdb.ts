@@ -15,7 +15,6 @@ import {
   onValue,
   ref,
   remove,
-  serverTimestamp,
   set,
   update,
   onDisconnect,
@@ -106,7 +105,10 @@ export async function createRoom(opts: CreateRoomOptions): Promise<{
     const metaRef = ref(db, `rooms/${code}/meta`);
     const snapshot = await get(metaRef);
     if (snapshot.exists()) continue;
-    await set(metaRef, meta);
+    await update(ref(db), {
+      [`rooms/${code}/meta`]: meta,
+      [`teacherRooms/${teacherUid}/${code}`]: toTeacherRoomIndex(code, meta),
+    });
     return { roomCode: code, teacherUid };
   }
   return null;
@@ -176,6 +178,7 @@ export async function endRoom(roomCode: string): Promise<void> {
     // 失敗不阻塞 endRoom
   }
   await update(ref(db, `rooms/${roomCode}/meta`), { isActive: false });
+  await syncTeacherRoomCounts(roomCode);
 }
 
 // ─────────────────── 班級活動歷史 (B1) ───────────────────
@@ -215,6 +218,53 @@ export interface TeacherRoomSummary {
   meta: RoomMeta;
   totalCount: number;
   completedCount: number;
+}
+
+interface TeacherRoomIndexRecord {
+  roomCode: string;
+  teacherName: string;
+  createdAt: number;
+  isActive: boolean;
+  scenarioVersion: string;
+  mode?: RoomMode;
+  className?: string;
+  totalCount: number;
+  completedCount: number;
+}
+
+function toTeacherRoomIndex(roomCode: string, meta: RoomMeta): TeacherRoomIndexRecord {
+  return {
+    roomCode,
+    teacherName: meta.teacherName,
+    createdAt: meta.createdAt,
+    isActive: meta.isActive,
+    scenarioVersion: meta.scenarioVersion,
+    ...(meta.mode && { mode: meta.mode }),
+    ...(meta.className && { className: meta.className }),
+    totalCount: 0,
+    completedCount: 0,
+  };
+}
+
+async function syncTeacherRoomCounts(roomCode: string): Promise<void> {
+  const db = getDb();
+  if (!db) return;
+  const roomSnap = await get(ref(db, `rooms/${roomCode}`));
+  if (!roomSnap.exists()) return;
+  const room = roomSnap.val() as RoomSnapshot;
+  if (!room.meta) return;
+
+  const students = room.students ?? {};
+  const mode: RoomMode = room.meta.mode ?? "mbti";
+  const completedCount = Object.values(students).filter((s) =>
+    mode === "sel" ? !!s.selStyle : !!s.finalType,
+  ).length;
+
+  await update(ref(db, `teacherRooms/${room.meta.teacherUid}/${roomCode}`), {
+    isActive: room.meta.isActive,
+    totalCount: Object.keys(students).length,
+    completedCount,
+  });
 }
 
 /**
@@ -332,29 +382,82 @@ export function subscribeTeacherRooms(
 ): Unsubscribe {
   const db = getDb();
   if (!db) return () => {};
-  return onValue(ref(db, "rooms"), (snap) => {
-    const rooms = (snap.val() as Record<string, RoomSnapshot> | null) ?? {};
-    const items = Object.entries(rooms)
-      .filter(([, room]) => room.meta?.teacherUid === teacherUid)
-      .map(([roomCode, room]) => {
-        const students = room.students ?? {};
-        const mode: RoomMode = room.meta?.mode ?? "mbti";
+  let indexRecords: Record<string, TeacherRoomIndexRecord> = {};
+  const roomSnapshots = new Map<string, RoomSnapshot>();
+  const roomUnsubs = new Map<string, Unsubscribe>();
+
+  const emit = () => {
+    const items = Object.entries(indexRecords)
+      .map(([indexedCode, indexed]) => {
+        const roomCode = indexed.roomCode ?? indexedCode;
+        const room = roomSnapshots.get(roomCode);
+        const meta = room?.meta ?? {
+          teacherUid,
+          teacherName: indexed.teacherName,
+          passwordHash: "",
+          createdAt: indexed.createdAt,
+          isActive: indexed.isActive,
+          scenarioVersion: indexed.scenarioVersion,
+          ...(indexed.mode && { mode: indexed.mode }),
+          ...(indexed.className && { className: indexed.className }),
+        };
+        const students = room?.students ?? {};
+        const mode: RoomMode = meta.mode ?? "mbti";
         const completedCount = Object.values(students).filter((s) =>
           mode === "sel" ? !!s.selStyle : !!s.finalType,
         ).length;
         return {
           roomCode,
-          meta: room.meta!,
+          meta,
           totalCount: Object.keys(students).length,
           completedCount,
         };
       })
       .sort((a, b) => b.meta.createdAt - a.meta.createdAt);
     callback(items);
+  };
+
+  const indexUnsub = onValue(ref(db, `teacherRooms/${teacherUid}`), (snap) => {
+    indexRecords = (snap.val() as Record<string, TeacherRoomIndexRecord> | null) ?? {};
+    const wantedCodes = new Set(Object.entries(indexRecords).map(([code, room]) => room.roomCode ?? code));
+
+    for (const [code, unsub] of roomUnsubs.entries()) {
+      if (!wantedCodes.has(code)) {
+        unsub();
+        roomUnsubs.delete(code);
+        roomSnapshots.delete(code);
+      }
+    }
+
+    for (const code of wantedCodes) {
+      if (roomUnsubs.has(code)) continue;
+      const unsub = onValue(ref(db, `rooms/${code}`), (roomSnap) => {
+        roomSnapshots.set(code, (roomSnap.val() as RoomSnapshot | null) ?? {});
+        emit();
+      });
+      roomUnsubs.set(code, unsub);
+    }
+
+    emit();
   });
+
+  return () => {
+    indexUnsub();
+    for (const unsub of roomUnsubs.values()) unsub();
+  };
 }
 
 // ─────────────────── 學生端 ───────────────────
+
+export async function ensureTeacherRoomIndexed(roomCode: string): Promise<void> {
+  const db = getDb();
+  if (!db) return;
+  const teacherUid = await ensureSignedIn();
+  if (!teacherUid) return;
+  const meta = await getRoomMeta(roomCode);
+  if (!meta || meta.teacherUid !== teacherUid) return;
+  await update(ref(db, `teacherRooms/${teacherUid}/${roomCode}`), toTeacherRoomIndex(roomCode, meta));
+}
 
 export interface StudentEntry {
   name: string;

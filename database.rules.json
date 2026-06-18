@@ -54,6 +54,25 @@
         ".read": "auth != null && auth.uid === $teacherUid",
         ".write": "auth != null && auth.uid === $teacherUid"
       }
+    },
+    "teacherRooms": {
+      "$teacherUid": {
+        ".read": "auth != null && auth.uid === $teacherUid",
+        ".write": "auth != null && auth.uid === $teacherUid",
+        "$roomCode": {
+          ".validate": "$roomCode.length >= 4 && $roomCode.length <= 8 && $roomCode.matches(/^[A-Z0-9]+$/)",
+          "roomCode": { ".validate": "newData.isString() && newData.val() === $roomCode" },
+          "teacherName": { ".validate": "newData.isString() && newData.val().length <= 30" },
+          "createdAt": { ".validate": "newData.isNumber()" },
+          "isActive": { ".validate": "newData.isBoolean()" },
+          "scenarioVersion": { ".validate": "newData.isString()" },
+          "mode": { ".validate": "newData.isString() && (newData.val() === 'mbti' || newData.val() === 'sel')" },
+          "className": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 30" },
+          "totalCount": { ".validate": "newData.isNumber()" },
+          "completedCount": { ".validate": "newData.isNumber()" },
+          "$other": { ".validate": false }
+        }
+      }
     }
   }
 }

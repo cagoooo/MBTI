@@ -8,6 +8,7 @@ import SoundButton from "@/components/SoundButton";
 import { ensureSignedIn, isFirebaseAvailable, subscribeAuth } from "@/lib/firebase";
 import {
   deleteSessionHistory,
+  ensureTeacherRoomIndexed,
   subscribeTeacherHistory,
   subscribeTeacherRooms,
   type TeacherRoomSummary,
@@ -57,6 +58,12 @@ export default function TeacherHistoryPage() {
 
   useEffect(() => {
     if (!teacherUid) return;
+    if (typeof window !== "undefined") {
+      const roomCodes = Object.keys(sessionStorage)
+        .map((key) => key.match(/^mbti-teacher-([A-Z0-9]{4,8})$/)?.[1])
+        .filter((code): code is string => !!code);
+      void Promise.allSettled(roomCodes.map((code) => ensureTeacherRoomIndexed(code)));
+    }
     setLoading(true);
     let historyReady = false;
     let roomsReady = false;
