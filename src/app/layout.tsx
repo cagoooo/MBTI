@@ -79,6 +79,15 @@ export default function RootLayout({
   return (
     <html lang="zh-Hant">
       <head>
+        {/* 🛡️ App 內建瀏覽器防護：Google OAuth 禁止在 WebView 登入（403 disallowed_useragent）
+            LINE → 自動帶 openExternalBrowser=1 跳系統預設瀏覽器；FB/IG/Messenger/微信/Kakao → 顯示引導。
+            必須放在 <head> 最前、早於任何 Google 登入邏輯執行。 */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              '(function(){var ua=navigator.userAgent||"";var isLine=/\\bLine\\//i.test(ua);var isOtherInApp=/FBAN|FBAV|FB_IAB|Instagram|Messenger|MicroMessenger|KAKAOTALK/i.test(ua);if(isLine&&location.search.indexOf("openExternalBrowser=1")===-1){var sep=location.search?"&":"?";location.replace(location.href.split("#")[0]+sep+"openExternalBrowser=1"+location.hash);return;}if(isOtherInApp||isLine){document.addEventListener("DOMContentLoaded",function(){var d=document.createElement("div");d.style.cssText="position:fixed;inset:0;z-index:99999;background:#0f172a;color:#fff;display:flex;align-items:center;justify-content:center;padding:24px;font-family:system-ui,\'Microsoft JhengHei\',sans-serif;";d.innerHTML=\'<div style="max-width:420px;text-align:center;background:#1e293b;border-radius:16px;padding:32px 26px;"><div style="font-size:52px;">🌐</div><h4 style="font-weight:800;margin:14px 0 10px;">請改用瀏覽器開啟</h4><p style="font-size:15px;line-height:1.8;color:#cbd5e1;margin:0;">您目前在 <b style="color:#fbbf24;">App 內建瀏覽器</b>（LINE／FB 等）中開啟本頁，Google 基於安全政策<b>禁止在此環境登入</b>。<br><br>請點右上／右下角「<b>⋯</b>」→ 選「<b style="color:#4ade80;">用預設瀏覽器開啟</b>」。</p></div>\';document.body.appendChild(d);});}})();',
+          }}
+        />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
