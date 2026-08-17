@@ -3175,7 +3175,7 @@ v3.0 → v3.22 走了 5 個月, **產品已經完整**, 接下來的重點要從
 - **作者**：阿凱老師（桃園市龍潭區石門國小）
 - **GitHub**：[cagoooo/MBTI](https://github.com/cagoooo/MBTI)
 - **線上版**：https://cagoooo.github.io/MBTI/
-- **教師頁**：https://www.smes.tyc.edu.tw/modules/tadnews/page.php?ncsn=11&nsn=16#a5
+- **教師頁**：https://www.smes.tyc.edu.tw/modules/school/index.php?department_id=2&zone_id=0&page_id=2&content_id=11&type=news&from_op=all_news#a5
 
 ---
 

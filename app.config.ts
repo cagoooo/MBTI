@@ -40,7 +40,7 @@ const config: AppConfig = {
   schoolShortName: "石門國小",
   teacherName: "阿凱老師",
   teacherHomepageUrl:
-    "https://www.smes.tyc.edu.tw/modules/tadnews/page.php?ncsn=11&nsn=16#a5",
+    "https://www.smes.tyc.edu.tw/modules/school/index.php?department_id=2&zone_id=0&page_id=2&content_id=11&type=news&from_op=all_news#a5",
   schoolHomepageUrl: "https://www.smes.tyc.edu.tw/",
   schoolEmoji: "🏫",
   productionUrl: "https://cagoooo.github.io/MBTI",
