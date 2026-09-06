@@ -4,7 +4,7 @@
 
 不是無聊問卷！背起書包走進校園，從開學第一天到校慶大結局，每個選擇都會改變故事走向，最後揭曉你的人格類型。
 
-> 📍 **目前版本：v3.13** ｜ 線上版：<https://cagoooo.github.io/MBTI/>
+> 📍 **目前版本：v3.22.5** ｜ 線上版：<https://cagoooo.github.io/MBTI/>
 >
 > 🗺️ **完整開發路線圖、未來優化建議、版本歷程都寫在 [ROADMAP.md](./ROADMAP.md)** — 包含 60+ 個依優先級分類的開發建議與評估。
 >
@@ -182,7 +182,7 @@ MBTI 校園奇遇記
 - Repository：`cagoooo/MBTI`
 - 可見性：公開
 - 主要技術：TypeScript、React、Next.js、Firebase、Tailwind CSS
-- 線上入口：未在 GitHub repository metadata 設定
+- 線上入口：<https://cagoooo.github.io/MBTI/>
 
 ### 可以怎麼應用
 
