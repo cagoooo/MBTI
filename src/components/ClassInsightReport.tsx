@@ -1,18 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { generateClassInsight, isGeminiAvailable } from "@/lib/gemini";
 import type { SessionSnapshot } from "@/lib/classroom-rtdb";
 import { playSound } from "@/lib/sound";
 import { isTtsAvailable, isTtsOn, speak as speakTts, stop as stopTts } from "@/lib/tts";
+import GeminiKeySettings, { useGeminiSettings } from "./GeminiKeySettings";
 
 interface Props {
   sessionId: string;
   snapshot: SessionSnapshot;
 }
-
-const STORAGE_KEY_PREFIX = "mbti-class-insight-";
 
 /**
  * W1 — AI 班級洞察報告
@@ -22,12 +21,14 @@ const STORAGE_KEY_PREFIX = "mbti-class-insight-";
  *
  * 設計:
  *   - 不自動觸發 (節省額度)
- *   - localStorage 快取結果 (跨 session — 老師重訪可看)
+ *   - 只顯示此頁取得的 Google 回應，不讀寫結果快取
  *   - 生成後自動朗讀 (跟其他 Gemini widget 一致)
  *   - 列印按鈕 (家長日報告材料)
  */
 export default function ClassInsightReport({ sessionId, snapshot }: Props) {
-  const [available, setAvailable] = useState(false);
+  const { available, revision } = useGeminiSettings();
+  const requestId = useRef(0);
+  const pending = useRef(false);
   const [result, setResult] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -35,12 +36,7 @@ export default function ClassInsightReport({ sessionId, snapshot }: Props) {
   const [ttsEnabled, setTtsEnabled] = useState(false);
 
   useEffect(() => {
-    setAvailable(isGeminiAvailable());
     setTtsEnabled(isTtsAvailable() && isTtsOn());
-    try {
-      const cached = localStorage.getItem(STORAGE_KEY_PREFIX + sessionId);
-      if (cached) setResult(cached);
-    } catch {}
     const refreshTts = () => setTtsEnabled(isTtsAvailable() && isTtsOn());
     window.addEventListener("storage", refreshTts);
     window.addEventListener("mbti-settings-change", refreshTts);
@@ -49,6 +45,16 @@ export default function ClassInsightReport({ sessionId, snapshot }: Props) {
       window.removeEventListener("mbti-settings-change", refreshTts);
     };
   }, [sessionId]);
+
+  useEffect(() => {
+    requestId.current++;
+    pending.current = false;
+    setResult(null);
+    setError(null);
+    setLoading(false);
+    stopTts();
+    return () => { requestId.current++; };
+  }, [revision, sessionId]);
 
   function speakResult(text: string) {
     if (!ttsEnabled) return;
@@ -66,6 +72,9 @@ export default function ClassInsightReport({ sessionId, snapshot }: Props) {
   }
 
   async function generate() {
+    if (!isGeminiAvailable() || pending.current) return;
+    const currentRequest = ++requestId.current;
+    pending.current = true;
     setLoading(true);
     setError(null);
     setOpen(true);
@@ -78,24 +87,26 @@ export default function ClassInsightReport({ sessionId, snapshot }: Props) {
         typeDistribution: snapshot.typeDistribution,
         axisCount: snapshot.axisCount,
       });
+      if (currentRequest !== requestId.current) return;
       setResult(text);
-      try {
-        localStorage.setItem(STORAGE_KEY_PREFIX + sessionId, text);
-      } catch {}
-      setTimeout(() => speakResult(text), 350);
+      setTimeout(() => {
+        if (currentRequest === requestId.current && isGeminiAvailable()) speakResult(text);
+      }, 350);
     } catch (e) {
+      if (currentRequest !== requestId.current) return;
       const msg = e instanceof Error ? e.message : "未知錯誤";
       setError(msg);
       playSound("toggleOff");
     } finally {
-      setLoading(false);
+      if (currentRequest === requestId.current) {
+        pending.current = false;
+        setLoading(false);
+      }
     }
   }
 
   function regenerate() {
-    try {
-      localStorage.removeItem(STORAGE_KEY_PREFIX + sessionId);
-    } catch {}
+    if (!isGeminiAvailable() || pending.current) return;
     setResult(null);
     void generate();
   }
@@ -105,24 +116,27 @@ export default function ClassInsightReport({ sessionId, snapshot }: Props) {
     window.print();
   }
 
-  if (!available) return null;
-
   return (
     <>
-      <button
-        onClick={() => {
-          if (result) {
-            setOpen(true);
-            playSound("tap");
-          } else {
-            void generate();
-          }
-        }}
-        className="text-xs px-3 py-1.5 rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white font-bold hover:opacity-95 transition flex items-center gap-1.5 shadow"
-      >
-        <span>✨</span>
-        <span>{result ? "查看 AI 報告" : "AI 寫家長日報告"}</span>
-      </button>
+      <section className="my-3 w-full min-w-0 rounded-2xl border border-violet-200 bg-violet-50/70 p-3 print-hide">
+        <h3 className="text-sm font-bold text-violet-900">✨ AI 班級洞察報告</h3>
+        <GeminiKeySettings />
+        <button
+          disabled={!available || loading}
+          onClick={() => {
+            if (result) {
+              setOpen(true);
+              playSound("tap");
+            } else {
+              void generate();
+            }
+          }}
+          className="text-xs px-3 py-1.5 rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white font-bold hover:opacity-95 transition flex items-center gap-1.5 shadow disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <span>✨</span>
+          <span>{loading ? "正在等待 Google 回應…" : result ? "查看 AI 報告" : available ? "AI 寫家長日報告" : "請先設定 Gemini"}</span>
+        </button>
+      </section>
 
       {/* Modal */}
       <AnimatePresence>
@@ -167,7 +181,7 @@ export default function ClassInsightReport({ sessionId, snapshot }: Props) {
                   <div className="space-y-3">
                     <div className="flex items-center gap-2 text-violet-700 font-bold text-sm">
                       <span className="animate-pulse">🪄</span>
-                      <span>AI 正在為這個班級分析中... (約 8 秒)</span>
+                      <span>正在等待 Google 生成班級報告，請耐心等待…</span>
                     </div>
                     {Array.from({ length: 4 }).map((_, i) => (
                       <div key={i} className="space-y-2">
@@ -185,6 +199,7 @@ export default function ClassInsightReport({ sessionId, snapshot }: Props) {
                     <p className="text-xs mt-1 opacity-80">{error}</p>
                     <button
                       onClick={generate}
+                      disabled={!available || loading}
                       className="mt-3 px-4 py-1.5 rounded-full bg-white border-2 border-rose-300 text-rose-700 text-xs font-bold hover:bg-rose-50"
                     >
                       🔄 再試一次
@@ -209,7 +224,7 @@ export default function ClassInsightReport({ sessionId, snapshot }: Props) {
               {result && (
                 <div className="p-4 border-t-2 border-violet-100 flex items-center justify-between gap-2 flex-wrap print-hide">
                   <p className="text-[10px] text-violet-700/60 leading-relaxed flex-1 min-w-[180px]">
-                    ✨ 由 Google Gemini AI 生成 · 老師參考用
+                    ✨ 此頁取得的 Google Gemini 回應 · 非心理診斷，需教師審閱
                   </p>
                   <div className="flex items-center gap-1.5 shrink-0">
                     {ttsEnabled && (
@@ -236,6 +251,7 @@ export default function ClassInsightReport({ sessionId, snapshot }: Props) {
                     </button>
                     <button
                       onClick={regenerate}
+                      disabled={!available || loading}
                       className="text-xs px-3 py-1.5 rounded-full bg-violet-100 border border-violet-300 text-violet-700 font-bold hover:bg-violet-200"
                     >
                       🔄 重新生成

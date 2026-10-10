@@ -1,32 +1,33 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { generatePersonalAnalysis, isGeminiAvailable } from "@/lib/gemini";
 import { loadPretestGuess } from "@/lib/pretest";
 import type { MBTIType } from "@/lib/types";
 import { playSound } from "@/lib/sound";
 import { isTtsAvailable, isTtsOn, speak as speakTts, stop as stopTts } from "@/lib/tts";
+import GeminiKeySettings, { useGeminiSettings } from "./GeminiKeySettings";
 
 interface Props {
   type: MBTIType;
   nickname: string;
 }
 
-const STORAGE_KEY_PREFIX = "mbti-gemini-analysis-";
-
 /**
  * Gemini 個人化分析 — 結果頁可選 widget
  *
  * 設計:
  *   - 不自動觸發 (要使用者主動按按鈕,避免無謂呼叫額度)
- *   - 結果快取在 sessionStorage,同型別 + 同 session 不重打
+ *   - 只顯示此頁取得的 Google 回應，不讀寫結果快取
  *   - Loading 狀態用骨架屏 + 提示
  *   - 失敗 graceful fallback
  *   - 醒目標示「✨ AI 寫的、非診斷」
  */
 export default function GeminiAnalysis({ type, nickname }: Props) {
-  const [available, setAvailable] = useState(false);
+  const { available, revision } = useGeminiSettings();
+  const requestId = useRef(0);
+  const pending = useRef(false);
   const [result, setResult] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -34,17 +35,18 @@ export default function GeminiAnalysis({ type, nickname }: Props) {
   const [ttsEnabled, setTtsEnabled] = useState(false);
 
   useEffect(() => {
-    setAvailable(isGeminiAvailable());
     setTtsEnabled(isTtsAvailable() && isTtsOn());
-    // 拿 sessionStorage 的 branch / 之前快取的結果
+    // 僅讀故事支線，不讀取舊 AI 結果。
+    setBranch("main");
     try {
       const raw = sessionStorage.getItem("mbti-result");
       if (raw) {
-        const parsed = JSON.parse(raw) as { branch?: string };
-        if (parsed.branch) setBranch(parsed.branch);
+        const parsed: unknown = JSON.parse(raw);
+        if (parsed && typeof parsed === "object" && "branch" in parsed &&
+          typeof parsed.branch === "string" && ["main", "sport", "art", "study", "friend"].includes(parsed.branch)) {
+          setBranch(parsed.branch);
+        }
       }
-      const cached = sessionStorage.getItem(STORAGE_KEY_PREFIX + type);
-      if (cached) setResult(cached);
     } catch {}
     const refreshTts = () => setTtsEnabled(isTtsAvailable() && isTtsOn());
     window.addEventListener("storage", refreshTts);
@@ -54,6 +56,16 @@ export default function GeminiAnalysis({ type, nickname }: Props) {
       window.removeEventListener("mbti-settings-change", refreshTts);
     };
   }, [type]);
+
+  useEffect(() => {
+    requestId.current++;
+    pending.current = false;
+    setResult(null);
+    setError(null);
+    setLoading(false);
+    stopTts();
+    return () => { requestId.current++; };
+  }, [revision, type]);
 
   function speakResult(text: string) {
     if (!ttsEnabled) return;
@@ -71,6 +83,9 @@ export default function GeminiAnalysis({ type, nickname }: Props) {
   }
 
   async function generate() {
+    if (!isGeminiAvailable() || pending.current) return;
+    const currentRequest = ++requestId.current;
+    pending.current = true;
     setLoading(true);
     setError(null);
     playSound("coin");
@@ -82,30 +97,30 @@ export default function GeminiAnalysis({ type, nickname }: Props) {
         branch,
         pretestGuess: pretest?.guess,
       });
+      if (currentRequest !== requestId.current) return;
       setResult(text);
-      try {
-        sessionStorage.setItem(STORAGE_KEY_PREFIX + type, text);
-      } catch {}
       // 新生成→自動朗讀
-      setTimeout(() => speakResult(text), 350);
+      setTimeout(() => {
+        if (currentRequest === requestId.current && isGeminiAvailable()) speakResult(text);
+      }, 350);
     } catch (e) {
+      if (currentRequest !== requestId.current) return;
       const msg = e instanceof Error ? e.message : "未知錯誤";
       setError(msg);
       playSound("toggleOff");
     } finally {
-      setLoading(false);
+      if (currentRequest === requestId.current) {
+        pending.current = false;
+        setLoading(false);
+      }
     }
   }
 
   function regenerate() {
-    try {
-      sessionStorage.removeItem(STORAGE_KEY_PREFIX + type);
-    } catch {}
+    if (!isGeminiAvailable() || pending.current) return;
     setResult(null);
     void generate();
   }
-
-  if (!available) return null; // 沒設 API key 就完全隱藏
 
   return (
     <motion.section
@@ -123,18 +138,21 @@ export default function GeminiAnalysis({ type, nickname }: Props) {
             <span>AI 為你寫一段</span>
           </h3>
           <p className="text-xs text-violet-700/70 mt-1">
-            根據你的 MBTI + 故事選擇，請 AI 寫一段專屬於你的描述
+            根據你的 MBTI、故事支線與課前猜測，請 AI 寫一段專屬於你的描述
           </p>
         </div>
       </div>
 
+      <GeminiKeySettings />
+
       {!result && !loading && !error && (
         <button
           onClick={generate}
-          className="btn-3d w-full py-3.5 rounded-2xl bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white font-black text-base hover:opacity-95 transition flex items-center justify-center gap-2"
+          disabled={!available || loading}
+          className="btn-3d w-full py-3.5 rounded-2xl bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white font-black text-base hover:opacity-95 transition flex items-center justify-center gap-2 disabled:cursor-not-allowed disabled:opacity-50"
         >
           <span className="text-xl">🪄</span>
-          <span>點此產生 (約 5 秒)</span>
+          <span>{available ? "點此產生個人化分析" : "請先由教師設定 Gemini"}</span>
         </button>
       )}
 
@@ -142,7 +160,7 @@ export default function GeminiAnalysis({ type, nickname }: Props) {
         <div className="bg-white/70 rounded-2xl p-5 space-y-3">
           <div className="flex items-center gap-2 text-violet-700 font-bold text-sm">
             <span className="animate-pulse">🪄</span>
-            <span>AI 正在為你寫專屬分析中... (約 5 秒)</span>
+            <span>正在等待 Google 生成專屬分析，請耐心等待…</span>
           </div>
           {/* 骨架屏 */}
           <div className="space-y-2">
@@ -163,6 +181,7 @@ export default function GeminiAnalysis({ type, nickname }: Props) {
           <p className="text-xs mt-1 opacity-80">{error}</p>
           <button
             onClick={generate}
+            disabled={!available || loading}
             className="mt-3 px-4 py-1.5 rounded-full bg-white border-2 border-rose-300 text-rose-700 text-xs font-bold hover:bg-rose-50"
           >
             🔄 再試一次
@@ -188,7 +207,7 @@ export default function GeminiAnalysis({ type, nickname }: Props) {
           </div>
           <div className="flex items-center justify-between gap-2 mt-4 pt-3 border-t border-violet-100 flex-wrap">
             <p className="text-[10px] text-violet-700/60 leading-relaxed flex-1 min-w-[180px]">
-              ✨ 由 Google Gemini AI 生成 · 僅供參考，非心理診斷
+              ✨ 此頁取得的 Google Gemini 回應 · 非心理診斷，需教師審閱
             </p>
             <div className="flex items-center gap-1.5 shrink-0">
               {ttsEnabled && result && (
@@ -211,6 +230,7 @@ export default function GeminiAnalysis({ type, nickname }: Props) {
               )}
               <button
                 onClick={regenerate}
+                disabled={!available || loading}
                 className="text-xs px-3 py-1 rounded-full bg-violet-100 border border-violet-300 text-violet-700 font-bold hover:bg-violet-200 transition"
               >
                 🔄 換一段
