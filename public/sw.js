@@ -46,11 +46,11 @@ self.addEventListener("install", (event) => {
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     (async () => {
-      // 清掉所有非當前版本的 cache (BUILD_VERSION 不同就會被清)
+      // 清掉本工具 (mbti-) 非當前版本的 cache (BUILD_VERSION 不同就會被清); 同網域其他工具的快取不動
       const keys = await caches.keys();
       await Promise.all(
         keys
-          .filter((k) => !k.startsWith(CACHE_VERSION))
+          .filter((k) => k.startsWith("mbti-") && !k.startsWith(CACHE_VERSION))
           .map((k) => caches.delete(k)),
       );
       await self.clients.claim();
@@ -155,7 +155,8 @@ self.addEventListener("message", (event) => {
     event.waitUntil(
       (async () => {
         const keys = await caches.keys();
-        await Promise.all(keys.map((k) => caches.delete(k)));
+        // 只清本工具 (mbti-) 的快取
+        await Promise.all(keys.filter((k) => k.startsWith("mbti-")).map((k) => caches.delete(k)));
       })(),
     );
   }

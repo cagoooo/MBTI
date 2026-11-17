@@ -164,15 +164,18 @@ export default function SwRegister() {
       if (navigator.serviceWorker.controller) {
         navigator.serviceWorker.controller.postMessage({ type: "CLEAR_CACHES" });
       }
-      // 也直接從主執行緒清 caches (雙保險)
+      // 也直接從主執行緒清 caches (雙保險) — 只清本工具 (mbti-) 的, 同網域其他工具的快取不動
       if ("caches" in window) {
         const keys = await caches.keys();
-        await Promise.all(keys.map((k) => caches.delete(k)));
+        await Promise.all(keys.filter((k) => k.startsWith("mbti-")).map((k) => caches.delete(k)));
       }
-      // 跟所有 SW registrations 說滾, 強迫拿新 sw.js
+      // 只叫本工具 scope 的 SW 檢查更新, 強迫拿新 sw.js (不碰同網域其他工具的註冊)
       if ("serviceWorker" in navigator) {
+        const ownScope = `${window.location.origin}${BASE_PATH}/`;
         const regs = await navigator.serviceWorker.getRegistrations();
-        await Promise.all(regs.map((r) => r.update().catch(() => {})));
+        await Promise.all(
+          regs.filter((r) => r.scope.startsWith(ownScope)).map((r) => r.update().catch(() => {})),
+        );
       }
     } catch {}
     // Hard reload — 加 query string 確保拿新 HTML

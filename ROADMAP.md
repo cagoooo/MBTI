@@ -1,7 +1,7 @@
 # 🗺️ MBTI 校園奇遇記 開發路線圖
 
-> 更新日期：2026-05-18
-> 目前線上版本：**v3.22.5**（服務組完整化 + Piano Warm BGM + 列印 bug 修補 + 5 大未來方向擴充規劃）
+> 更新日期：2026-11-17
+> 目前線上版本：**v3.22.6**（立即更新／自我修復只清除本工具的快取與註冊，不再影響同網域其他工具）
 
 ---
 
@@ -772,6 +772,13 @@ SDG 4 優質教育 / SDG 10 減少不平等 / SDG 13 氣候行動 / SDG 16 和�
 | **根因** | v3.17 紙感設計加了 `body::before` 紅 margin 線 + `body::after` 三圓點裝飾, `position: fixed`。`@media (max-width: 720px)` 有 hide, **但通用 `@media print` 忘了 hide**, iOS Safari 把 fixed 元素印進 PDF |
 | **修法** | globals.css 第 2126 行 `@media print` 區塊加:<br>`body::before, body::after { display: none !important; }` |
 | **為什麼 EmergencyCard 沒事** | 第 780 行 `@media print` 有處理但限 `body.printing-card` class, 只 EmergencyCard 有加; 通用 PrintSheet 走另一條 print 規則 |
+
+### ✅ v3.22.6 — 更新只清本工具快取（2026-11-17）
+
+| 項目 | 細節 |
+|---|---|
+| **症狀** | 按「立即更新」會清掉同網域（cagoooo.github.io）所有工具的離線快取 |
+| **修法** | 立即更新／自我修復只清除本工具的快取與註冊，不再影響同網域其他工具：SwRegister 只刪 `mbti-` 開頭的快取、只叫本工具 scope 的 SW 檢查更新；sw.js 的 activate 與 CLEAR_CACHES 也只刪 `mbti-` 開頭的快取 |
 
 ---
 
