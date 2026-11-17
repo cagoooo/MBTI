@@ -40,7 +40,7 @@ const config: AppConfig = {
   schoolShortName: "石門國小",
   teacherName: "阿凱老師",
   teacherHomepageUrl:
-    "https://www.smes.tyc.edu.tw/modules/school/index.php?department_id=2&zone_id=0&page_id=2&content_id=11&type=news&from_op=all_news#a5",
+    "https://cagoooo.github.io/Akai/",
   schoolHomepageUrl: "https://www.smes.tyc.edu.tw/",
   schoolEmoji: "🏫",
   productionUrl: "https://cagoooo.github.io/MBTI",

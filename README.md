@@ -182,7 +182,7 @@ git push
 
 ---
 
-Made with ❤️ by [阿凱老師 ｜ 桃園市龍潭區石門國小](https://www.smes.tyc.edu.tw/modules/school/index.php?department_id=2&zone_id=0&page_id=2&content_id=11&type=news&from_op=all_news#a5)
+Made with ❤️ by [阿凱老師 ｜ 桃園市龍潭區石門國小](https://cagoooo.github.io/Akai/)
 
 ---
 
