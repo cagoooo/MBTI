@@ -18,7 +18,7 @@
     "@types/qrcode": "^1.5.6",
     "firebase": "^12.13.0",
     "framer-motion": "11.18.0",
-    "next": "15.1.6",
+    "next": "15.5.29",
     "qrcode": "^1.5.4",
     "react": "19.0.0",
     "react-dom": "19.0.0"
@@ -31,9 +31,15 @@
     "pinyin": "^4.0.0",
     "pinyin-pro": "^3.28.1",
     "pinyin-zhuyin": "^1.0.4",
-    "postcss": "8.5.1",
+    "postcss": "8.5.33",
     "sharp": "^0.34.5",
     "tailwindcss": "^4.3.0",
     "typescript": "5.7.3"
+  },
+  "overrides": {
+    "@grpc/grpc-js": "^1.14.7",
+    "next": {
+      "postcss": "^8.5.33"
+    }
   }
 }
